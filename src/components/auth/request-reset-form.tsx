@@ -1,0 +1,50 @@
+"use client";
+
+import { useActionState } from "react";
+
+import { requestPasswordResetAction } from "@/actions/auth";
+import { initialAuthFormState } from "@/actions/auth-state";
+import { FormMessage } from "@/components/ui/form-message";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
+
+export function RequestResetForm() {
+  const [state, formAction] = useActionState(
+    requestPasswordResetAction,
+    initialAuthFormState,
+  );
+
+  return (
+    <form action={formAction} noValidate className="grid gap-4">
+      {state.message && (
+        <FormMessage status={state.status === "success" ? "success" : "error"}>
+          {state.message}
+        </FormMessage>
+      )}
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="correo">Correo electrónico</Label>
+        <Input
+          id="correo"
+          name="correo"
+          type="email"
+          autoComplete="email"
+          placeholder="tucorreo@ejemplo.com"
+          required
+          aria-invalid={Boolean(state.fieldErrors?.correo)}
+          aria-describedby={state.fieldErrors?.correo ? "error-correo" : undefined}
+        />
+        {state.fieldErrors?.correo && (
+          <p id="error-correo" className="text-sm text-destructive">
+            {state.fieldErrors.correo[0]}
+          </p>
+        )}
+      </div>
+
+      <SubmitButton className="mt-2 w-full" pendingText="Enviando enlace…">
+        Enviar enlace de recuperación
+      </SubmitButton>
+    </form>
+  );
+}
