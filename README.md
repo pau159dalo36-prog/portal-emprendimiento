@@ -12,7 +12,7 @@ Este proyecto es una base de Next.js para un portal independiente de emprendimie
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 24 LTS (ver `.nvmrc`)
 - Una cuenta de Supabase (proyecto remoto, sin Docker)
 
 ## Configuración inicial
@@ -31,7 +31,7 @@ Este proyecto es una base de Next.js para un portal independiente de emprendimie
 
    - `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto.
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: clave pública de Supabase.
-   - `NEXT_PUBLIC_SITE_URL`: `http://localhost:3000`.
+   - `NEXT_PUBLIC_SITE_URL`: en desarrollo puede quedar vacía (usa `http://localhost:3000` por defecto) o indicarla explícitamente.
 
 3. Enlazar el proyecto Supabase (si no está enlazado):
 
@@ -61,6 +61,17 @@ SQL en supabase/migrations/ → supabase:db:push → supabase:types → aplicaci
 ```
 
 Detalles en [docs/SUPABASE.md](./docs/SUPABASE.md) y [docs/DATABASE.md](./docs/DATABASE.md).
+
+## Despliegue en Netlify
+
+Netlify detecta Next.js automáticamente y aplica su adaptador OpenNext (SSR, Server Actions, Route Handlers, proxy e imágenes) sin plugins manuales.
+
+- `netlify.toml`: solo define el comando de build (`npm run build`).
+- Versión de Node: `24` LTS vía `.nvmrc` y `engines.node`.
+- Variables requeridas en Netlify: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `NEXT_PUBLIC_SITE_URL` (URL pública del sitio).
+- Endpoint de salud: `GET /api/health`.
+
+Guía completa en [docs/NETLIFY.md](./docs/NETLIFY.md).
 
 ## Arquitectura
 

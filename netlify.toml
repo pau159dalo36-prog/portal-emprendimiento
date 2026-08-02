@@ -1,0 +1,8 @@
+# Netlify detecta Next.js automáticamente y aplica su adaptador OpenNext en
+# cada build (SSR, Server Actions, Route Handlers, proxy e image optimization).
+# No se fija ninguna versión del adaptador y no se configura un directorio
+# publish manual: el adaptador gestiona la salida de `next build`.
+#
+# La versión de Node se controla con .nvmrc (Node 24 LTS).
+[build]
+  command = "npm run build"
