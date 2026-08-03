@@ -84,7 +84,76 @@ Pendiente opcional (fuera del alcance verificado de FASE 1):
 
 ## FASE 2 — Organizaciones y proyectos
 
-Estado: ⬜ pendiente.
+Estado: ✅ completada (2026-08-04).
+
+Objetivo: organizaciones y proyectos de extremo a extremo — tablas con
+restricciones/índices/triggers y RLS; validación Zod; Server Actions; páginas
+localizadas ES/EN (crear, editar, publicar, privacidad, listado/exploración,
+perfiles de organizaciones y proyectos); gestión de miembros, roles,
+necesidades y enlaces. Sin vídeos ni feed (FASES 3 y 4).
+
+Realizado:
+- Migración aplicada en producción (`npx supabase db push --linked`,
+  2026-08-04): `supabase/migrations/20260804000000_fase2_organizations_projects.sql`
+  - Tablas: `organizations`, `organization_members`, `organization_links`,
+    `projects`, `project_members`, `project_needs`, `project_links`.
+  - Catálogos en base: `organization_member_roles`, `project_member_roles`,
+    `organization_link_types`, `project_link_types`, `project_stages`,
+    `project_statuses`, `need_statuses`.
+  - RLS por fila (select público vs. dueño/miembro), grants mínimos, triggers
+    (`updated_at`, slug, auto-membresía del dueño, protección de `id`).
+  - Funciones SQL `SECURITY DEFINER` con `set search_path = ''`
+    (`is_organization_member`, `is_organization_manager`,
+    `is_project_member`) para evitar recursión de RLS; guardas impiden editar
+    la fila del owner real.
+  - `src/types/database.types.ts` regenerado (`npm run supabase:types`).
+- Catálogos i18n ES/EN completados y validados (`metadata`, `nav`, `avatar`,
+  `industries`, `projectStages`, `projectStatuses`, `orgRoles`,
+  `projectRoles`, `needStatuses`, `linkTypes`, `organizations`, `projects`,
+  `organizationForm`, `projectForm`, `managers`, `actions.organization`,
+  `actions.project`, validaciones nuevas, `validation.labels`).
+- Validaciones Zod: `src/validations/organization.ts`, `src/validations/project.ts`,
+  `src/validations/fields.ts` (helpers `createSlugSchema`,
+  `createEnumArraySchema`, `createIsCheckedSchema`, opcionales).
+- Server Actions traducidas: `src/actions/organization.ts`,
+  `src/actions/project.ts` (crear/editar miembros, enlaces, necesidades,
+  roles, estados; comprobación de permisos con `getClaims()`).
+- Helpers de datos: `src/organizations/data.ts` (`isOrganizationMember`,
+  `isOrganizationManager`, `listOrganizationsForUser`),
+  `src/projects/data.ts` (`isProjectMember`, consultas de detalle).
+- Mappers puros: `src/organizations/map.ts`, `src/projects/map.ts`.
+- Componentes: `public-header.tsx`, `signed-in-nav.tsx` (enlaces nuevos),
+  `member-manager.tsx`, `link-manager.tsx` (genéricos), `organization-form.tsx`,
+  `project-form.tsx`, `need-manager.tsx`, `org-card.tsx`, `project-card.tsx`,
+  `project-filters.tsx`.
+- Páginas públicas: `/[locale]/organizaciones` (lista), `/[locale]/organizaciones/[slug]`,
+  `/[locale]/proyectos` (explorar con filtros vía `searchParams`),
+  `/[locale]/proyectos/[slug]`.
+- Páginas autenticadas: `(app)/organizaciones/nueva`, `(app)/organizaciones/[slug]/editar`
+  (miembros/enlaces solo owner), `(app)/proyectos/nuevo`,
+  `(app)/proyectos/[slug]/editar` (owner gestiona core/equipo; miembros
+  gestionan necesidades/enlaces).
+- Navegación: `signed-in-nav.tsx` y `brand.links` actualizados con rutas de
+  organizaciones y proyectos.
+- Ajustes Zod v4: `createEnumArraySchema` devuelve `ZodArray` (no `preprocess`)
+  para que `.max()` exista y el tipo de salida no se amplíe a `any`;
+  `validationState` acepta `flatten().fieldErrors` como `unknown` (en Zod v4 los
+  esquemas primitivos devuelven `string`).
+- Tests de unidades puras: `src/validations/organization.test.ts` (10),
+  `src/validations/project.test.ts` (8).
+
+Verificaciones FASE 2:
+- [x] lint (`npm run lint`)
+- [x] TypeScript (`npm run typecheck`)
+- [x] build (`npm run build`) — 25 rutas incluidas las nuevas
+- [x] tests (`npm run test`) — 24 tests en 4 ficheros
+- [x] Migración aplicada en producción y RLS auditada
+- [x] Catálogos i18n ES/EN válidos
+
+Pendiente opcional (fuera del alcance de FASE 2):
+- Auditoría manual responsive/accesibilidad de las nuevas páginas.
+- Comprobación en vivo del flujo crear→editar→miembros→necesidades en la
+  instancia desplegada.
 
 ## FASE 3 — Storage, vídeos y publicación de vídeo
 

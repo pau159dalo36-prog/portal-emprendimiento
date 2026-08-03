@@ -10,6 +10,12 @@ export async function SignedInNav() {
 
   return (
     <div className="flex items-center gap-3">
+      <Link href="/proyectos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        {t("projects")}
+      </Link>
+      <Link href="/organizaciones" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        {t("organizations")}
+      </Link>
       <Link href="/panel" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         {t("panel")}
       </Link>

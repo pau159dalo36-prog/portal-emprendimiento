@@ -20,6 +20,10 @@ export const brand = {
     perfil: "/perfil",
     configuracionPerfil: "/configuracion/perfil",
     configuracionIdioma: "/configuracion/idioma",
+    proyectos: "/proyectos",
+    organizaciones: "/organizaciones",
+    nuevoProyecto: "/proyectos/nuevo",
+    nuevaOrganizacion: "/organizaciones/nueva",
   },
 } as const;
 

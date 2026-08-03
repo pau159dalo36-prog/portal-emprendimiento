@@ -8,12 +8,16 @@ export type FormState = {
 export const initialFormState: FormState = { status: "idle" };
 
 export function validationState(
-  error: { flatten: () => { fieldErrors: Record<string, string[] | undefined> } },
+  error: { flatten: () => { fieldErrors: unknown } },
   message: string,
 ): FormState {
+  const { fieldErrors } = error.flatten();
   return {
     status: "error",
     message,
-    fieldErrors: error.flatten().fieldErrors,
+    fieldErrors:
+      fieldErrors && typeof fieldErrors === "object"
+        ? (fieldErrors as Record<string, string[] | undefined>)
+        : undefined,
   };
 }

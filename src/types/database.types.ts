@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      organization_links: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          link_type: string
+          organization_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          link_type: string
+          organization_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          link_type?: string
+          organization_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          profile_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          profile_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          profile_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          contact_email: string | null
+          created_at: string
+          description: string | null
+          headline: string | null
+          id: string
+          industries: string[]
+          is_public: boolean
+          location: string | null
+          logo_url: string | null
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          headline?: string | null
+          id?: string
+          industries?: string[]
+          is_public?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          headline?: string | null
+          id?: string
+          industries?: string[]
+          is_public?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_roles: {
         Row: {
           created_at: string
@@ -502,6 +638,215 @@ export type Database = {
         }
         Relationships: []
       }
+      project_links: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          link_type: string
+          project_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          link_type: string
+          project_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          link_type?: string
+          project_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          project_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          project_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          project_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_needs: {
+        Row: {
+          commitment: string | null
+          created_at: string
+          description: string | null
+          id: string
+          project_id: string
+          skill_id: string | null
+          sort_order: number
+          status: string
+          title: string
+        }
+        Insert: {
+          commitment?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_id: string
+          skill_id?: string | null
+          sort_order?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          commitment?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_id?: string
+          skill_id?: string | null
+          sort_order?: number
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_needs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          industries: string[]
+          is_public: boolean
+          name: string
+          organization_id: string | null
+          owner_id: string
+          problem: string | null
+          slug: string
+          solution: string | null
+          stage: string
+          status: string
+          tagline: string | null
+          target_market: string | null
+          traction: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          industries?: string[]
+          is_public?: boolean
+          name: string
+          organization_id?: string | null
+          owner_id: string
+          problem?: string | null
+          slug: string
+          solution?: string | null
+          stage?: string
+          status?: string
+          tagline?: string | null
+          target_market?: string | null
+          traction?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          industries?: string[]
+          is_public?: boolean
+          name?: string
+          organization_id?: string | null
+          owner_id?: string
+          problem?: string | null
+          slug?: string
+          solution?: string | null
+          stage?: string
+          status?: string
+          tagline?: string | null
+          target_market?: string | null
+          traction?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       skills: {
         Row: {
           created_at: string
@@ -528,7 +873,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_organization_manager: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
+      is_organization_member: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
+      is_project_member: { Args: { p_project_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
