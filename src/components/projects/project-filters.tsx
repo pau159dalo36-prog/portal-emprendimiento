@@ -8,20 +8,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { INDUSTRIES } from "@/organizations/constants";
 import { PROJECT_STAGES } from "@/projects/constants";
 
 type ProjectFiltersProps = {
   initialSearch: string;
   initialStage: string;
+  initialIndustry: string;
 };
 
-export function ProjectFilters({ initialSearch, initialStage }: ProjectFiltersProps) {
+export function ProjectFilters({
+  initialSearch,
+  initialStage,
+  initialIndustry,
+}: ProjectFiltersProps) {
   const t = useTranslations("projects");
   const stages = useTranslations("projectStages");
+  const industries = useTranslations("industries");
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
   const [stage, setStage] = useState(initialStage);
+  const [industry, setIndustry] = useState(initialIndustry);
 
   function go(params: URLSearchParams) {
     const query = params.toString();
@@ -37,19 +45,23 @@ export function ProjectFilters({ initialSearch, initialStage }: ProjectFiltersPr
     if (stage) {
       params.set("stage", stage);
     }
+    if (industry) {
+      params.set("industry", industry);
+    }
     go(params);
   }
 
   function clearFilters() {
     setSearch("");
     setStage("");
+    setIndustry("");
     go(new URLSearchParams());
   }
 
   return (
     <form
       onSubmit={applyFilters}
-      className="grid gap-3 rounded-2xl border border-border/60 bg-card p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+      className="grid gap-3 rounded-2xl border border-border/60 bg-card p-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto] lg:items-end"
     >
       <div className="grid gap-2">
         <Label htmlFor="project-search">{t("searchPlaceholder")}</Label>
@@ -82,6 +94,24 @@ export function ProjectFilters({ initialSearch, initialStage }: ProjectFiltersPr
           {PROJECT_STAGES.map((value) => (
             <option key={value} value={value}>
               {stages(value as Parameters<typeof stages>[0])}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="project-industry">{t("industry")}</Label>
+        <select
+          id="project-industry"
+          name="industry"
+          value={industry}
+          onChange={(event) => setIndustry(event.target.value)}
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+        >
+          <option value="">{t("allIndustries")}</option>
+          {INDUSTRIES.map((value) => (
+            <option key={value} value={value}>
+              {industries(value as Parameters<typeof industries>[0])}
             </option>
           ))}
         </select>

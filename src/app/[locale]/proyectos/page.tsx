@@ -1,16 +1,26 @@
 import { getTranslations } from "next-intl/server";
 
 import { getCurrentUser } from "@/auth/session";
-import { ProjectCard } from "@/components/projects/project-card";
+import { ProjectGrid } from "@/components/feed/project-grid";
 import { ProjectFilters } from "@/components/projects/project-filters";
+import { ProjectSort } from "@/components/projects/project-sort";
 import { buttonVariants } from "@/components/ui/button";
+import { INDUSTRIES } from "@/organizations/constants";
 import { PROJECT_STAGES } from "@/projects/constants";
-import { listPublishedProjects } from "@/projects/data";
+import {
+  countOpenNeedsByProject,
+  listPublishedProjects,
+} from "@/projects/data";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 
 type ExploreProjectsPageProps = {
-  searchParams: Promise<{ q?: string; stage?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    stage?: string;
+    industry?: string;
+    order?: string;
+  }>;
 };
 
 export async function generateMetadata() {
@@ -20,18 +30,31 @@ export async function generateMetadata() {
 export default async function ExploreProjectsPage({
   searchParams,
 }: ExploreProjectsPageProps) {
-  const { q, stage } = await searchParams;
+  const { q, stage, industry, order } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   const t = await getTranslations("projects");
 
-  const validStage = stage && PROJECT_STAGES.includes(stage as (typeof PROJECT_STAGES)[number])
-    ? stage
-    : undefined;
+  const validStage =
+    stage && PROJECT_STAGES.includes(stage as (typeof PROJECT_STAGES)[number])
+      ? stage
+      : undefined;
+  const validIndustry =
+    industry && INDUSTRIES.includes(industry as (typeof INDUSTRIES)[number])
+      ? industry
+      : undefined;
+  const orderBy: "created_at" | "updated_at" = order === "activos" ? "updated_at" : "created_at";
 
   const projects = await listPublishedProjects(supabase, {
     search: q?.trim() || undefined,
     stage: validStage,
+    industry: validIndustry,
+    orderBy,
   });
+
+  const needsCounts = await countOpenNeedsByProject(
+    supabase,
+    projects.map((project) => project.id),
+  );
 
   return (
     <div className="grid gap-6">
@@ -47,16 +70,28 @@ export default async function ExploreProjectsPage({
         )}
       </div>
 
-      <ProjectFilters initialSearch={q ?? ""} initialStage={validStage ?? ""} />
+      <ProjectFilters
+        initialSearch={q ?? ""}
+        initialStage={validStage ?? ""}
+        initialIndustry={validIndustry ?? ""}
+      />
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("resultCount", { count: projects.length })}
+        </p>
+        <ProjectSort
+          search={q?.trim() ?? ""}
+          stage={validStage ?? ""}
+          industry={validIndustry ?? ""}
+          initialOrder={order ?? "recientes"}
+        />
+      </div>
 
       {projects.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        <ProjectGrid projects={projects} needsCounts={needsCounts} />
       ) : (
-        <div className="grid gap-1">
+        <div className="grid gap-1 rounded-2xl border border-dashed border-border/70 bg-card p-8 text-center">
           <p className="text-sm font-medium">{t("empty")}</p>
           <p className="text-sm text-muted-foreground">{t("emptyHint")}</p>
         </div>

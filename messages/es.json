@@ -46,64 +46,66 @@
     "newOrganization": "Nueva organización",
     "explore": "Explorar"
   },
+  "feed": {
+    "forYou": "Para ti",
+    "newProjects": "Nuevos",
+    "categoriesLabel": "Categorías",
+    "needsCount": "{count, plural, one {# oportunidad} other {# oportunidades}}",
+    "projectCount": "{count, plural, one {# proyecto} other {# proyectos}}",
+    "anonymous": "Anónimo",
+    "inProject": "En {name}",
+    "emptyTitle": "El feed está empezando",
+    "emptyDescription": "Aún no hay proyectos ni oportunidades publicados. Cuando alguien publique un proyecto, aparecerá aquí.",
+    "exploreProjects": "Explorar proyectos",
+    "videosTitle": "Vídeos cortos",
+    "videosDescription": "Demos, pitches y avances de la comunidad."
+  },
+  "sidebar": {
+    "main": "Principal",
+    "activity": "Tu actividad",
+    "comingSoon": "Próximamente",
+    "soonBadge": "Pronto",
+    "moreComingSoon": "Más funciones en camino",
+    "home": "Inicio",
+    "explore": "Explorar",
+    "organizations": "Organizaciones",
+    "profile": "Mi perfil",
+    "publish": "Publicar",
+    "signIn": "Entrar",
+    "videos": "Vídeos",
+    "posts": "Publicaciones",
+    "jobs": "Empleos",
+    "communities": "Comunidades"
+  },
   "home": {
-    "hero": {
-      "badge": "Comparte, descubre y construye.",
-      "title": "Convierte tu idea en un proyecto validado",
-      "description": "Plataforma independiente para publicar ideas, recibir feedback estructurado, validar proyectos y encontrar colaboradores afines.",
-      "primaryCta": "Comienza gratis",
-      "secondaryCta": "Explorar funciones"
+    "intro": {
+      "eyebrow": "Descubre, colabora y construye.",
+      "title": "Proyectos reales, oportunidades reales",
+      "description": "Explora proyectos en marcha, encuentra quién busca colaboración y conoce las organizaciones que están construyendo.",
+      "publishCta": "Publicar proyecto",
+      "createAccount": "Crear cuenta gratis",
+      "exploreCta": "Explorar proyectos"
     },
-    "features": {
-      "eyebrow": "Características",
-      "title": "Todo lo que necesitas para validar tu idea",
-      "subtitle": "Desde la publicación estructurada hasta la conexión con otros emprendedores, el portal te acompaña en cada etapa.",
-      "items": [
-        {
-          "title": "Publica tu idea",
-          "description": "Describe tu propuesta con estructura: problema, solución, mercado objetivo y etapa de desarrollo."
-        },
-        {
-          "title": "Recibe feedback real",
-          "description": "La comunidad comenta con criterios definidos para que mejores tu proyecto con aportes concretos."
-        },
-        {
-          "title": "Encuentra colaboradores",
-          "description": "Conecta con perfiles que complementan tus habilidades y formá equipos para avanzar juntos."
-        }
-      ]
-    },
-    "how": {
-      "eyebrow": "Cómo funciona",
-      "title": "De la idea al proyecto en tres pasos",
-      "subtitle": "Un proceso simple que te da claridad y te conecta con las personas adecuadas.",
-      "steps": [
-        {
-          "title": "Publica",
-          "description": "Sube tu idea con un formato guiado: explica el problema, tu solución y el mercado al que apuntas."
-        },
-        {
-          "title": "Recibe feedback",
-          "description": "La comunidad y mentores comentan con criterios objetivos para que puedas mejorar iterativamente."
-        },
-        {
-          "title": "Valida y crece",
-          "description": "Encuentra colaboradores, únete a comunidades y prepara tu proyecto para el siguiente nivel."
-        }
-      ]
-    },
-    "community": {
-      "eyebrow": "Comunidad",
-      "title": "No tienes que emprender solo",
-      "description": "Únete a una comunidad activa de emprendedores que comparten tus inquietudes. Participa en discusiones, recibe feedback sincero y forma equipos con personas que complementan tus habilidades.",
-      "points": [
-        "Feedback guiado por criterios objetivos",
-        "Conexión con perfiles afines a tu proyecto",
-        "Comunidades temáticas por industria y etapa"
-      ],
-      "ctaLabel": "¿Te unes?",
-      "ctaText": "Crea tu cuenta gratis y empieza a construir tu proyecto con el apoyo de una comunidad que valida, no solo opina.",
-      "ctaButton": "Crear cuenta gratis"
+    "sections": {
+      "recommended": {
+        "title": "Recomendados para ti",
+        "subtitle": "Proyectos con actividad reciente.",
+        "viewAll": "Ver todos"
+      },
+      "needs": {
+        "title": "Buscan personas",
+        "subtitle": "Oportunidades abiertas para sumarte."
+      },
+      "organizations": {
+        "title": "Organizaciones",
+        "subtitle": "Equipos y organizaciones en la plataforma.",
+        "viewAll": "Ver todas"
+      },
+      "recent": {
+        "title": "Nuevos en Ideora",
+        "subtitle": "Lo último que se ha publicado.",
+        "viewAll": "Ver todos"
+      }
     }
   },
   "auth": {
@@ -474,6 +476,12 @@
     "search": "Buscar",
     "clear": "Limpiar",
     "allStages": "Todas las etapas",
+    "allIndustries": "Todos los sectores",
+    "industry": "Sector",
+    "sort": "Ordenar",
+    "sortRecent": "Más recientes",
+    "sortActive": "Más activos",
+    "resultCount": "{count, plural, one {# proyecto} other {# proyectos}}",
     "empty": "No se encontraron proyectos.",
     "emptyHint": "Prueba a cambiar la búsqueda o los filtros.",
     "newTitle": "Nuevo proyecto",
