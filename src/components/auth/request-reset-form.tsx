@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import { requestPasswordResetAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
@@ -14,6 +15,7 @@ export function RequestResetForm() {
     requestPasswordResetAction,
     initialAuthFormState,
   );
+  const t = useTranslations("authForm");
 
   return (
     <form action={formAction} noValidate className="grid gap-4">
@@ -24,13 +26,13 @@ export function RequestResetForm() {
       )}
 
       <div className="grid gap-1.5">
-        <Label htmlFor="correo">Correo electrónico</Label>
+        <Label htmlFor="correo">{t("email")}</Label>
         <Input
           id="correo"
           name="correo"
           type="email"
           autoComplete="email"
-          placeholder="tucorreo@ejemplo.com"
+          placeholder={t("emailPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.correo)}
           aria-describedby={state.fieldErrors?.correo ? "error-correo" : undefined}
@@ -42,8 +44,8 @@ export function RequestResetForm() {
         )}
       </div>
 
-      <SubmitButton className="mt-2 w-full" pendingText="Enviando enlace…">
-        Enviar enlace de recuperación
+      <SubmitButton className="mt-2 w-full" pendingText={t("sendResetLinkPending")}>
+        {t("sendResetLink")}
       </SubmitButton>
     </form>
   );

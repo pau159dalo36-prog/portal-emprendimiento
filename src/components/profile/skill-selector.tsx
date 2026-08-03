@@ -1,7 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { cn } from "@/lib/utils";
-import { SKILL_LEVELS, SKILL_LEVEL_LABELS } from "@/profiles/constants";
+import { SKILL_LEVELS } from "@/profiles/constants";
 import type { SkillOption, SkillSelection } from "@/profiles/map";
 
 export type { SkillOption, SkillSelection };
@@ -13,6 +15,9 @@ type SkillSelectorProps = {
 };
 
 export function SkillSelector({ skills, value, onChange }: SkillSelectorProps) {
+  const t = useTranslations("skillSelector");
+  const levels = useTranslations("skillLevels");
+
   function toggle(skillId: string) {
     const next: SkillSelection = { ...value };
     if (skillId in next) {
@@ -57,7 +62,7 @@ export function SkillSelector({ skills, value, onChange }: SkillSelectorProps) {
                   htmlFor={`nivel-${skill.id}`}
                   className="text-xs text-muted-foreground"
                 >
-                  Nivel
+                  {t("level")}
                 </label>
                 <select
                   id={`nivel-${skill.id}`}
@@ -66,13 +71,13 @@ export function SkillSelector({ skills, value, onChange }: SkillSelectorProps) {
                     const next = event.target.value === "" ? null : Number(event.target.value);
                     setLevel(skill.id, next);
                   }}
-                  aria-label={`Nivel de ${skill.name}`}
+                  aria-label={t("levelFor", { name: skill.name })}
                   className="h-8 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
                 >
-                  <option value="">Opcional</option>
+                  <option value="">{t("optional")}</option>
                   {SKILL_LEVELS.map((level) => (
                     <option key={level} value={level}>
-                      {SKILL_LEVEL_LABELS[level]}
+                      {levels(String(level))}
                     </option>
                   ))}
                 </select>

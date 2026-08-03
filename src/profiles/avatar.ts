@@ -1,13 +1,9 @@
-export const AVATAR_FILE_NAME = "avatar.webp";
-export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
-export const AVATAR_MAX_DIMENSION = 512;
-export const AVATAR_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-] as const;
+import { uploads } from "@/config/uploads";
+
+export const AVATAR_FILE_NAME = uploads.avatar.fileName;
+export const AVATAR_MAX_BYTES = uploads.avatar.maxBytes;
+export const AVATAR_MAX_DIMENSION = uploads.avatar.maxDimension;
+export const AVATAR_MIME_TYPES = uploads.avatar.mimeTypes;
 
 export type AvatarMimeType = (typeof AVATAR_MIME_TYPES)[number];
 
@@ -24,7 +20,7 @@ export function avatarStoragePath(userId: string): string {
 }
 
 export function getPublicAvatarUrl(supabaseUrl: string, path: string): string {
-  return `${supabaseUrl}/storage/v1/object/public/avatars/${path}`;
+  return `${supabaseUrl}/storage/v1/object/public/${uploads.avatar.bucket}/${path}`;
 }
 
 export function isImageSignature(buffer: ArrayBuffer): boolean {

@@ -1,15 +1,19 @@
+import type { ValidationTranslator } from "@/validations/auth";
 import {
   AVATAR_MAX_BYTES,
   AVATAR_MAX_DIMENSION,
   isAllowedAvatarMime,
 } from "@/profiles/avatar";
 
-export function validateAvatarFile(file: File): string | null {
+export function validateAvatarFile(
+  file: File,
+  t: ValidationTranslator,
+): string | null {
   if (!isAllowedAvatarMime(file.type)) {
-    return "Formato no permitido. Usa PNG, JPEG, WebP, GIF o AVIF.";
+    return t("badFormat");
   }
   if (file.size > AVATAR_MAX_BYTES) {
-    return "La imagen no puede superar los 5 MB.";
+    return t("tooLarge");
   }
   return null;
 }

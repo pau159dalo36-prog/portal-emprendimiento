@@ -7,10 +7,7 @@ import {
   Lightbulb,
   CheckCircle,
 } from "lucide-react";
-import { AuthActions } from "@/components/shared/auth-actions";
-import { SignedInNav } from "@/components/shared/signed-in-nav";
 import { buttonVariants } from "@/components/ui/button";
-import { getCurrentUser } from "@/auth/session";
 
 const features = [
   {
@@ -33,9 +30,7 @@ const features = [
   },
 ];
 
-export default async function Home() {
-  const { user } = await getCurrentUser();
-
+export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
@@ -69,7 +64,18 @@ export default async function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
-            {user ? <SignedInNav /> : <AuthActions />}
+            <Link
+              href="/iniciar-sesion"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              href="/crear-cuenta"
+              className={buttonVariants({ size: "sm" })}
+            >
+              Crear cuenta
+            </Link>
           </div>
         </div>
       </header>
@@ -99,7 +105,7 @@ export default async function Home() {
 
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
-                href="/registrarse"
+                href="/crear-cuenta"
                 className={buttonVariants({
                   size: "lg",
                   className: "w-full sm:w-auto",
@@ -255,7 +261,7 @@ export default async function Home() {
                   apoyo de una comunidad que valida, no solo opina.
                 </p>
                 <Link
-                  href="/registrarse"
+                  href="/crear-cuenta"
                   className={buttonVariants({
                     size: "lg",
                     className: "mt-6 w-full",

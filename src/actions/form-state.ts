@@ -9,7 +9,7 @@ export const initialFormState: FormState = { status: "idle" };
 
 export function validationState(
   error: { flatten: () => { fieldErrors: Record<string, string[] | undefined> } },
-  message = "Revisa los campos marcados.",
+  message: string,
 ): FormState {
   return {
     status: "error",

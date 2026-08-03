@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import { signInAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
@@ -10,9 +10,11 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Link } from "@/i18n/navigation";
 
 export function SignInForm() {
   const [state, formAction] = useActionState(signInAction, initialAuthFormState);
+  const t = useTranslations("authForm");
 
   return (
     <form action={formAction} noValidate className="grid gap-4">
@@ -23,13 +25,13 @@ export function SignInForm() {
       )}
 
       <div className="grid gap-1.5">
-        <Label htmlFor="correo">Correo electrónico</Label>
+        <Label htmlFor="correo">{t("email")}</Label>
         <Input
           id="correo"
           name="correo"
           type="email"
           autoComplete="email"
-          placeholder="tucorreo@ejemplo.com"
+          placeholder={t("emailPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.correo)}
           aria-describedby={state.fieldErrors?.correo ? "error-correo" : undefined}
@@ -43,12 +45,12 @@ export function SignInForm() {
 
       <div className="grid gap-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="contrasena">Contraseña</Label>
+          <Label htmlFor="contrasena">{t("password")}</Label>
           <Link
             href="/recuperar-contrasena"
             className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
-            ¿Olvidaste tu contraseña?
+            {t("forgotPassword")}
           </Link>
         </div>
         <Input
@@ -56,7 +58,7 @@ export function SignInForm() {
           name="contrasena"
           type="password"
           autoComplete="current-password"
-          placeholder="Tu contraseña"
+          placeholder={t("passwordPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.contrasena)}
           aria-describedby={state.fieldErrors?.contrasena ? "error-contrasena" : undefined}
@@ -71,12 +73,12 @@ export function SignInForm() {
       <div className="flex items-center gap-2">
         <Checkbox id="recordar" name="recordar" value="on" defaultChecked className="mt-0.5" />
         <Label htmlFor="recordar" className="leading-6 font-normal">
-          Recordarme durante 30 días
+          {t("remember")}
         </Label>
       </div>
 
-      <SubmitButton className="mt-2 w-full" pendingText="Iniciando sesión…">
-        Iniciar sesión
+      <SubmitButton className="mt-2 w-full" pendingText={t("signInPending")}>
+        {t("signInSubmit")}
       </SubmitButton>
     </form>
   );

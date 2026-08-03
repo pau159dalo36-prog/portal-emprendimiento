@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ type InterestInputProps = {
 };
 
 export function InterestInput({ value, onChange }: InterestInputProps) {
+  const t = useTranslations("interestInput");
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -23,11 +25,11 @@ export function InterestInput({ value, onChange }: InterestInputProps) {
       return;
     }
     if (value.length >= MAX_INTERESTS) {
-      setError(`Puedes añadir como máximo ${MAX_INTERESTS} intereses.`);
+      setError(t("maxReached", { max: MAX_INTERESTS }));
       return;
     }
     if (value.some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
-      setError("Ese interés ya está añadido.");
+      setError(t("alreadyAdded"));
       return;
     }
     onChange([...value, trimmed]);
@@ -52,12 +54,12 @@ export function InterestInput({ value, onChange }: InterestInputProps) {
               add();
             }
           }}
-          placeholder="Escribe un interés y pulsa Enter"
-          aria-label="Nuevo interés"
+          placeholder={t("placeholder")}
+          aria-label={t("newInterest")}
         />
-        <Button type="button" variant="secondary" onClick={add} aria-label="Añadir interés">
+        <Button type="button" variant="secondary" onClick={add} aria-label={t("addInterest")}>
           <Plus aria-hidden="true" />
-          Añadir
+          {t("add")}
         </Button>
       </div>
 
@@ -72,7 +74,7 @@ export function InterestInput({ value, onChange }: InterestInputProps) {
                 <button
                   type="button"
                   onClick={() => remove(interest)}
-                  aria-label={`Quitar ${interest}`}
+                  aria-label={t("remove", { interest })}
                   className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted-foreground/15 hover:text-foreground"
                 >
                   <X className="size-3.5" aria-hidden="true" />

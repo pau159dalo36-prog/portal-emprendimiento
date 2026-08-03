@@ -8,8 +8,11 @@ import {
 } from "@/lib/supabase/session-cookie";
 import type { Database } from "@/types/database.types";
 
-export async function updateSession(request: NextRequest): Promise<NextResponse> {
-  let supabaseResponse = NextResponse.next({ request });
+export async function updateSession(
+  request: NextRequest,
+  baseResponse?: NextResponse,
+): Promise<NextResponse> {
+  let supabaseResponse = baseResponse ?? NextResponse.next({ request });
 
   const rememberMe = request.cookies.get(REMEMBER_ME_COOKIE)?.value === "1";
 

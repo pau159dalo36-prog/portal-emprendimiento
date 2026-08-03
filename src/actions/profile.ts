@@ -1,64 +1,73 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getLocale, getTranslations } from "next-intl/server";
 import { requireUser } from "@/auth/session";
 import { validationState, type FormState } from "@/actions/form-state";
 import type { Database } from "@/types/database.types";
+import type { ValidationTranslator } from "@/validations/auth";
 import {
-  onboardingStepSchemas,
-  updateProfileSchema,
+  createOnboardingStepSchemas,
+  createUpdateProfileSchema,
   type OnboardingStepKey,
+  type OnboardingStepSchemas,
 } from "@/validations/profile";
+import { getPathname } from "@/i18n/navigation";
+import { redirect } from "next/navigation";
 
 const TOTAL_STEPS = 5;
 
 type StepInput = {
-  [K in OnboardingStepKey]: z.infer<(typeof onboardingStepSchemas)[K]>;
+  [K in OnboardingStepKey]: z.infer<OnboardingStepSchemas[K]>;
 };
 
 type ParsedStep =
   | { ok: true; data: StepInput[OnboardingStepKey] }
   | { ok: false; state: FormState };
 
-function parseStep(step: number, formData: FormData): ParsedStep {
+function parseStep(
+  step: number,
+  formData: FormData,
+  schemas: OnboardingStepSchemas,
+  ta: ValidationTranslator,
+): ParsedStep {
   let result:
     | z.ZodSafeParseResult<StepInput[OnboardingStepKey]>
     | undefined;
 
   if (step === 1) {
-    result = onboardingStepSchemas[1].safeParse({
+    result = schemas[1].safeParse({
       full_name: formData.get("full_name"),
       username: formData.get("username"),
       headline: formData.get("headline"),
       location: formData.get("location"),
     });
   } else if (step === 2) {
-    result = onboardingStepSchemas[2].safeParse({ bio: formData.get("bio") });
+    result = schemas[2].safeParse({ bio: formData.get("bio") });
   } else if (step === 3) {
-    result = onboardingStepSchemas[3].safeParse({
+    result = schemas[3].safeParse({
       user_types: formData.getAll("user_types"),
       weekly_availability: formData.get("weekly_availability"),
       collaboration_preferences: formData.getAll("collaboration_preferences"),
     });
   } else if (step === 4) {
-    result = onboardingStepSchemas[4].safeParse({
+    result = schemas[4].safeParse({
       habilidades: formData.getAll("habilidades"),
       intereses: formData.getAll("intereses"),
       niveles: formData.getAll("niveles"),
     });
   } else if (step === 5) {
-    result = onboardingStepSchemas[5].safeParse({
+    result = schemas[5].safeParse({
       website_url: formData.get("website_url"),
       linkedin_url: formData.get("linkedin_url"),
       is_public: formData.get("is_public"),
     });
   } else {
-    return { ok: false, state: { status: "error", message: "Paso no válido." } };
+    return { ok: false, state: { status: "error", message: ta("invalidStep") } };
   }
 
   if (!result.success) {
-    return { ok: false, state: validationState(result.error) };
+    return { ok: false, state: validationState(result.error, ta("validationGeneral")) };
   }
 
   return { ok: true, data: result.data };
@@ -133,13 +142,18 @@ export async function saveOnboardingStepAction(
   formData: FormData,
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
+  const locale = await getLocale();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.profile");
+
+  const schemas = createOnboardingStepSchemas(t);
 
   const step = Number(formData.get("step"));
   if (!Number.isInteger(step) || step < 1 || step > TOTAL_STEPS) {
-    return { status: "error", message: "Paso no válido." };
+    return { status: "error", message: ta("invalidStep") };
   }
 
-  const parsed = parseStep(step, formData);
+  const parsed = parseStep(step, formData, schemas, ta);
   if (!parsed.ok) {
     return parsed.state;
   }
@@ -150,7 +164,7 @@ export async function saveOnboardingStepAction(
     if (!skillsOk) {
       return {
         status: "error",
-        message: "No se pudieron guardar tus habilidades. Inténtalo de nuevo.",
+        message: ta("skillsSaveFailed"),
       };
     }
 
@@ -158,13 +172,13 @@ export async function saveOnboardingStepAction(
     if (!interestsOk) {
       return {
         status: "error",
-        message: "No se pudieron guardar tus intereses. Inténtalo de nuevo.",
+        message: ta("interestsSaveFailed"),
       };
     }
 
     return {
       status: "success",
-      message: "Paso 4 guardado.",
+      message: ta("stepSaved", { step: 4 }),
       savedStep: 4,
     };
   }
@@ -204,20 +218,20 @@ export async function saveOnboardingStepAction(
     if (isUsernameTaken(error)) {
       return {
         status: "error",
-        message: "Ese username ya está en uso.",
-        fieldErrors: { username: ["Ese username ya está en uso. Elige otro."] },
+        message: ta("usernameTaken"),
+        fieldErrors: { username: [ta("usernameTakenField")] },
       };
     }
-    return { status: "error", message: "No se pudo guardar el paso. Inténtalo de nuevo." };
+    return { status: "error", message: ta("stepSaveFailed") };
   }
 
   if (step === 5) {
-    redirect("/panel");
+    redirect(getPathname({ href: "/panel", locale }));
   }
 
   return {
     status: "success",
-    message: `Paso ${step} guardado.`,
+    message: ta("stepSaved", { step }),
     savedStep: step,
   };
 }
@@ -227,8 +241,10 @@ export async function updateProfileAction(
   formData: FormData,
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.profile");
 
-  const parsed = updateProfileSchema.safeParse({
+  const parsed = createUpdateProfileSchema(t).safeParse({
     full_name: formData.get("full_name"),
     username: formData.get("username"),
     headline: formData.get("headline"),
@@ -246,7 +262,7 @@ export async function updateProfileAction(
   });
 
   if (!parsed.success) {
-    return validationState(parsed.error);
+    return validationState(parsed.error, ta("validationGeneral"));
   }
 
   const {
@@ -271,19 +287,18 @@ export async function updateProfileAction(
     if (isUsernameTaken(error)) {
       return {
         status: "error",
-        message: "Ese username ya está en uso.",
-        fieldErrors: { username: ["Ese username ya está en uso. Elige otro."] },
+        message: ta("usernameTaken"),
+        fieldErrors: { username: [ta("usernameTakenField")] },
       };
     }
-    return { status: "error", message: "No se pudieron guardar los cambios. Inténtalo de nuevo." };
+    return { status: "error", message: ta("saveFailed") };
   }
 
   const skillsOk = await replaceSkills(supabase, user.id, habilidades, niveles);
   if (!skillsOk) {
     return {
       status: "error",
-      message:
-        "Los datos se guardaron, pero no se pudieron actualizar las habilidades. Revisa e inténtalo de nuevo.",
+      message: ta("skillsPartial"),
     };
   }
 
@@ -291,10 +306,9 @@ export async function updateProfileAction(
   if (!interestsOk) {
     return {
       status: "error",
-      message:
-        "Los datos se guardaron, pero no se pudieron actualizar los intereses. Revisa e inténtalo de nuevo.",
+      message: ta("interestsPartial"),
     };
   }
 
-  return { status: "success", message: "Cambios guardados correctamente." };
+  return { status: "success", message: ta("saved") };
 }

@@ -14,6 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
+      professional_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      profile_achievements: {
+        Row: {
+          achieved_on: string | null
+          created_at: string
+          description: string | null
+          id: string
+          profile_id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          achieved_on?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          profile_id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          achieved_on?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          profile_id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_achievements_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_blocks: {
+        Row: {
+          blocked_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_blocks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_education: {
+        Row: {
+          created_at: string
+          degree: string | null
+          description: string | null
+          end_year: number | null
+          field_of_study: string | null
+          id: string
+          institution: string
+          profile_id: string
+          sort_order: number
+          start_year: number | null
+        }
+        Insert: {
+          created_at?: string
+          degree?: string | null
+          description?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          id?: string
+          institution: string
+          profile_id: string
+          sort_order?: number
+          start_year?: number | null
+        }
+        Update: {
+          created_at?: string
+          degree?: string | null
+          description?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          id?: string
+          institution?: string
+          profile_id?: string
+          sort_order?: number
+          start_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_education_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_experience: {
+        Row: {
+          company: string
+          created_at: string
+          description: string | null
+          end_month: number | null
+          end_year: number | null
+          id: string
+          is_current: boolean
+          location: string | null
+          profile_id: string
+          role: string
+          sort_order: number
+          start_month: number | null
+          start_year: number | null
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          description?: string | null
+          end_month?: number | null
+          end_year?: number | null
+          id?: string
+          is_current?: boolean
+          location?: string | null
+          profile_id: string
+          role: string
+          sort_order?: number
+          start_month?: number | null
+          start_year?: number | null
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          end_month?: number | null
+          end_year?: number | null
+          id?: string
+          is_current?: boolean
+          location?: string | null
+          profile_id?: string
+          role?: string
+          sort_order?: number
+          start_month?: number | null
+          start_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_experience_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_follows: {
+        Row: {
+          created_at: string
+          following_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          following_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          following_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_follows_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_interests: {
         Row: {
           created_at: string
@@ -38,6 +284,123 @@ export type Database = {
             foreignKeyName: "profile_interests_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_languages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          proficiency: number | null
+          profile_id: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          proficiency?: number | null
+          profile_id: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          proficiency?: number | null
+          profile_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_languages_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_links: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          link_type: string
+          profile_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          link_type: string
+          profile_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          link_type?: string
+          profile_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_preferences: {
+        Row: {
+          created_at: string
+          profile_id: string
+          receive_notifications: boolean
+          updated_at: string
+          visible_achievements: boolean
+          visible_contact_email: boolean
+          visible_education: boolean
+          visible_experience: boolean
+          visible_skills: boolean
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          receive_notifications?: boolean
+          updated_at?: string
+          visible_achievements?: boolean
+          visible_contact_email?: boolean
+          visible_education?: boolean
+          visible_experience?: boolean
+          visible_skills?: boolean
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          receive_notifications?: boolean
+          updated_at?: string
+          visible_achievements?: boolean
+          visible_contact_email?: boolean
+          visible_education?: boolean
+          visible_experience?: boolean
+          visible_skills?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -81,6 +444,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           collaboration_preferences: string[]
+          contact_email: string | null
           created_at: string
           full_name: string | null
           headline: string | null
@@ -89,6 +453,7 @@ export type Database = {
           linkedin_url: string | null
           location: string | null
           onboarding_completed: boolean
+          timezone: string | null
           updated_at: string
           user_types: string[]
           username: string | null
@@ -99,6 +464,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           collaboration_preferences?: string[]
+          contact_email?: string | null
           created_at?: string
           full_name?: string | null
           headline?: string | null
@@ -107,6 +473,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          timezone?: string | null
           updated_at?: string
           user_types?: string[]
           username?: string | null
@@ -117,6 +484,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           collaboration_preferences?: string[]
+          contact_email?: string | null
           created_at?: string
           full_name?: string | null
           headline?: string | null
@@ -125,6 +493,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          timezone?: string | null
           updated_at?: string
           user_types?: string[]
           username?: string | null

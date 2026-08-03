@@ -1,5 +1,6 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { requireUser } from "@/auth/session";
 import { getSupabaseUrl } from "@/lib/env";
 import {
@@ -29,24 +30,25 @@ async function removeFilesInFolder(
 
 export async function updateAvatarAction(formData: FormData): Promise<FormState> {
   const { supabase, user } = await requireUser();
+  const t = await getTranslations("actions.avatar");
 
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) {
-    return { status: "error", message: "Selecciona una imagen de perfil." };
+    return { status: "error", message: t("noFile") };
   }
   if (file.size > AVATAR_MAX_BYTES) {
-    return { status: "error", message: "La imagen no puede superar los 5 MB." };
+    return { status: "error", message: t("tooLarge") };
   }
   if (!isAllowedAvatarMime(file.type)) {
     return {
       status: "error",
-      message: "Formato no permitido. Usa PNG, JPEG, WebP, GIF o AVIF.",
+      message: t("badFormat"),
     };
   }
 
   const buffer = await file.arrayBuffer();
   if (!isImageSignature(buffer)) {
-    return { status: "error", message: "El archivo no es una imagen válida." };
+    return { status: "error", message: t("notImage") };
   }
 
   const path = avatarStoragePath(user.id);
@@ -55,7 +57,7 @@ export async function updateAvatarAction(formData: FormData): Promise<FormState>
     .upload(path, file, { contentType: file.type, upsert: true });
 
   if (uploadError) {
-    return { status: "error", message: "No se pudo subir la imagen. Inténtalo de nuevo." };
+    return { status: "error", message: t("uploadFailed") };
   }
 
   await removeFilesInFolder(supabase, user.id, path);
@@ -67,14 +69,15 @@ export async function updateAvatarAction(formData: FormData): Promise<FormState>
     .eq("id", user.id);
 
   if (profileError) {
-    return { status: "error", message: "La imagen se subió pero no se pudo actualizar el perfil." };
+    return { status: "error", message: t("profileUpdateFailed") };
   }
 
-  return { status: "success", message: "Avatar actualizado." };
+  return { status: "success", message: t("uploaded") };
 }
 
 export async function removeAvatarAction(): Promise<FormState> {
   const { supabase, user } = await requireUser();
+  const t = await getTranslations("actions.avatar");
 
   await removeFilesInFolder(supabase, user.id);
 
@@ -84,8 +87,8 @@ export async function removeAvatarAction(): Promise<FormState> {
     .eq("id", user.id);
 
   if (error) {
-    return { status: "error", message: "No se pudo quitar el avatar. Inténtalo de nuevo." };
+    return { status: "error", message: t("removeFailed") };
   }
 
-  return { status: "success", message: "Avatar eliminado." };
+  return { status: "success", message: t("removed") };
 }

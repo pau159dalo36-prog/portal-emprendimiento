@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Save } from "lucide-react";
 
 import { updateProfileAction } from "@/actions/profile";
@@ -20,10 +21,8 @@ import {
 } from "@/components/profile/skill-selector";
 import {
   COLLABORATION_PREFERENCES,
-  COLLABORATION_PREFERENCE_LABELS,
   MAX_AVAILABILITY,
   USER_TYPES,
-  USER_TYPE_LABELS,
 } from "@/profiles/constants";
 
 export type ProfileFormData = {
@@ -99,6 +98,10 @@ export function ProfileForm({
   initialSkills,
   initialInterests,
 }: ProfileFormProps) {
+  const t = useTranslations("profileForm");
+  const f = useTranslations("profileFields");
+  const types = useTranslations("types");
+  const collab = useTranslations("collab");
   const [state, formAction, pending] = useActionState(updateProfileAction, initialFormState);
   const [draft, setDraft] = useState<Draft>(() =>
     draftFromProfile(initialProfile, initialSkills, initialInterests),
@@ -108,21 +111,21 @@ export function ProfileForm({
     <form action={formAction} noValidate className="space-y-8">
       <section className="grid gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Foto de perfil</h2>
-          <p className="text-sm text-muted-foreground">Se guarda al instante al subirla.</p>
+          <h2 className="text-lg font-semibold">{t("photoTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("photoHint")}</p>
         </div>
         <AvatarUploader name={initialProfile.full_name} src={initialProfile.avatar_url} />
       </section>
 
       <section className="grid gap-4 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-semibold">Datos básicos</h2>
-          <p className="text-sm text-muted-foreground">Identifican tu perfil público.</p>
+          <h2 className="text-lg font-semibold">{t("basicTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("basicHint")}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="full_name">Nombre completo *</Label>
+            <Label htmlFor="full_name">{f("fullName")}</Label>
             <Input
               id="full_name"
               name="full_name"
@@ -131,7 +134,7 @@ export function ProfileForm({
                 setDraft((d) => ({ ...d, full_name: event.target.value }))
               }
               aria-invalid={Boolean(fieldError(state, "full_name"))}
-              placeholder="María García"
+              placeholder={f("fullNamePlaceholder")}
             />
             {fieldError(state, "full_name") && (
               <p className="text-sm text-destructive">{fieldError(state, "full_name")}</p>
@@ -139,7 +142,7 @@ export function ProfileForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="username">Username *</Label>
+            <Label htmlFor="username">{f("username")}</Label>
             <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/40 px-3">
               <span className="text-sm text-muted-foreground">/</span>
               <Input
@@ -157,23 +160,21 @@ export function ProfileForm({
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              3-30 caracteres: minúsculas, números, guiones y guiones bajos.
-            </p>
+            <p className="text-xs text-muted-foreground">{f("usernameHint")}</p>
             {fieldError(state, "username") && (
               <p className="text-sm text-destructive">{fieldError(state, "username")}</p>
             )}
           </div>
 
           <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="headline">Titular</Label>
+            <Label htmlFor="headline">{f("headline")}</Label>
             <Input
               id="headline"
               name="headline"
               value={draft.headline}
               onChange={(event) => setDraft((d) => ({ ...d, headline: event.target.value }))}
               aria-invalid={Boolean(fieldError(state, "headline"))}
-              placeholder="Fundadora de Acme, apasionada de la sostenibilidad"
+              placeholder={f("headlinePlaceholder")}
             />
             {fieldError(state, "headline") && (
               <p className="text-sm text-destructive">{fieldError(state, "headline")}</p>
@@ -181,14 +182,14 @@ export function ProfileForm({
           </div>
 
           <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="location">Ubicación</Label>
+            <Label htmlFor="location">{f("location")}</Label>
             <Input
               id="location"
               name="location"
               value={draft.location}
               onChange={(event) => setDraft((d) => ({ ...d, location: event.target.value }))}
               aria-invalid={Boolean(fieldError(state, "location"))}
-              placeholder="Madrid, España"
+              placeholder={f("locationPlaceholder")}
             />
             {fieldError(state, "location") && (
               <p className="text-sm text-destructive">{fieldError(state, "location")}</p>
@@ -199,35 +200,35 @@ export function ProfileForm({
 
       <section className="grid gap-4 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-semibold">Biografía</h2>
-          <p className="text-sm text-muted-foreground">Tu historia y qué te mueve.</p>
+          <h2 className="text-lg font-semibold">{t("bioTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("bioHint")}</p>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="bio">Biografía</Label>
+          <Label htmlFor="bio">{f("bio")}</Label>
           <Textarea
             id="bio"
             name="bio"
             value={draft.bio}
             onChange={(event) => setDraft((d) => ({ ...d, bio: event.target.value }))}
-            placeholder="Cuéntanos tu experiencia, tu proyecto actual y qué te gustaría conseguir…"
+            placeholder={f("bioPlaceholder")}
           />
-          <p className="text-xs text-muted-foreground">{draft.bio.length}/1000 caracteres</p>
+          <p className="text-xs text-muted-foreground">{f("charCount", { count: draft.bio.length, max: 1000 })}</p>
         </div>
       </section>
 
       <section className="grid gap-4 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-semibold">Perfil profesional</h2>
-          <p className="text-sm text-muted-foreground">Cómo colaborar con otros miembros.</p>
+          <h2 className="text-lg font-semibold">{t("professionalTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("professionalHint")}</p>
         </div>
 
         <div>
-          <span className="text-sm leading-none font-medium">Tipo de usuario *</span>
-          <p className="mt-1 text-sm text-muted-foreground">Puedes elegir más de una.</p>
+          <span className="text-sm leading-none font-medium">{f("userTypeLabel")}</span>
+          <p className="mt-1 text-sm text-muted-foreground">{f("multipleHint")}</p>
           <div className="mt-3">
             <ChipGroup
               name="user_types"
-              options={USER_TYPES.map((value) => ({ value, label: USER_TYPE_LABELS[value] }))}
+              options={USER_TYPES.map((value) => ({ value, label: types(value) }))}
               value={draft.user_types}
               onChange={(next) => setDraft((d) => ({ ...d, user_types: next }))}
             />
@@ -235,7 +236,7 @@ export function ProfileForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="weekly_availability">Disponibilidad semanal (horas) *</Label>
+          <Label htmlFor="weekly_availability">{f("availabilityLabel")}</Label>
           <div className="flex items-center gap-3">
             <Input
               id="weekly_availability"
@@ -249,10 +250,10 @@ export function ProfileForm({
                 setDraft((d) => ({ ...d, weekly_availability: event.target.value }))
               }
               className="max-w-28"
-              placeholder="10"
+              placeholder={f("availabilityPlaceholder")}
             />
             <span className="text-sm text-muted-foreground">
-              horas de 0 a {MAX_AVAILABILITY}
+              {f("hoursRange", { max: MAX_AVAILABILITY })}
             </span>
           </div>
           {fieldError(state, "weekly_availability") && (
@@ -263,16 +264,14 @@ export function ProfileForm({
         </div>
 
         <div>
-          <span className="text-sm leading-none font-medium">Preferencias de colaboración</span>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Selecciona todas las que apliquen.
-          </p>
+          <span className="text-sm leading-none font-medium">{f("collabLabel")}</span>
+          <p className="mt-1 text-sm text-muted-foreground">{f("collabHint")}</p>
           <div className="mt-3">
             <ChipGroup
               name="collaboration_preferences"
               options={COLLABORATION_PREFERENCES.map((value) => ({
                 value,
-                label: COLLABORATION_PREFERENCE_LABELS[value],
+                label: collab(value),
               }))}
               value={draft.collaboration_preferences}
               onChange={(next) =>
@@ -285,17 +284,13 @@ export function ProfileForm({
 
       <section className="grid gap-4 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-semibold">Habilidades e intereses</h2>
-          <p className="text-sm text-muted-foreground">
-            Ayuda a otros a encontrar qué ofreces y qué te interesa.
-          </p>
+          <h2 className="text-lg font-semibold">{t("skillsTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("skillsHint")}</p>
         </div>
 
         <div>
-          <span className="text-sm leading-none font-medium">Habilidades</span>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Marca las que tengas y, si quieres, su nivel.
-          </p>
+          <span className="text-sm leading-none font-medium">{f("skillsLabel")}</span>
+          <p className="mt-1 text-sm text-muted-foreground">{f("skillsHint")}</p>
           <div className="mt-3">
             <SkillSelector
               skills={skills}
@@ -306,10 +301,8 @@ export function ProfileForm({
         </div>
 
         <div>
-          <span className="text-sm leading-none font-medium">Intereses</span>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Temas que te gustaría explorar o sobre los que aprender.
-          </p>
+          <span className="text-sm leading-none font-medium">{f("interestsLabel")}</span>
+          <p className="mt-1 text-sm text-muted-foreground">{f("interestsHint")}</p>
           <div className="mt-3">
             <InterestInput
               value={draft.intereses}
@@ -321,13 +314,13 @@ export function ProfileForm({
 
       <section className="grid gap-4 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-semibold">Enlaces y privacidad</h2>
-          <p className="text-sm text-muted-foreground">Conecta tu perfil con el resto del mundo.</p>
+          <h2 className="text-lg font-semibold">{t("linksTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("linksHint")}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="website_url">Web</Label>
+            <Label htmlFor="website_url">{f("websiteLabel")}</Label>
             <Input
               id="website_url"
               name="website_url"
@@ -336,7 +329,7 @@ export function ProfileForm({
                 setDraft((d) => ({ ...d, website_url: event.target.value }))
               }
               aria-invalid={Boolean(fieldError(state, "website_url"))}
-              placeholder="https://miproyecto.com"
+              placeholder={f("websitePlaceholder")}
             />
             {fieldError(state, "website_url") && (
               <p className="text-sm text-destructive">{fieldError(state, "website_url")}</p>
@@ -344,7 +337,7 @@ export function ProfileForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="linkedin_url">LinkedIn</Label>
+            <Label htmlFor="linkedin_url">{f("linkedinLabel")}</Label>
             <Input
               id="linkedin_url"
               name="linkedin_url"
@@ -353,7 +346,7 @@ export function ProfileForm({
                 setDraft((d) => ({ ...d, linkedin_url: event.target.value }))
               }
               aria-invalid={Boolean(fieldError(state, "linkedin_url"))}
-              placeholder="https://linkedin.com/in/maria"
+              placeholder={f("linkedinPlaceholder")}
             />
             {fieldError(state, "linkedin_url") && (
               <p className="text-sm text-destructive">{fieldError(state, "linkedin_url")}</p>
@@ -370,10 +363,8 @@ export function ProfileForm({
             className="size-4 rounded border-border accent-primary"
           />
           <span>
-            <span className="block text-sm font-medium">Perfil público</span>
-            <span className="block text-xs text-muted-foreground">
-              Cualquier persona podrá ver tu perfil sin necesidad de iniciar sesión.
-            </span>
+            <span className="block text-sm font-medium">{f("publicLabel")}</span>
+            <span className="block text-xs text-muted-foreground">{f("publicHint")}</span>
           </span>
         </label>
       </section>
@@ -388,7 +379,7 @@ export function ProfileForm({
           ) : (
             <Save aria-hidden="true" />
           )}
-          Guardar cambios
+          {t("save")}
         </Button>
       </div>
     </form>

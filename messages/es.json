@@ -1,0 +1,464 @@
+{
+  "metadata": {
+    "title": "Comparte, descubre y construye.",
+    "description": "Comparte tus ideas, descubre oportunidades y construye proyectos con una comunidad que valida, no solo opina.",
+    "home": "Inicio",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "resetPassword": "Recuperar contraseña",
+    "updatePassword": "Actualizar contraseña",
+    "verifyEmail": "Confirma tu correo",
+    "panel": "Panel",
+    "onboarding": "Completa tu perfil",
+    "myProfile": "Mi perfil",
+    "profileSettings": "Configuración del perfil",
+    "languageSettings": "Idioma",
+    "profile": "Perfil"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "backToHome": "Volver al inicio",
+    "viewPublicProfile": "Ver perfil público",
+    "editProfile": "Editar perfil",
+    "allRightsReserved": "Todos los derechos reservados."
+  },
+  "nav": {
+    "panel": "Panel",
+    "editProfile": "Editar perfil",
+    "signOut": "Cerrar sesión",
+    "signIn": "Iniciar sesión",
+    "createAccount": "Crear cuenta",
+    "features": "Características",
+    "howItWorks": "Cómo funciona",
+    "community": "Comunidad",
+    "goToDashboard": "Ir a mi panel",
+    "language": "Idioma"
+  },
+  "home": {
+    "hero": {
+      "badge": "Comparte, descubre y construye.",
+      "title": "Convierte tu idea en un proyecto validado",
+      "description": "Plataforma independiente para publicar ideas, recibir feedback estructurado, validar proyectos y encontrar colaboradores afines.",
+      "primaryCta": "Comienza gratis",
+      "secondaryCta": "Explorar funciones"
+    },
+    "features": {
+      "eyebrow": "Características",
+      "title": "Todo lo que necesitas para validar tu idea",
+      "subtitle": "Desde la publicación estructurada hasta la conexión con otros emprendedores, el portal te acompaña en cada etapa.",
+      "items": [
+        {
+          "title": "Publica tu idea",
+          "description": "Describe tu propuesta con estructura: problema, solución, mercado objetivo y etapa de desarrollo."
+        },
+        {
+          "title": "Recibe feedback real",
+          "description": "La comunidad comenta con criterios definidos para que mejores tu proyecto con aportes concretos."
+        },
+        {
+          "title": "Encuentra colaboradores",
+          "description": "Conecta con perfiles que complementan tus habilidades y formá equipos para avanzar juntos."
+        }
+      ]
+    },
+    "how": {
+      "eyebrow": "Cómo funciona",
+      "title": "De la idea al proyecto en tres pasos",
+      "subtitle": "Un proceso simple que te da claridad y te conecta con las personas adecuadas.",
+      "steps": [
+        {
+          "title": "Publica",
+          "description": "Sube tu idea con un formato guiado: explica el problema, tu solución y el mercado al que apuntas."
+        },
+        {
+          "title": "Recibe feedback",
+          "description": "La comunidad y mentores comentan con criterios objetivos para que puedas mejorar iterativamente."
+        },
+        {
+          "title": "Valida y crece",
+          "description": "Encuentra colaboradores, únete a comunidades y prepara tu proyecto para el siguiente nivel."
+        }
+      ]
+    },
+    "community": {
+      "eyebrow": "Comunidad",
+      "title": "No tienes que emprender solo",
+      "description": "Únete a una comunidad activa de emprendedores que comparten tus inquietudes. Participa en discusiones, recibe feedback sincero y forma equipos con personas que complementan tus habilidades.",
+      "points": [
+        "Feedback guiado por criterios objetivos",
+        "Conexión con perfiles afines a tu proyecto",
+        "Comunidades temáticas por industria y etapa"
+      ],
+      "ctaLabel": "¿Te unes?",
+      "ctaText": "Crea tu cuenta gratis y empieza a construir tu proyecto con el apoyo de una comunidad que valida, no solo opina.",
+      "ctaButton": "Crear cuenta gratis"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Iniciar sesión",
+      "description": "Accede a tu cuenta para continuar con tu proyecto.",
+      "passwordUpdated": "Tu contraseña se actualizó correctamente. Inicia sesión con la nueva contraseña.",
+      "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
+      "noAccount": "¿Aún no tienes una cuenta?",
+      "createFree": "Crea una gratis"
+    },
+    "signUp": {
+      "title": "Crear cuenta",
+      "description": "Únete al portal y empieza a validar tu idea hoy mismo.",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión"
+    },
+    "reset": {
+      "title": "Recuperar contraseña",
+      "description": "Te enviaremos un enlace para restablecer tu contraseña.",
+      "remembered": "¿Recordaste tu contraseña?",
+      "signIn": "Inicia sesión"
+    },
+    "update": {
+      "title": "Actualizar contraseña",
+      "description": "Elige una contraseña nueva para tu cuenta."
+    },
+    "verify": {
+      "title": "Revisa tu correo",
+      "description": "Te hemos enviado un enlace de confirmación. Abre el correo para activar tu cuenta y empezar con tu perfil.",
+      "notFound": "¿No lo encuentras? Revisa la carpeta de spam o promociones.",
+      "confirmed": "¿Ya confirmaste tu cuenta?",
+      "signIn": "Inicia sesión",
+      "notYourEmail": "¿No es tu correo?",
+      "createNew": "Crea una cuenta nueva"
+    }
+  },
+  "authForm": {
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tucorreo@ejemplo.com",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "passwordPlaceholder": "Tu contraseña",
+    "remember": "Recordarme durante 30 días",
+    "signInSubmit": "Iniciar sesión",
+    "signInPending": "Iniciando sesión…",
+    "fullName": "Nombre y apellidos",
+    "fullNamePlaceholder": "Ej. Ana García",
+    "passwordHelp": "Mínimo 8 caracteres, con mayúsculas, minúsculas y números.",
+    "passwordMinPlaceholder": "Mínimo 8 caracteres",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repite tu contraseña",
+    "acceptTerms": "He leído y acepto los términos y condiciones y la política de privacidad.",
+    "createAccount": "Crear cuenta",
+    "createAccountPending": "Creando cuenta…",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "updatePassword": "Actualizar contraseña",
+    "updatePasswordPending": "Actualizando contraseña…",
+    "sendResetLink": "Enviar enlace de recuperación",
+    "sendResetLinkPending": "Enviando enlace…"
+  },
+  "panel": {
+    "greeting": "Hola, {name}.",
+    "defaultGreeting": "emprendedor",
+    "defaultHeadline": "Este es tu panel personal.",
+    "completeness": "Completitud del perfil",
+    "missing": "Falta: {label}",
+    "mainData": "Datos principales",
+    "noTypes": "Sin tipos seleccionados",
+    "location": "Ubicación",
+    "weeklyAvailability": "Disponibilidad semanal",
+    "collaboration": "Colaboración",
+    "skills": "Habilidades",
+    "interests": "Intereses",
+    "upcoming": "Próximamente",
+    "upcomingDescription": "Estas funcionalidades llegarán en los próximos días.",
+    "upcomingBadge": "Próximamente",
+    "howOthersSeeMe": "Ver cómo me ven los demás",
+    "sections": {
+      "nombre": "Nombre público",
+      "username": "Username",
+      "headline": "Titular profesional",
+      "bio": "Biografía",
+      "location": "Ubicación",
+      "roles": "Roles",
+      "habilidades": "Habilidades",
+      "intereses": "Intereses",
+      "disponibilidad": "Disponibilidad semanal",
+      "colaboracion": "Preferencias de colaboración",
+      "enlaces": "Web y LinkedIn",
+      "avatar": "Avatar"
+    },
+    "modules": {
+      "ideas": { "title": "Ideas", "description": "Publica y valida tus ideas de negocio." },
+      "feedback": { "title": "Feedback", "description": "Recibe y da feedback constructivo." },
+      "communities": { "title": "Comunidades", "description": "Únete a comunidades por sector o interés." },
+      "messaging": { "title": "Mensajería", "description": "Contacta con otros miembros del portal." }
+    }
+  },
+  "types": {
+    "emprendedor": "Emprendedor/a",
+    "colaborador": "Colaborador/a",
+    "mentor": "Mentor/a",
+    "profesional": "Profesional",
+    "inversor": "Inversor/a",
+    "empresa": "Empresa",
+    "institucion": "Institución"
+  },
+  "collab": {
+    "remunerado": "Remunerado",
+    "participacion": "Participación",
+    "intercambio": "Intercambio de habilidades",
+    "voluntario": "Voluntariado",
+    "cofundador": "Buscar cofundador/a",
+    "no_disponible": "No disponible"
+  },
+  "skillLevels": {
+    "1": "Básico",
+    "2": "Principiante",
+    "3": "Intermedio",
+    "4": "Avanzado",
+    "5": "Experto"
+  },
+  "publicProfile": {
+    "noName": "Sin nombre",
+    "isYou": "Eres tú",
+    "hoursPerWeek": "{hours} h/semana disponibles",
+    "joined": "Se unió en {date}",
+    "web": "Web",
+    "linkedIn": "LinkedIn",
+    "about": "Sobre {firstName}",
+    "aboutMe": "mí",
+    "noBio": "Aún no ha escrito una biografía.",
+    "skillsTitle": "Habilidades",
+    "noSkills": "Aún no ha añadido habilidades.",
+    "interestsTitle": "Intereses",
+    "noInterests": "Aún no ha añadido intereses.",
+    "collaborationTitle": "Busca colaborar así"
+  },
+  "settings": {
+    "profileTitle": "Configuración del perfil",
+    "profileDescription": "Edita tus datos y decide quién puede ver tu perfil.",
+    "languageTitle": "Idioma",
+    "languageDescription": "Elige el idioma en el que se muestra la interfaz."
+  },
+  "language": {
+    "sectionLabel": "Idioma de la interfaz",
+    "sectionHint": "Los cambios se aplican de inmediato y se recuerdan en este navegador.",
+    "languages": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "onboarding": {
+    "navLabel": "Progreso del formulario",
+    "steps": {
+      "1": "Perfil",
+      "2": "Biografía",
+      "3": "Perfil profesional",
+      "4": "Habilidades",
+      "5": "Conectar"
+    },
+    "stepCount": "Paso {current} de {total}",
+    "step1": {
+      "title": "Datos básicos",
+      "description": "Cuéntanos quién eres. Estos datos identifican tu perfil público."
+    },
+    "step2": {
+      "title": "Tu historia",
+      "description": "Cuéntanos qué haces y qué te mueve."
+    },
+    "step3": {
+      "title": "Tu perfil profesional",
+      "description": "Define cómo colaborar con otros miembros."
+    },
+    "step4": {
+      "title": "Habilidades e intereses",
+      "description": "Ayuda a otros a encontrar qué ofreces y qué te interesa."
+    },
+    "step5": {
+      "title": "Conecta tu perfil",
+      "description": "Añade enlaces y decide quién puede ver tu perfil."
+    },
+    "fields": {
+      "photoLabel": "Foto de perfil (opcional)",
+      "photoHint": "Se guarda al instante al subirla.",
+      "fullName": "Nombre completo *",
+      "fullNamePlaceholder": "María García",
+      "username": "Username *",
+      "usernameHint": "3-30 caracteres: minúsculas, números, guiones y guiones bajos.",
+      "headline": "Titular",
+      "headlinePlaceholder": "Fundadora de Acme, apasionada de la sostenibilidad",
+      "location": "Ubicación",
+      "locationPlaceholder": "Madrid, España",
+      "bio": "Biografía",
+      "bioPlaceholder": "Cuéntanos tu experiencia, tu proyecto actual y qué te gustaría conseguir…",
+      "charCount": "{count}/{max} caracteres",
+      "userTypeLabel": "Tipo de usuario *",
+      "multipleHint": "Puedes elegir más de una.",
+      "availabilityLabel": "Disponibilidad semanal (horas) *",
+      "availabilityPlaceholder": "10",
+      "hoursRange": "horas de 0 a {max}",
+      "collabLabel": "Preferencias de colaboración",
+      "collabHint": "Selecciona todas las que apliquen.",
+      "skillsLabel": "Habilidades",
+      "skillsHint": "Marca las que tengas y, si quieres, su nivel.",
+      "interestsLabel": "Intereses",
+      "interestsHint": "Temas que te gustaría explorar o sobre los que aprender.",
+      "websiteLabel": "Web",
+      "websitePlaceholder": "https://miproyecto.com",
+      "linkedinLabel": "LinkedIn",
+      "linkedinPlaceholder": "https://linkedin.com/in/maria",
+      "publicLabel": "Perfil público",
+      "publicHint": "Cualquier persona podrá ver tu perfil sin necesidad de iniciar sesión."
+    },
+    "actions": {
+      "back": "Volver",
+      "continue": "Continuar",
+      "finish": "Finalizar",
+      "lastHint": "Paso {step} de {total}: al finalizar serás redirigido a tu panel."
+    }
+  },
+  "profileForm": {
+    "photoTitle": "Foto de perfil",
+    "photoHint": "Se guarda al instante al subirla.",
+    "basicTitle": "Datos básicos",
+    "basicHint": "Identifican tu perfil público.",
+    "bioTitle": "Biografía",
+    "bioHint": "Tu historia y qué te mueve.",
+    "professionalTitle": "Perfil profesional",
+    "professionalHint": "Cómo colaborar con otros miembros.",
+    "skillsTitle": "Habilidades e intereses",
+    "skillsHint": "Ayuda a otros a encontrar qué ofreces y qué te interesa.",
+    "linksTitle": "Enlaces y privacidad",
+    "linksHint": "Conecta tu perfil con el resto del mundo.",
+    "save": "Guardar cambios"
+  },
+  "profileFields": {
+    "fullName": "Nombre completo *",
+    "fullNamePlaceholder": "María García",
+    "username": "Username *",
+    "usernameHint": "3-30 caracteres: minúsculas, números, guiones y guiones bajos.",
+    "headline": "Titular",
+    "headlinePlaceholder": "Fundadora de Acme, apasionada de la sostenibilidad",
+    "location": "Ubicación",
+    "locationPlaceholder": "Madrid, España",
+    "bio": "Biografía",
+    "bioPlaceholder": "Cuéntanos tu experiencia, tu proyecto actual y qué te gustaría conseguir…",
+    "charCount": "{count}/{max} caracteres",
+    "userTypeLabel": "Tipo de usuario *",
+    "multipleHint": "Puedes elegir más de una.",
+    "availabilityLabel": "Disponibilidad semanal (horas) *",
+    "availabilityPlaceholder": "10",
+    "hoursRange": "horas de 0 a {max}",
+    "collabLabel": "Preferencias de colaboración",
+    "collabHint": "Selecciona todas las que apliquen.",
+    "skillsLabel": "Habilidades",
+    "skillsHint": "Marca las que tengas y, si quieres, su nivel.",
+    "interestsLabel": "Intereses",
+    "interestsHint": "Temas que te gustaría explorar o sobre los que aprender.",
+    "websiteLabel": "Web",
+    "websitePlaceholder": "https://miproyecto.com",
+    "linkedinLabel": "LinkedIn",
+    "linkedinPlaceholder": "https://linkedin.com/in/maria",
+    "publicLabel": "Perfil público",
+    "publicHint": "Cualquier persona podrá ver tu perfil sin necesidad de iniciar sesión."
+  },
+  "skillSelector": {
+    "level": "Nivel",
+    "optional": "Opcional",
+    "levelFor": "Nivel de {name}"
+  },
+  "interestInput": {
+    "placeholder": "Escribe un interés y pulsa Enter",
+    "newInterest": "Nuevo interés",
+    "add": "Añadir",
+    "addInterest": "Añadir interés",
+    "maxReached": "Puedes añadir como máximo {max} intereses.",
+    "alreadyAdded": "Ese interés ya está añadido.",
+    "remove": "Quitar {interest}"
+  },
+  "avatar": {
+    "selectLabel": "Seleccionar imagen de perfil",
+    "uploading": "Subiendo…",
+    "upload": "Subir foto",
+    "remove": "Quitar",
+    "hint": "PNG, JPEG, WebP, GIF o AVIF. Máximo 5 MB y 512 px (se comprime automáticamente)."
+  },
+  "errors": {
+    "title": "Algo salió mal",
+    "description": "Hubo un problema al cargar esta página. Puedes intentarlo de nuevo.",
+    "retry": "Intentar de nuevo"
+  },
+  "actions": {
+    "auth": {
+      "validationGeneral": "Revisa los campos marcados.",
+      "signInInvalid": "El correo o la contraseña no son válidos.",
+      "signInFailed": "El correo o la contraseña son incorrectos.",
+      "signUpFailed": "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      "resetSent": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+      "updateFailed": "No se pudo actualizar la contraseña. Vuelve a intentarlo."
+    },
+    "profile": {
+      "invalidStep": "Paso no válido.",
+      "skillsSaveFailed": "No se pudieron guardar tus habilidades. Inténtalo de nuevo.",
+      "interestsSaveFailed": "No se pudieron guardar tus intereses. Inténtalo de nuevo.",
+      "stepSaved": "Paso {step} guardado.",
+      "usernameTaken": "Ese username ya está en uso.",
+      "usernameTakenField": "Ese username ya está en uso. Elige otro.",
+      "stepSaveFailed": "No se pudo guardar el paso. Inténtalo de nuevo.",
+      "saveFailed": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+      "skillsPartial": "Los datos se guardaron, pero no se pudieron actualizar las habilidades. Revisa e inténtalo de nuevo.",
+      "interestsPartial": "Los datos se guardaron, pero no se pudieron actualizar los intereses. Revisa e inténtalo de nuevo.",
+      "saved": "Cambios guardados correctamente."
+    },
+    "avatar": {
+      "noFile": "Selecciona una imagen de perfil.",
+      "tooLarge": "La imagen no puede superar los 5 MB.",
+      "badFormat": "Formato no permitido. Usa PNG, JPEG, WebP, GIF o AVIF.",
+      "notImage": "El archivo no es una imagen válida.",
+      "uploadFailed": "No se pudo subir la imagen. Inténtalo de nuevo.",
+      "profileUpdateFailed": "La imagen se subió pero no se pudo actualizar el perfil.",
+      "uploaded": "Avatar actualizado.",
+      "removeFailed": "No se pudo quitar el avatar. Inténtalo de nuevo.",
+      "removed": "Avatar eliminado."
+    }
+  },
+  "validation": {
+    "nameMin": "Escribe tu nombre y apellidos.",
+    "nameMax": "El nombre es demasiado largo.",
+    "emailInvalid": "Escribe un correo válido.",
+    "emailMax": "El correo es demasiado largo.",
+    "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+    "passwordMax": "La contraseña no puede superar los 72 caracteres.",
+    "passwordLower": "Debe incluir al menos una letra minúscula.",
+    "passwordUpper": "Debe incluir al menos una letra mayúscula.",
+    "passwordNumber": "Debe incluir al menos un número.",
+    "passwordRequired": "Escribe tu contraseña.",
+    "passwordTooLong": "La contraseña es demasiado larga.",
+    "termsRequired": "Debes aceptar los términos y condiciones.",
+    "passwordsMismatch": "Las contraseñas no coinciden.",
+    "usernameMin": "El username debe tener al menos 3 caracteres.",
+    "usernameMax": "El username no puede superar los 30 caracteres.",
+    "usernameChars": "Solo letras minúsculas, números, guiones y guiones bajos.",
+    "urlInvalid": "Escribe una URL válida, por ejemplo https://...",
+    "urlTooLong": "La URL es demasiado larga.",
+    "urlProtocol": "La URL debe empezar por http:// o https://.",
+    "requiredField": "{label} es obligatorio.",
+    "fieldTooLong": "{label} es demasiado largo.",
+    "emptyItems": "{label} no pueden estar vacíos.",
+    "minSelection": "Selecciona al menos un {label}.",
+    "maxItems": "No puedes seleccionar más de {count} {label}.",
+    "minRole": "Selecciona al menos un rol.",
+    "minCollaboration": "Selecciona al menos una preferencia de colaboración.",
+    "availabilityNumber": "Escribe la disponibilidad en horas.",
+    "availabilityInteger": "La disponibilidad debe ser un número entero.",
+    "availabilityNegative": "La disponibilidad no puede ser negativa.",
+    "availabilityMax": "La disponibilidad no puede superar {count} horas.",
+    "duplicateInterests": "No puedes repetir intereses.",
+    "labels": {
+      "fullName": "El nombre público",
+      "headline": "El titular profesional",
+      "location": "La ubicación",
+      "bio": "La biografía",
+      "skill": "habilidad",
+      "interest": "interés"
+    }
+  }
+}

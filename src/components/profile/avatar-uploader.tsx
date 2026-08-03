@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 
 import { removeAvatarAction, updateAvatarAction } from "@/actions/avatar";
@@ -19,6 +20,8 @@ type AvatarUploaderProps = {
 export function AvatarUploader({ name, src }: AvatarUploaderProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("avatar");
+  const ta = useTranslations("actions.avatar");
   const [state, setState] = useState<FormState>({ status: "idle" });
   const [busy, setBusy] = useState<"upload" | "remove" | null>(null);
 
@@ -26,7 +29,7 @@ export function AvatarUploader({ name, src }: AvatarUploaderProps) {
     if (!file) {
       return;
     }
-    const clientError = validateAvatarFile(file);
+    const clientError = validateAvatarFile(file, ta);
     if (clientError) {
       setState({ status: "error", message: clientError });
       return;
@@ -76,7 +79,7 @@ export function AvatarUploader({ name, src }: AvatarUploaderProps) {
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
             className="hidden"
-            aria-label="Seleccionar imagen de perfil"
+            aria-label={t("selectLabel")}
             onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
           />
           <Button
@@ -91,7 +94,7 @@ export function AvatarUploader({ name, src }: AvatarUploaderProps) {
             ) : (
               <Camera aria-hidden="true" />
             )}
-            {busy === "upload" ? "Subiendo…" : "Subir foto"}
+            {busy === "upload" ? t("uploading") : t("upload")}
           </Button>
           {src && (
             <Button
@@ -106,13 +109,11 @@ export function AvatarUploader({ name, src }: AvatarUploaderProps) {
               ) : (
                 <Trash2 aria-hidden="true" />
               )}
-              Quitar
+              {t("remove")}
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          PNG, JPEG, WebP, GIF o AVIF. Máximo 5 MB y 512 px (se comprime automáticamente).
-        </p>
+        <p className="text-xs text-muted-foreground">{t("hint")}</p>
       </div>
 
       <div className="w-full">

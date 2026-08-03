@@ -40,6 +40,7 @@ export function getCompletionSections(
 }
 
 export function getCompletionPercent(sections: CompletionSection[]): number {
+  if (sections.length === 0) return 0;
   const done = sections.filter((section) => section.done).length;
   return Math.round((done / sections.length) * 100);
 }

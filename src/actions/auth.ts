@@ -1,18 +1,20 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AuthUnknownError, isAuthError } from "@supabase/supabase-js";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { AuthFormState } from "@/actions/auth-state";
 import { getSiteUrl } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { getPostLoginDestination } from "@/profiles/destination";
 import {
-  requestPasswordResetSchema,
-  signInSchema,
-  signUpSchema,
-  updatePasswordSchema,
+  createRequestPasswordResetSchema,
+  createSignInSchema,
+  createSignUpSchema,
+  createUpdatePasswordSchema,
 } from "@/validations/auth";
+import { getPathname } from "@/i18n/navigation";
+import { redirect } from "next/navigation";
 
 type AuthLogEntry = {
   action: string;
@@ -57,12 +59,13 @@ function logAuthError(action: string, error: unknown): void {
 }
 
 function validationResult(
+  t: (key: string, values?: Record<string, string | number>) => string,
   error: z.ZodError,
-  message = "Revisa los campos marcados.",
+  message?: string,
 ): AuthFormState {
   return {
     status: "error",
-    message,
+    message: message ?? t("validationGeneral"),
     fieldErrors: error.flatten().fieldErrors,
   };
 }
@@ -71,7 +74,11 @@ export async function signUpAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = signUpSchema.safeParse({
+  const locale = await getLocale();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.auth");
+
+  const parsed = createSignUpSchema(t).safeParse({
     nombre: formData.get("nombre"),
     correo: formData.get("correo"),
     contrasena: formData.get("contrasena"),
@@ -80,7 +87,7 @@ export async function signUpAction(
   });
 
   if (!parsed.success) {
-    return validationResult(parsed.error);
+    return validationResult(ta, parsed.error);
   }
 
   const supabase = await createClient();
@@ -98,29 +105,34 @@ export async function signUpAction(
     logSignUpError(error);
     return {
       status: "error",
-      message: "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      message: ta("signUpFailed"),
     };
   }
 
   if (data.session && data.user) {
-    redirect(await getPostLoginDestination(supabase, data.user.id));
+    const destination = await getPostLoginDestination(supabase, data.user.id);
+    redirect(getPathname({ href: destination, locale }));
   }
 
-  redirect("/verificar-correo");
+  redirect(getPathname({ href: "/verificar-correo", locale }));
 }
 
 export async function signInAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = signInSchema.safeParse({
+  const locale = await getLocale();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.auth");
+
+  const parsed = createSignInSchema(t).safeParse({
     correo: formData.get("correo"),
     contrasena: formData.get("contrasena"),
     recordar: formData.get("recordar"),
   });
 
   if (!parsed.success) {
-    return validationResult(parsed.error, "El correo o la contraseña no son válidos.");
+    return validationResult(ta, parsed.error, ta("signInInvalid"));
   }
 
   const supabase = await createClient({ persistent: parsed.data.recordar });
@@ -134,23 +146,27 @@ export async function signInAction(
     logAuthError("signIn", error);
     return {
       status: "error",
-      message: "El correo o la contraseña son incorrectos.",
+      message: ta("signInFailed"),
     };
   }
 
-  redirect(await getPostLoginDestination(supabase, data.session.user.id));
+  const destination = await getPostLoginDestination(supabase, data.session.user.id);
+  redirect(getPathname({ href: destination, locale }));
 }
 
 export async function requestPasswordResetAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = requestPasswordResetSchema.safeParse({
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.auth");
+
+  const parsed = createRequestPasswordResetSchema(t).safeParse({
     correo: formData.get("correo"),
   });
 
   if (!parsed.success) {
-    return validationResult(parsed.error);
+    return validationResult(ta, parsed.error);
   }
 
   const supabase = await createClient();
@@ -161,8 +177,7 @@ export async function requestPasswordResetAction(
 
   return {
     status: "success",
-    message:
-      "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+    message: ta("resetSent"),
   };
 }
 
@@ -170,13 +185,17 @@ export async function updatePasswordAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = updatePasswordSchema.safeParse({
+  const locale = await getLocale();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.auth");
+
+  const parsed = createUpdatePasswordSchema(t).safeParse({
     contrasena: formData.get("contrasena"),
     confirmarContrasena: formData.get("confirmar-contrasena"),
   });
 
   if (!parsed.success) {
-    return validationResult(parsed.error);
+    return validationResult(ta, parsed.error);
   }
 
   const supabase = await createClient();
@@ -189,19 +208,25 @@ export async function updatePasswordAction(
     logAuthError("updatePassword", error);
     return {
       status: "error",
-      message: "No se pudo actualizar la contraseña. Vuelve a intentarlo.",
+      message: ta("updateFailed"),
     };
   }
 
   await supabase.auth.signOut({ scope: "global" });
 
-  redirect("/iniciar-sesion?contrasena=actualizada");
+  redirect(
+    getPathname({
+      href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } },
+      locale,
+    }),
+  );
 }
 
 export async function signOutAction(): Promise<void> {
+  const locale = await getLocale();
   const supabase = await createClient({ persistent: false });
 
   await supabase.auth.signOut({ scope: "global" });
 
-  redirect("/");
+  redirect(getPathname({ href: "/", locale }));
 }

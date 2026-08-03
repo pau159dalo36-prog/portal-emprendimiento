@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useActionState, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 import { saveOnboardingStepAction } from "@/actions/profile";
@@ -21,10 +22,8 @@ import {
 } from "@/components/profile/skill-selector";
 import {
   COLLABORATION_PREFERENCES,
-  COLLABORATION_PREFERENCE_LABELS,
   MAX_AVAILABILITY,
   USER_TYPES,
-  USER_TYPE_LABELS,
 } from "@/profiles/constants";
 import { cn } from "@/lib/utils";
 
@@ -67,14 +66,6 @@ type Draft = {
 };
 
 const TOTAL_STEPS = 5;
-
-const STEP_LABELS = [
-  "Perfil",
-  "Biografía",
-  "Perfil profesional",
-  "Habilidades",
-  "Conectar",
-];
 
 function draftFromProfile(
   initialProfile: OnboardingInitialProfile,
@@ -142,6 +133,9 @@ export function OnboardingForm({
   initialSkills,
   initialInterests,
 }: OnboardingFormProps) {
+  const t = useTranslations("onboarding");
+  const types = useTranslations("types");
+  const collab = useTranslations("collab");
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<Draft>(() =>
     draftFromProfile(initialProfile, initialSkills, initialInterests),
@@ -157,50 +151,53 @@ export function OnboardingForm({
 
   return (
     <div>
-      <nav aria-label="Progreso del formulario" className="mb-6">
+      <nav aria-label={t("navLabel")} className="mb-6">
         <ol className="flex items-center gap-2">
-          {STEP_LABELS.map((label, index) => {
-            const stepNumber = index + 1;
-            const completed = stepNumber < step;
-            const current = stepNumber === step;
-            return (
-              <li key={label} className="flex items-center gap-2">
-                {index > 0 && (
-                  <span
-                    aria-hidden="true"
-                    className={cn("h-px w-6", completed ? "bg-primary" : "bg-border")}
-                  />
-                )}
-                <span
-                  aria-current={current ? "step" : undefined}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 text-xs font-medium",
-                    completed && "text-primary",
-                    current && "text-foreground",
-                    !completed && !current && "text-muted-foreground",
+          {Array.from({ length: TOTAL_STEPS }, (_, index) => index + 1).map(
+            (stepNumber, index) => {
+              const completed = stepNumber < step;
+              const current = stepNumber === step;
+              return (
+                <li key={stepNumber} className="flex items-center gap-2">
+                  {index > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className={cn("h-px w-6", completed ? "bg-primary" : "bg-border")}
+                    />
                   )}
-                >
                   <span
+                    aria-current={current ? "step" : undefined}
                     className={cn(
-                      "flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
-                      completed && "border-primary bg-primary text-primary-foreground",
-                      current && "border-primary text-primary",
-                      !completed && !current && "border-border text-muted-foreground",
+                      "inline-flex items-center gap-1.5 text-xs font-medium",
+                      completed && "text-primary",
+                      current && "text-foreground",
+                      !completed && !current && "text-muted-foreground",
                     )}
                   >
-                    {completed ? <Check className="size-3" aria-hidden="true" /> : stepNumber}
+                    <span
+                      className={cn(
+                        "flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
+                        completed && "border-primary bg-primary text-primary-foreground",
+                        current && "border-primary text-primary",
+                        !completed && !current && "border-border text-muted-foreground",
+                      )}
+                    >
+                      {completed ? <Check className="size-3" aria-hidden="true" /> : stepNumber}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {t(`steps.${stepNumber}`)}
+                    </span>
                   </span>
-                  <span className="hidden sm:inline">{label}</span>
-                </span>
-              </li>
-            );
-          })}
+                </li>
+              );
+            },
+          )}
         </ol>
       </nav>
 
       <div className="mb-6">
         <p className="mb-2 text-sm text-muted-foreground">
-          Paso {step} de {TOTAL_STEPS}
+          {t("stepCount", { current: step, total: TOTAL_STEPS })}
         </p>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
@@ -215,17 +212,13 @@ export function OnboardingForm({
           {(state, pending) => (
             <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Datos básicos</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Cuéntanos quién eres. Estos datos identifican tu perfil público.
-                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">{t("step1.title")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("step1.description")}</p>
               </div>
 
               <div>
-                <span className="text-sm leading-none font-medium">Foto de perfil (opcional)</span>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Se guarda al instante al subirla.
-                </p>
+                <span className="text-sm leading-none font-medium">{t("fields.photoLabel")}</span>
+                <p className="mt-1 text-sm text-muted-foreground">{t("fields.photoHint")}</p>
                 <div className="mt-3">
                   <AvatarUploader name={draft.full_name} src={initialProfile.avatar_url} />
                 </div>
@@ -233,7 +226,7 @@ export function OnboardingForm({
 
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="full_name">Nombre completo *</Label>
+                  <Label htmlFor="full_name">{t("fields.fullName")}</Label>
                   <Input
                     id="full_name"
                     name="full_name"
@@ -242,7 +235,7 @@ export function OnboardingForm({
                       setDraft((d) => ({ ...d, full_name: event.target.value }))
                     }
                     aria-invalid={Boolean(fieldError(state, "full_name"))}
-                    placeholder="María García"
+                    placeholder={t("fields.fullNamePlaceholder")}
                   />
                   {fieldError(state, "full_name") && (
                     <p className="text-sm text-destructive">{fieldError(state, "full_name")}</p>
@@ -250,7 +243,7 @@ export function OnboardingForm({
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="username">Username *</Label>
+                  <Label htmlFor="username">{t("fields.username")}</Label>
                   <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/40 px-3">
                     <span className="text-sm text-muted-foreground">/</span>
                     <Input
@@ -268,16 +261,14 @@ export function OnboardingForm({
                       className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    3-30 caracteres: minúsculas, números, guiones y guiones bajos.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("fields.usernameHint")}</p>
                   {fieldError(state, "username") && (
                     <p className="text-sm text-destructive">{fieldError(state, "username")}</p>
                   )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="headline">Titular</Label>
+                  <Label htmlFor="headline">{t("fields.headline")}</Label>
                   <Input
                     id="headline"
                     name="headline"
@@ -286,7 +277,7 @@ export function OnboardingForm({
                       setDraft((d) => ({ ...d, headline: event.target.value }))
                     }
                     aria-invalid={Boolean(fieldError(state, "headline"))}
-                    placeholder="Fundadora de Acme, apasionada de la sostenibilidad"
+                    placeholder={t("fields.headlinePlaceholder")}
                   />
                   {fieldError(state, "headline") && (
                     <p className="text-sm text-destructive">{fieldError(state, "headline")}</p>
@@ -294,7 +285,7 @@ export function OnboardingForm({
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="location">Ubicación</Label>
+                  <Label htmlFor="location">{t("fields.location")}</Label>
                   <Input
                     id="location"
                     name="location"
@@ -303,7 +294,7 @@ export function OnboardingForm({
                       setDraft((d) => ({ ...d, location: event.target.value }))
                     }
                     aria-invalid={Boolean(fieldError(state, "location"))}
-                    placeholder="Madrid, España"
+                    placeholder={t("fields.locationPlaceholder")}
                   />
                   {fieldError(state, "location") && (
                     <p className="text-sm text-destructive">{fieldError(state, "location")}</p>
@@ -328,23 +319,21 @@ export function OnboardingForm({
           {(state, pending) => (
             <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Tu historia</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Cuéntanos qué haces y qué te mueve.
-                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">{t("step2.title")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("step2.description")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="bio">Biografía</Label>
+                <Label htmlFor="bio">{t("fields.bio")}</Label>
                 <Textarea
                   id="bio"
                   name="bio"
                   value={draft.bio}
                   onChange={(event) => setDraft((d) => ({ ...d, bio: event.target.value }))}
-                  placeholder="Cuéntanos tu experiencia, tu proyecto actual y qué te gustaría conseguir…"
+                  placeholder={t("fields.bioPlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {draft.bio.length}/1000 caracteres
+                  {t("fields.charCount", { count: draft.bio.length, max: 1000 })}
                 </p>
               </div>
 
@@ -365,22 +354,20 @@ export function OnboardingForm({
           {(state, pending) => (
             <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Tu perfil profesional</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Define cómo colaborar con otros miembros.
-                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">{t("step3.title")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("step3.description")}</p>
               </div>
 
               <div className="grid gap-3">
                 <div>
-                  <span className="text-sm leading-none font-medium">Tipo de usuario *</span>
-                  <p className="mt-1 text-sm text-muted-foreground">Puedes elegir más de una.</p>
+                  <span className="text-sm leading-none font-medium">{t("fields.userTypeLabel")}</span>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("fields.multipleHint")}</p>
                   <div className="mt-3">
                     <ChipGroup
                       name="user_types"
                       options={USER_TYPES.map((value) => ({
                         value,
-                        label: USER_TYPE_LABELS[value],
+                        label: types(value),
                       }))}
                       value={draft.user_types}
                       onChange={(next) => setDraft((d) => ({ ...d, user_types: next }))}
@@ -390,7 +377,7 @@ export function OnboardingForm({
 
                 <div className="grid gap-2 pt-2">
                   <Label htmlFor="weekly_availability">
-                    Disponibilidad semanal (horas) *
+                    {t("fields.availabilityLabel")}
                   </Label>
                   <div className="flex items-center gap-3">
                     <Input
@@ -408,10 +395,10 @@ export function OnboardingForm({
                         }))
                       }
                       className="max-w-28"
-                      placeholder="10"
+                      placeholder={t("fields.availabilityPlaceholder")}
                     />
                     <span className="text-sm text-muted-foreground">
-                      horas de 0 a {MAX_AVAILABILITY}
+                      {t("fields.hoursRange", { max: MAX_AVAILABILITY })}
                     </span>
                   </div>
                   {fieldError(state, "weekly_availability") && (
@@ -423,15 +410,15 @@ export function OnboardingForm({
 
                 <div className="pt-2">
                   <span className="text-sm leading-none font-medium">
-                    Preferencias de colaboración
+                    {t("fields.collabLabel")}
                   </span>
-                  <p className="mt-1 text-sm text-muted-foreground">Selecciona todas las que apliquen.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("fields.collabHint")}</p>
                   <div className="mt-3">
                     <ChipGroup
                       name="collaboration_preferences"
                       options={COLLABORATION_PREFERENCES.map((value) => ({
                         value,
-                        label: COLLABORATION_PREFERENCE_LABELS[value],
+                        label: collab(value),
                       }))}
                       value={draft.collaboration_preferences}
                       onChange={(next) =>
@@ -459,18 +446,14 @@ export function OnboardingForm({
           {(state, pending) => (
             <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Habilidades e intereses</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Ayuda a otros a encontrar qué ofreces y qué te interesa.
-                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">{t("step4.title")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("step4.description")}</p>
               </div>
 
               <div className="grid gap-5">
                 <div>
-                  <span className="text-sm leading-none font-medium">Habilidades</span>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Marca las que tengas y, si quieres, su nivel.
-                  </p>
+                  <span className="text-sm leading-none font-medium">{t("fields.skillsLabel")}</span>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("fields.skillsHint")}</p>
                   <div className="mt-3">
                     <SkillSelector
                       skills={skills}
@@ -481,10 +464,8 @@ export function OnboardingForm({
                 </div>
 
                 <div>
-                  <span className="text-sm leading-none font-medium">Intereses</span>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Temas que te gustaría explorar o sobre los que aprender.
-                  </p>
+                  <span className="text-sm leading-none font-medium">{t("fields.interestsLabel")}</span>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("fields.interestsHint")}</p>
                   <div className="mt-3">
                     <InterestInput
                       value={draft.intereses}
@@ -511,15 +492,13 @@ export function OnboardingForm({
           {(state, pending) => (
             <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Conecta tu perfil</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Añade enlaces y decide quién puede ver tu perfil.
-                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">{t("step5.title")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("step5.description")}</p>
               </div>
 
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="website_url">Web</Label>
+                  <Label htmlFor="website_url">{t("fields.websiteLabel")}</Label>
                   <Input
                     id="website_url"
                     name="website_url"
@@ -528,7 +507,7 @@ export function OnboardingForm({
                       setDraft((d) => ({ ...d, website_url: event.target.value }))
                     }
                     aria-invalid={Boolean(fieldError(state, "website_url"))}
-                    placeholder="https://miproyecto.com"
+                    placeholder={t("fields.websitePlaceholder")}
                   />
                   {fieldError(state, "website_url") && (
                     <p className="text-sm text-destructive">{fieldError(state, "website_url")}</p>
@@ -536,7 +515,7 @@ export function OnboardingForm({
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="linkedin_url">LinkedIn</Label>
+                  <Label htmlFor="linkedin_url">{t("fields.linkedinLabel")}</Label>
                   <Input
                     id="linkedin_url"
                     name="linkedin_url"
@@ -545,7 +524,7 @@ export function OnboardingForm({
                       setDraft((d) => ({ ...d, linkedin_url: event.target.value }))
                     }
                     aria-invalid={Boolean(fieldError(state, "linkedin_url"))}
-                    placeholder="https://linkedin.com/in/maria"
+                    placeholder={t("fields.linkedinPlaceholder")}
                   />
                   {fieldError(state, "linkedin_url") && (
                     <p className="text-sm text-destructive">{fieldError(state, "linkedin_url")}</p>
@@ -563,9 +542,9 @@ export function OnboardingForm({
                     className="size-4 rounded border-border accent-primary"
                   />
                   <span>
-                    <span className="block text-sm font-medium">Perfil público</span>
+                    <span className="block text-sm font-medium">{t("fields.publicLabel")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Cualquier persona podrá ver tu perfil sin necesidad de iniciar sesión.
+                      {t("fields.publicHint")}
                     </span>
                   </span>
                 </label>
@@ -602,6 +581,8 @@ function FormActions({
   last?: boolean;
   error?: string;
 }) {
+  const t = useTranslations("onboarding");
+
   return (
     <div className="space-y-3 pt-2">
       {error && (
@@ -613,7 +594,7 @@ function FormActions({
         {canGoBack ? (
           <Button type="button" variant="outline" onClick={onGoBack} disabled={pending}>
             <ArrowLeft aria-hidden="true" />
-            Volver
+            {t("actions.back")}
           </Button>
         ) : (
           <span />
@@ -623,7 +604,7 @@ function FormActions({
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
             <>
-              {last ? "Finalizar" : "Continuar"}
+              {last ? t("actions.finish") : t("actions.continue")}
               {!last && <ArrowRight aria-hidden="true" />}
             </>
           )}
@@ -631,7 +612,7 @@ function FormActions({
       </div>
       {last && (
         <p className="text-xs text-muted-foreground">
-          Paso {step} de {TOTAL_STEPS}: al finalizar serás redirigido a tu panel.
+          {t("actions.lastHint", { step, total: TOTAL_STEPS })}
         </p>
       )}
     </div>

@@ -1,46 +1,64 @@
 import { z } from "zod";
 
-export const passwordSchema = z
-  .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres.")
-  .max(72, "La contraseña no puede superar los 72 caracteres.")
-  .regex(/[a-z]/, "Debe incluir al menos una letra minúscula.")
-  .regex(/[A-Z]/, "Debe incluir al menos una letra mayúscula.")
-  .regex(/[0-9]/, "Debe incluir al menos un número.");
+export type ValidationTranslator = (
+  key: string,
+  values?: Record<string, string | number>,
+) => string;
 
-export const signUpSchema = z
-  .object({
-    nombre: z
+export function createPasswordSchema(t: ValidationTranslator) {
+  return z
+    .string()
+    .min(8, t("passwordMin"))
+    .max(72, t("passwordMax"))
+    .regex(/[a-z]/, t("passwordLower"))
+    .regex(/[A-Z]/, t("passwordUpper"))
+    .regex(/[0-9]/, t("passwordNumber"));
+}
+
+export function createSignUpSchema(t: ValidationTranslator) {
+  return z
+    .object({
+      nombre: z
+        .string()
+        .trim()
+        .min(2, t("nameMin"))
+        .max(80, t("nameMax")),
+      correo: z.email(t("emailInvalid")).max(254, t("emailMax")).toLowerCase(),
+      contrasena: createPasswordSchema(t),
+      confirmarContrasena: z.string(),
+      terminos: z.literal("on", { error: t("termsRequired") }),
+    })
+    .refine((datos) => datos.contrasena === datos.confirmarContrasena, {
+      error: t("passwordsMismatch"),
+      path: ["confirmarContrasena"],
+    });
+}
+
+export function createSignInSchema(t: ValidationTranslator) {
+  return z.object({
+    correo: z.email(t("emailInvalid")).max(254, t("emailMax")).toLowerCase(),
+    contrasena: z
       .string()
-      .trim()
-      .min(2, "Escribe tu nombre y apellidos.")
-      .max(80, "El nombre es demasiado largo."),
-    correo: z.email("Escribe un correo válido.").max(254, "El correo es demasiado largo.").toLowerCase(),
-    contrasena: passwordSchema,
-    confirmarContrasena: z.string(),
-    terminos: z.literal("on", { error: "Debes aceptar los términos y condiciones." }),
-  })
-  .refine((datos) => datos.contrasena === datos.confirmarContrasena, {
-    error: "Las contraseñas no coinciden.",
-    path: ["confirmarContrasena"],
+      .min(1, t("passwordRequired"))
+      .max(72, t("passwordTooLong")),
+    recordar: z.preprocess((valor) => valor === "on", z.boolean()),
   });
+}
 
-export const signInSchema = z.object({
-  correo: z.email("Escribe un correo válido.").max(254, "El correo es demasiado largo.").toLowerCase(),
-  contrasena: z.string().min(1, "Escribe tu contraseña.").max(72, "La contraseña es demasiado larga."),
-  recordar: z.preprocess((valor) => valor === "on", z.boolean()),
-});
-
-export const requestPasswordResetSchema = z.object({
-  correo: z.email("Escribe un correo válido.").max(254, "El correo es demasiado largo.").toLowerCase(),
-});
-
-export const updatePasswordSchema = z
-  .object({
-    contrasena: passwordSchema,
-    confirmarContrasena: z.string(),
-  })
-  .refine((datos) => datos.contrasena === datos.confirmarContrasena, {
-    error: "Las contraseñas no coinciden.",
-    path: ["confirmarContrasena"],
+export function createRequestPasswordResetSchema(t: ValidationTranslator) {
+  return z.object({
+    correo: z.email(t("emailInvalid")).max(254, t("emailMax")).toLowerCase(),
   });
+}
+
+export function createUpdatePasswordSchema(t: ValidationTranslator) {
+  return z
+    .object({
+      contrasena: createPasswordSchema(t),
+      confirmarContrasena: z.string(),
+    })
+    .refine((datos) => datos.contrasena === datos.confirmarContrasena, {
+      error: t("passwordsMismatch"),
+      path: ["confirmarContrasena"],
+    });
+}

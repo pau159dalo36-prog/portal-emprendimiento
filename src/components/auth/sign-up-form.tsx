@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import { signUpAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
@@ -12,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export function SignUpForm() {
   const [state, formAction] = useActionState(signUpAction, initialAuthFormState);
+  const t = useTranslations("authForm");
 
   return (
     <form action={formAction} noValidate className="grid gap-4">
@@ -22,12 +24,12 @@ export function SignUpForm() {
       )}
 
       <div className="grid gap-1.5">
-        <Label htmlFor="nombre">Nombre y apellidos</Label>
+        <Label htmlFor="nombre">{t("fullName")}</Label>
         <Input
           id="nombre"
           name="nombre"
           autoComplete="name"
-          placeholder="Ej. Ana García"
+          placeholder={t("fullNamePlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.nombre)}
           aria-describedby={state.fieldErrors?.nombre ? "error-nombre" : undefined}
@@ -40,13 +42,13 @@ export function SignUpForm() {
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="correo">Correo electrónico</Label>
+        <Label htmlFor="correo">{t("email")}</Label>
         <Input
           id="correo"
           name="correo"
           type="email"
           autoComplete="email"
-          placeholder="tucorreo@ejemplo.com"
+          placeholder={t("emailPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.correo)}
           aria-describedby={state.fieldErrors?.correo ? "error-correo" : undefined}
@@ -59,13 +61,13 @@ export function SignUpForm() {
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="contrasena">Contraseña</Label>
+        <Label htmlFor="contrasena">{t("password")}</Label>
         <Input
           id="contrasena"
           name="contrasena"
           type="password"
           autoComplete="new-password"
-          placeholder="Mínimo 8 caracteres"
+          placeholder={t("passwordMinPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.contrasena)}
           aria-describedby={
@@ -73,7 +75,7 @@ export function SignUpForm() {
           }
         />
         <p id="ayuda-contrasena" className="text-sm text-muted-foreground">
-          Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
+          {t("passwordHelp")}
         </p>
         {state.fieldErrors?.contrasena && (
           <p id="error-contrasena" className="text-sm text-destructive">
@@ -83,13 +85,13 @@ export function SignUpForm() {
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="confirmar-contrasena">Confirmar contraseña</Label>
+        <Label htmlFor="confirmar-contrasena">{t("confirmPassword")}</Label>
         <Input
           id="confirmar-contrasena"
           name="confirmar-contrasena"
           type="password"
           autoComplete="new-password"
-          placeholder="Repite tu contraseña"
+          placeholder={t("confirmPasswordPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.confirmarContrasena)}
           aria-describedby={
@@ -106,15 +108,15 @@ export function SignUpForm() {
       <div className="flex items-start gap-2">
         <Checkbox id="terminos" name="terminos" value="on" className="mt-0.5" />
         <Label htmlFor="terminos" className="leading-6 font-normal">
-          He leído y acepto los términos y condiciones y la política de privacidad.
+          {t("acceptTerms")}
         </Label>
       </div>
       {state.fieldErrors?.terminos && (
         <p className="text-sm text-destructive">{state.fieldErrors.terminos[0]}</p>
       )}
 
-      <SubmitButton className="mt-2 w-full" pendingText="Creando cuenta…">
-        Crear cuenta
+      <SubmitButton className="mt-2 w-full" pendingText={t("createAccountPending")}>
+        {t("createAccount")}
       </SubmitButton>
     </form>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import { updatePasswordAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
@@ -11,6 +12,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 
 export function UpdatePasswordForm() {
   const [state, formAction] = useActionState(updatePasswordAction, initialAuthFormState);
+  const t = useTranslations("authForm");
 
   return (
     <form action={formAction} noValidate className="grid gap-4">
@@ -21,13 +23,13 @@ export function UpdatePasswordForm() {
       )}
 
       <div className="grid gap-1.5">
-        <Label htmlFor="contrasena">Nueva contraseña</Label>
+        <Label htmlFor="contrasena">{t("newPassword")}</Label>
         <Input
           id="contrasena"
           name="contrasena"
           type="password"
           autoComplete="new-password"
-          placeholder="Mínimo 8 caracteres"
+          placeholder={t("passwordMinPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.contrasena)}
           aria-describedby={
@@ -35,7 +37,7 @@ export function UpdatePasswordForm() {
           }
         />
         <p id="ayuda-contrasena" className="text-sm text-muted-foreground">
-          Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
+          {t("passwordHelp")}
         </p>
         {state.fieldErrors?.contrasena && (
           <p id="error-contrasena" className="text-sm text-destructive">
@@ -45,13 +47,13 @@ export function UpdatePasswordForm() {
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="confirmar-contrasena">Confirmar nueva contraseña</Label>
+        <Label htmlFor="confirmar-contrasena">{t("confirmNewPassword")}</Label>
         <Input
           id="confirmar-contrasena"
           name="confirmar-contrasena"
           type="password"
           autoComplete="new-password"
-          placeholder="Repite tu contraseña"
+          placeholder={t("confirmPasswordPlaceholder")}
           required
           aria-invalid={Boolean(state.fieldErrors?.confirmarContrasena)}
           aria-describedby={
@@ -65,8 +67,8 @@ export function UpdatePasswordForm() {
         )}
       </div>
 
-      <SubmitButton className="mt-2 w-full" pendingText="Actualizando contraseña…">
-        Actualizar contraseña
+      <SubmitButton className="mt-2 w-full" pendingText={t("updatePasswordPending")}>
+        {t("updatePassword")}
       </SubmitButton>
     </form>
   );

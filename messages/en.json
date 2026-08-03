@@ -1,0 +1,464 @@
+{
+  "metadata": {
+    "title": "Share, discover and build.",
+    "description": "Share your ideas, discover opportunities and build projects with a community that validates, not just comments.",
+    "home": "Home",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "resetPassword": "Reset password",
+    "updatePassword": "Update password",
+    "verifyEmail": "Confirm your email",
+    "panel": "Dashboard",
+    "onboarding": "Complete your profile",
+    "myProfile": "My profile",
+    "profileSettings": "Profile settings",
+    "languageSettings": "Language",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading…",
+    "backToHome": "Back to home",
+    "viewPublicProfile": "View public profile",
+    "editProfile": "Edit profile",
+    "allRightsReserved": "All rights reserved."
+  },
+  "nav": {
+    "panel": "Dashboard",
+    "editProfile": "Edit profile",
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "community": "Community",
+    "goToDashboard": "Go to my dashboard",
+    "language": "Language"
+  },
+  "home": {
+    "hero": {
+      "badge": "Share, discover and build.",
+      "title": "Turn your idea into a validated project",
+      "description": "An independent platform to publish ideas, get structured feedback, validate projects and find like-minded collaborators.",
+      "primaryCta": "Start for free",
+      "secondaryCta": "Explore features"
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Everything you need to validate your idea",
+      "subtitle": "From structured publishing to connecting with other entrepreneurs, the portal supports you at every stage.",
+      "items": [
+        {
+          "title": "Publish your idea",
+          "description": "Describe your proposal with structure: problem, solution, target market and stage of development."
+        },
+        {
+          "title": "Get real feedback",
+          "description": "The community comments with defined criteria so you can improve your project with concrete input."
+        },
+        {
+          "title": "Find collaborators",
+          "description": "Connect with profiles that complement your skills and build teams to move forward together."
+        }
+      ]
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From idea to project in three steps",
+      "subtitle": "A simple process that gives you clarity and connects you with the right people.",
+      "steps": [
+        {
+          "title": "Publish",
+          "description": "Share your idea with a guided format: explain the problem, your solution and the market you are targeting."
+        },
+        {
+          "title": "Get feedback",
+          "description": "The community and mentors comment with objective criteria so you can improve iteratively."
+        },
+        {
+          "title": "Validate and grow",
+          "description": "Find collaborators, join communities and prepare your project for the next level."
+        }
+      ]
+    },
+    "community": {
+      "eyebrow": "Community",
+      "title": "You don't have to go it alone",
+      "description": "Join an active community of entrepreneurs who share your concerns. Take part in discussions, get honest feedback and build teams with people who complement your skills.",
+      "points": [
+        "Feedback guided by objective criteria",
+        "Connection with profiles related to your project",
+        "Themed communities by industry and stage"
+      ],
+      "ctaLabel": "Will you join?",
+      "ctaText": "Create your free account and start building your project with the support of a community that validates, not just comments.",
+      "ctaButton": "Create a free account"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in",
+      "description": "Access your account to continue with your project.",
+      "passwordUpdated": "Your password was updated successfully. Sign in with your new password.",
+      "actionError": "The action could not be completed. Try again.",
+      "noAccount": "Don't have an account yet?",
+      "createFree": "Create one for free"
+    },
+    "signUp": {
+      "title": "Create account",
+      "description": "Join the portal and start validating your idea today.",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "reset": {
+      "title": "Reset password",
+      "description": "We'll send you a link to reset your password.",
+      "remembered": "Remembered your password?",
+      "signIn": "Sign in"
+    },
+    "update": {
+      "title": "Update password",
+      "description": "Choose a new password for your account."
+    },
+    "verify": {
+      "title": "Check your email",
+      "description": "We've sent you a confirmation link. Open the email to activate your account and get started with your profile.",
+      "notFound": "Can't find it? Check your spam or promotions folder.",
+      "confirmed": "Already confirmed your account?",
+      "signIn": "Sign in",
+      "notYourEmail": "Not your email?",
+      "createNew": "Create a new account"
+    }
+  },
+  "authForm": {
+    "email": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "forgotPassword": "Forgot your password?",
+    "passwordPlaceholder": "Your password",
+    "remember": "Remember me for 30 days",
+    "signInSubmit": "Sign in",
+    "signInPending": "Signing in…",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "e.g. Ana García",
+    "passwordHelp": "At least 8 characters, with uppercase, lowercase letters and numbers.",
+    "passwordMinPlaceholder": "At least 8 characters",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "acceptTerms": "I have read and accept the terms and conditions and the privacy policy.",
+    "createAccount": "Create account",
+    "createAccountPending": "Creating account…",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "updatePassword": "Update password",
+    "updatePasswordPending": "Updating password…",
+    "sendResetLink": "Send recovery link",
+    "sendResetLinkPending": "Sending link…"
+  },
+  "panel": {
+    "greeting": "Hi, {name}.",
+    "defaultGreeting": "entrepreneur",
+    "defaultHeadline": "This is your personal dashboard.",
+    "completeness": "Profile completeness",
+    "missing": "Missing: {label}",
+    "mainData": "Main data",
+    "noTypes": "No types selected",
+    "location": "Location",
+    "weeklyAvailability": "Weekly availability",
+    "collaboration": "Collaboration",
+    "skills": "Skills",
+    "interests": "Interests",
+    "upcoming": "Coming soon",
+    "upcomingDescription": "These features will be available in the next few days.",
+    "upcomingBadge": "Coming soon",
+    "howOthersSeeMe": "See how others see me",
+    "sections": {
+      "nombre": "Public name",
+      "username": "Username",
+      "headline": "Professional headline",
+      "bio": "Bio",
+      "location": "Location",
+      "roles": "Roles",
+      "habilidades": "Skills",
+      "intereses": "Interests",
+      "disponibilidad": "Weekly availability",
+      "colaboracion": "Collaboration preferences",
+      "enlaces": "Website and LinkedIn",
+      "avatar": "Avatar"
+    },
+    "modules": {
+      "ideas": { "title": "Ideas", "description": "Publish and validate your business ideas." },
+      "feedback": { "title": "Feedback", "description": "Give and receive constructive feedback." },
+      "communities": { "title": "Communities", "description": "Join communities by sector or interest." },
+      "messaging": { "title": "Messaging", "description": "Contact other members of the portal." }
+    }
+  },
+  "types": {
+    "emprendedor": "Entrepreneur",
+    "colaborador": "Collaborator",
+    "mentor": "Mentor",
+    "profesional": "Professional",
+    "inversor": "Investor",
+    "empresa": "Company",
+    "institucion": "Institution"
+  },
+  "collab": {
+    "remunerado": "Paid work",
+    "participacion": "Equity participation",
+    "intercambio": "Skill exchange",
+    "voluntario": "Volunteering",
+    "cofundador": "Looking for a co-founder",
+    "no_disponible": "Not available"
+  },
+  "skillLevels": {
+    "1": "Basic",
+    "2": "Beginner",
+    "3": "Intermediate",
+    "4": "Advanced",
+    "5": "Expert"
+  },
+  "publicProfile": {
+    "noName": "No name",
+    "isYou": "That's you",
+    "hoursPerWeek": "{hours} hrs/week available",
+    "joined": "Joined {date}",
+    "web": "Website",
+    "linkedIn": "LinkedIn",
+    "about": "About {firstName}",
+    "aboutMe": "me",
+    "noBio": "They haven't written a bio yet.",
+    "skillsTitle": "Skills",
+    "noSkills": "They haven't added any skills yet.",
+    "interestsTitle": "Interests",
+    "noInterests": "They haven't added any interests yet.",
+    "collaborationTitle": "Looking to collaborate like this"
+  },
+  "settings": {
+    "profileTitle": "Profile settings",
+    "profileDescription": "Edit your details and decide who can see your profile.",
+    "languageTitle": "Language",
+    "languageDescription": "Choose the language used for the interface."
+  },
+  "language": {
+    "sectionLabel": "Interface language",
+    "sectionHint": "Changes apply immediately and are remembered in this browser.",
+    "languages": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "onboarding": {
+    "navLabel": "Form progress",
+    "steps": {
+      "1": "Profile",
+      "2": "Bio",
+      "3": "Professional profile",
+      "4": "Skills",
+      "5": "Connect"
+    },
+    "stepCount": "Step {current} of {total}",
+    "step1": {
+      "title": "Basic details",
+      "description": "Tell us who you are. This information identifies your public profile."
+    },
+    "step2": {
+      "title": "Your story",
+      "description": "Tell us what you do and what drives you."
+    },
+    "step3": {
+      "title": "Your professional profile",
+      "description": "Define how you want to collaborate with other members."
+    },
+    "step4": {
+      "title": "Skills and interests",
+      "description": "Help others find what you offer and what you care about."
+    },
+    "step5": {
+      "title": "Connect your profile",
+      "description": "Add links and decide who can see your profile."
+    },
+    "fields": {
+      "photoLabel": "Profile photo (optional)",
+      "photoHint": "It saves instantly when uploaded.",
+      "fullName": "Full name *",
+      "fullNamePlaceholder": "Maria García",
+      "username": "Username *",
+      "usernameHint": "3-30 characters: lowercase letters, numbers, hyphens and underscores.",
+      "headline": "Headline",
+      "headlinePlaceholder": "Founder of Acme, passionate about sustainability",
+      "location": "Location",
+      "locationPlaceholder": "Madrid, Spain",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about your experience, your current project and what you'd like to achieve…",
+      "charCount": "{count}/{max} characters",
+      "userTypeLabel": "User type *",
+      "multipleHint": "You can choose more than one.",
+      "availabilityLabel": "Weekly availability (hours) *",
+      "availabilityPlaceholder": "10",
+      "hoursRange": "hours from 0 to {max}",
+      "collabLabel": "Collaboration preferences",
+      "collabHint": "Select all that apply.",
+      "skillsLabel": "Skills",
+      "skillsHint": "Select the ones you have and, if you want, your level.",
+      "interestsLabel": "Interests",
+      "interestsHint": "Topics you'd like to explore or learn about.",
+      "websiteLabel": "Website",
+      "websitePlaceholder": "https://myproject.com",
+      "linkedinLabel": "LinkedIn",
+      "linkedinPlaceholder": "https://linkedin.com/in/maria",
+      "publicLabel": "Public profile",
+      "publicHint": "Anyone will be able to see your profile without signing in."
+    },
+    "actions": {
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Finish",
+      "lastHint": "Step {step} of {total}: once you finish you'll be redirected to your dashboard."
+    }
+  },
+  "profileForm": {
+    "photoTitle": "Profile photo",
+    "photoHint": "It saves instantly when uploaded.",
+    "basicTitle": "Basic details",
+    "basicHint": "They identify your public profile.",
+    "bioTitle": "Bio",
+    "bioHint": "Your story and what drives you.",
+    "professionalTitle": "Professional profile",
+    "professionalHint": "How you collaborate with other members.",
+    "skillsTitle": "Skills and interests",
+    "skillsHint": "Help others find what you offer and what you care about.",
+    "linksTitle": "Links and privacy",
+    "linksHint": "Connect your profile with the rest of the world.",
+    "save": "Save changes"
+  },
+  "profileFields": {
+    "fullName": "Full name *",
+    "fullNamePlaceholder": "Maria García",
+    "username": "Username *",
+    "usernameHint": "3-30 characters: lowercase letters, numbers, hyphens and underscores.",
+    "headline": "Headline",
+    "headlinePlaceholder": "Founder of Acme, passionate about sustainability",
+    "location": "Location",
+    "locationPlaceholder": "Madrid, Spain",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about your experience, your current project and what you'd like to achieve…",
+    "charCount": "{count}/{max} characters",
+    "userTypeLabel": "User type *",
+    "multipleHint": "You can choose more than one.",
+    "availabilityLabel": "Weekly availability (hours) *",
+    "availabilityPlaceholder": "10",
+    "hoursRange": "hours from 0 to {max}",
+    "collabLabel": "Collaboration preferences",
+    "collabHint": "Select all that apply.",
+    "skillsLabel": "Skills",
+    "skillsHint": "Select the ones you have and, if you want, your level.",
+    "interestsLabel": "Interests",
+    "interestsHint": "Topics you'd like to explore or learn about.",
+    "websiteLabel": "Website",
+    "websitePlaceholder": "https://myproject.com",
+    "linkedinLabel": "LinkedIn",
+    "linkedinPlaceholder": "https://linkedin.com/in/maria",
+    "publicLabel": "Public profile",
+    "publicHint": "Anyone will be able to see your profile without signing in."
+  },
+  "skillSelector": {
+    "level": "Level",
+    "optional": "Optional",
+    "levelFor": "Level for {name}"
+  },
+  "interestInput": {
+    "placeholder": "Type an interest and press Enter",
+    "newInterest": "New interest",
+    "add": "Add",
+    "addInterest": "Add interest",
+    "maxReached": "You can add up to {max} interests.",
+    "alreadyAdded": "That interest is already added.",
+    "remove": "Remove {interest}"
+  },
+  "avatar": {
+    "selectLabel": "Select profile image",
+    "uploading": "Uploading…",
+    "upload": "Upload photo",
+    "remove": "Remove",
+    "hint": "PNG, JPEG, WebP, GIF or AVIF. Max 5 MB and 512 px (compressed automatically)."
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "There was a problem loading this page. You can try again.",
+    "retry": "Try again"
+  },
+  "actions": {
+    "auth": {
+      "validationGeneral": "Review the highlighted fields.",
+      "signInInvalid": "The email or password is not valid.",
+      "signInFailed": "The email or password is incorrect.",
+      "signUpFailed": "The account could not be created. Try again.",
+      "resetSent": "If the email is registered, you'll receive a link to reset your password.",
+      "updateFailed": "The password could not be updated. Please try again."
+    },
+    "profile": {
+      "invalidStep": "Invalid step.",
+      "skillsSaveFailed": "Your skills could not be saved. Try again.",
+      "interestsSaveFailed": "Your interests could not be saved. Try again.",
+      "stepSaved": "Step {step} saved.",
+      "usernameTaken": "That username is already in use.",
+      "usernameTakenField": "That username is already in use. Choose another one.",
+      "stepSaveFailed": "The step could not be saved. Try again.",
+      "saveFailed": "The changes could not be saved. Try again.",
+      "skillsPartial": "Your data was saved, but your skills could not be updated. Review and try again.",
+      "interestsPartial": "Your data was saved, but your interests could not be updated. Review and try again.",
+      "saved": "Changes saved successfully."
+    },
+    "avatar": {
+      "noFile": "Select a profile image.",
+      "tooLarge": "The image cannot exceed 5 MB.",
+      "badFormat": "Format not allowed. Use PNG, JPEG, WebP, GIF or AVIF.",
+      "notImage": "The file is not a valid image.",
+      "uploadFailed": "The image could not be uploaded. Try again.",
+      "profileUpdateFailed": "The image was uploaded but the profile could not be updated.",
+      "uploaded": "Avatar updated.",
+      "removeFailed": "The avatar could not be removed. Try again.",
+      "removed": "Avatar removed."
+    }
+  },
+  "validation": {
+    "nameMin": "Enter your full name.",
+    "nameMax": "The name is too long.",
+    "emailInvalid": "Enter a valid email.",
+    "emailMax": "The email is too long.",
+    "passwordMin": "The password must be at least 8 characters long.",
+    "passwordMax": "The password cannot exceed 72 characters.",
+    "passwordLower": "It must include at least one lowercase letter.",
+    "passwordUpper": "It must include at least one uppercase letter.",
+    "passwordNumber": "It must include at least one number.",
+    "passwordRequired": "Enter your password.",
+    "passwordTooLong": "The password is too long.",
+    "termsRequired": "You must accept the terms and conditions.",
+    "passwordsMismatch": "The passwords don't match.",
+    "usernameMin": "The username must be at least 3 characters long.",
+    "usernameMax": "The username cannot exceed 30 characters.",
+    "usernameChars": "Only lowercase letters, numbers, hyphens and underscores.",
+    "urlInvalid": "Enter a valid URL, e.g. https://...",
+    "urlTooLong": "The URL is too long.",
+    "urlProtocol": "The URL must start with http:// or https://.",
+    "requiredField": "{label} is required.",
+    "fieldTooLong": "{label} is too long.",
+    "emptyItems": "{label} cannot be empty.",
+    "minSelection": "Select at least one {label}.",
+    "maxItems": "You can't select more than {count} {label}.",
+    "minRole": "Select at least one role.",
+    "minCollaboration": "Select at least one collaboration preference.",
+    "availabilityNumber": "Enter availability in hours.",
+    "availabilityInteger": "Availability must be a whole number.",
+    "availabilityNegative": "Availability cannot be negative.",
+    "availabilityMax": "Availability cannot exceed {count} hours.",
+    "duplicateInterests": "You can't repeat interests.",
+    "labels": {
+      "fullName": "The public name",
+      "headline": "The professional headline",
+      "location": "The location",
+      "bio": "The bio",
+      "skill": "skill",
+      "interest": "interest"
+    }
+  }
+}
