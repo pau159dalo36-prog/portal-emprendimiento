@@ -6,6 +6,7 @@ import { CalendarDays, Clock, Globe, Link as LinkIcon, MapPin } from "lucide-rea
 import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { VideoCard } from "@/components/video/video-card";
 import {
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import { getProfileInterests, getProfileSkills } from "@/profiles/data";
 import { brand } from "@/config/brand";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
+import { listPublishedVideos } from "@/videos/data";
 
 type PublicProfilePageProps = {
   params: Promise<{ username: string; locale: string }>;
@@ -66,9 +68,10 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     year: "numeric",
   }).format(new Date(profile.created_at));
 
-  const [skills, interests] = await Promise.all([
+  const [skills, interests, publishedVideos] = await Promise.all([
     getProfileSkills(supabase, profile.id),
     getProfileInterests(supabase, profile.id),
+    listPublishedVideos(supabase, { authorId: profile.id, limit: 12 }),
   ]);
 
   const firstName = profile.full_name?.split(" ")[0];
@@ -178,13 +181,33 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         </CardContent>
       </Card>
 
+      {publishedVideos.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between gap-4">
+            <CardTitle>{t("videosTitle")}</CardTitle>
+            <Link
+              href="/videos"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              {t("viewAllVideos")}
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {publishedVideos.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>{t("skillsTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {skills.length > 0 ? (
-            <ul className="flex flex-wrap gap-2">
+          {skills.length > 0 ? (            <ul className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <li key={skill.skill_id}>
                   <Badge className="gap-1 border-border bg-muted px-3 py-1.5 text-sm">

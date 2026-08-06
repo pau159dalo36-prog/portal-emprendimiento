@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { VideoCard } from "@/components/video/video-card";
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import {
   getProjectMembers,
   getProjectNeeds,
 } from "@/projects/data";
+import { listPublishedVideosForProject } from "@/videos/data";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 
@@ -58,10 +60,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     notFound();
   }
 
-  const [members, needs, links] = await Promise.all([
+  const [members, needs, links, projectVideos] = await Promise.all([
     getProjectMembers(supabase, project.id),
     getProjectNeeds(supabase, project.id),
     getProjectLinks(supabase, project.id),
+    listPublishedVideosForProject(supabase, project.id, { limit: 12 }),
   ]);
 
   const isOwner = user?.id === project.owner_id;
@@ -304,6 +307,27 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {projectVideos.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between gap-4">
+            <CardTitle>{t("videosTitle")}</CardTitle>
+            <Link
+              href="/videos"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              {t("viewAllVideos")}
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {projectVideos.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

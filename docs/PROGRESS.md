@@ -157,7 +157,100 @@ Pendiente opcional (fuera del alcance de FASE 2):
 
 ## FASE 3 — Storage, vídeos y publicación de vídeo
 
-Estado: ⬜ pendiente.
+Estado: ✔ fase 3 de base de datos **aplicada** en el remoto
+(`efgmjuzcqolpibraymol`, 2026-08-06). Resta la validación funcional en vivo
+(subida/publicación/moderación) antes de cerrar la fase por completo.
+
+Objetivo: permitir a los usuarios subir vídeos de presentación de sus proyectos y
+crear publicaciones de vídeo reales, con subida directa desde el navegador a
+Supabase Storage (sin servicios externos de pago, sin transcodificación ni
+streaming simulados). La publicación se modela **directamente sobre `videos`**
+(title, caption, status, published_at); no se usa `video_publications`.
+
+Realizado:
+- Migración `20260805000000_fase3_storage_videos.sql` reescrita sin
+  `video_publications`: `videos` con todos los campos de publicación, CHECKs
+  (incl. `thumbnail_bucket`/`poster_bucket`), índices, triggers (`updated_at`,
+  `prevent_id_change`, `sync_published_at`, `validate_state_change`,
+  `validate_visibility_bucket`, `validate_thumbnail_visibility`), catálogo
+  `video_languages`, buckets `public-videos`/`private-videos`/
+  `video-thumbnails`, RLS y políticas de Storage. Sin DROP/DELETE/TRUNCATE.
+  Helper SECURITY DEFINER `can_access_video_storage` para evitar recursión de
+  RLS en storage privado.
+- **Moderación administrativa (FASE 12 adelantada a la FASE 3)**:
+  `is_platform_admin()` (JWT `app_metadata.role='admin'`, función **invoker**
+  sin elevación de privilegios), RPCs SECURITY DEFINER
+  `admin_approve_video`/`admin_reject_video`/`admin_flag_video` con auditoría
+  (`moderated_by`/`moderated_at`/`moderation_reason`) y rechazo de vídeos
+  propios; el trigger `videos_validate_state_change` bloquea que el propietario
+  altere `moderation_status` salvo que el autor sea un admin distinto del
+  propietario (verificado con `auth.jwt()`, sin guards de sesión manipulables).
+  Las lecturas públicas (RLS + helper de storage) exigen
+  `moderation_status='approved'`.
+- **Clases de visibilidad con bucket obligatorio**: CHECK
+  `videos_bucket_visibility_check` (público → `public-videos`, protegido →
+  `private-videos`), trigger `videos_validate_visibility_bucket` (congela
+  bucket/clase tras subir; revertir a `uploading` queda bloqueado, cerrando la
+  vía de eludir la congelación) y `videos_validate_thumbnail_visibility`.
+  `video_visibility_class(text)` centraliza la lógica.
+- **Miniaturas/portadas con bucket explícito**: columnas `thumbnail_bucket`/
+  `poster_bucket` (CHECKs de bucket permitido y de presencia path↔bucket).
+  Clase pública → `video-thumbnails`; clase protegida → `private-videos` o nulo.
+  La política `video_thumbnails_public_read` solo sirve por URL pública objetos
+  referenciados por un vídeo publicado/listo/aprobado de clase pública (o del
+  propio usuario); `can_access_video_storage` valida los buckets de imagen.
+- Server Action `saveVideoPublicationAction` valida que la visibilidad coincida
+  con la clase del vídeo subido; ocultar/archivar ya no fuerza `visibility='private'`.
+  Nueva `src/actions/moderation.ts` (`moderateVideoAction`) con chequeo de rol en
+  servidor + RPCs.
+- Helpers de clase en `src/videos/visibility.ts`
+  (`getVisibilityClass`, `getBucketForVisibility`, `getClassForBucket`,
+  `getVisibilitiesForClass`, `canChangeVisibility`) + test
+  `src/videos/visibility.test.ts` (14 casos). `video-publication-form.tsx` solo
+  ofrece opciones de la clase del vídeo subido. i18n ES/EN actualizado.
+- Límites conservadores en `src/config/uploads.ts` (100 MB, 180 s, mp4/webm,
+  miniatura 5 MB, subtítulos 1 MB) coherentes con los buckets.
+- `src/lib/video/`: `types.ts`, `video-provider.ts` (interfaz),
+  `supabase-video-provider.ts` (signed URLs 1 h), `utils.ts`, `validation.ts`.
+- Data layer y Server Actions migrados a leer/escribir directo desde `videos`
+  (`src/videos/types.ts`, `src/videos/data.ts`, `src/videos/map.ts`,
+  `src/actions/videos.ts`): borrador → guardar/publicar → estados → borrado.
+- UI/páginas: formulario, tarjeta, reproductor, dropzone, rail, listado
+  público, detalle, edición y panel — adaptadas al modelo sin publicaciones.
+- Tipos generados actualizados a mano (`src/types/database.types.ts`):
+  `videos` con `title/caption/status/published_at`, moderación,
+  `thumbnail_bucket`/`poster_bucket`, RPCs admin y `video_visibility_class`,
+  sin `video_publications`.
+- Docs nuevas: `VIDEO_ARCHITECTURE.md`, `VIDEO_UPLOADS.md`,
+  `STORAGE_POLICIES.md`, `RLS_POLICIES.md`, `SECURITY.md`; actualizadas
+  `DATABASE.md` y `SUPABASE.md` (si aplica).
+- Tests actualizados a los nuevos límites: `lib/video/validation.test.ts`,
+  `validations/video.test.ts` (renombrado `createVideoSchema`),
+  `videos/visibility.test.ts`.
+- Verificaciones: lint ✅ · typecheck ✅ · test ✅ (75) · build ✅ (29 rutas).
+
+Aplicación en el remoto (`efgmjuzcqolpibraymol`, 2026-08-06):
+- `npm run supabase:db:push` aplicado: `supabase migration list` muestra
+  `20260805000000_fase3_storage_videos.sql` en Local **y** Remote (los cuatro
+  timestamps coinciden).
+- `npm run supabase:types` regenerado desde el remoto; los tipos confirman
+  `thumbnail_bucket`/`poster_bucket` y las FKs `videos_owner_id_fkey`/
+  `videos_moderated_by_fkey`.
+- Fix derivado de los tipos regenerados: `src/videos/data.ts` ahora usa
+  `profiles!videos_owner_id_fkey(...)` para desambiguar el embed de `owner`
+  (nuevo FK `moderated_by` a `profiles`).
+- Tras el push: lint ✅ · typecheck ✅ · test ✅ (75) · build ✅ (29 rutas).
+- Sin commit ni push de git (pendiente de decisión del usuario).
+- No se ha tocado el proyecto `raqcchcvypeptywpjisn`.
+
+Pendiente de FASE 3 (validación funcional en vivo):
+- Subir un vídeo real, publicarlo y comprobar listado/detalle/reproductor.
+- Verificar moderación admin (aprobar/rechazar/flag) y que el propietario no
+  puede auto-aprobarse.
+- Comprobar lectura pública de miniaturas (`video-thumbnails`) y signed URLs de
+  vídeos protegidos (`private-videos`).
+- `src/types/database.types.ts` quedó regenerado desde el remoto (ya no se
+  ajusta a mano).
 
 ## FASE 4 — Publicaciones, feed, visualizaciones y seguimiento
 
@@ -193,7 +286,8 @@ Estado: ⬜ pendiente.
 
 ## FASE 12 — Moderación, administración y privacidad
 
-Estado: ⬜ pendiente.
+Estado: 🔵 en curso (moderación de vídeo adelantada y completada en FASE 3;
+   restan UI de administración y privacidad global).
 
 ## FASE 13 — Analítica, SEO, accesibilidad y rendimiento
 

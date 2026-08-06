@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowUpRight, ExternalLink, Settings2 } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Settings2, Video } from "lucide-react";
 
 import { requireUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
@@ -108,6 +108,21 @@ export default async function PanelPage() {
           </Link>
         )}
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-4">
+          <div className="grid gap-1">
+            <CardTitle className="flex items-center gap-2">
+              <Video className="size-5 text-primary" aria-hidden="true" />
+              {t("videosTitle")}
+            </CardTitle>
+            <CardDescription>{t("videosDescription")}</CardDescription>
+          </div>
+          <Link href="/panel/videos" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            {t("manageVideos")}
+          </Link>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

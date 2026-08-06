@@ -7,8 +7,8 @@ import { EmptyFeed } from "@/components/feed/empty-feed";
 import { OrganizationRow } from "@/components/feed/organization-row";
 import { ProjectGrid } from "@/components/feed/project-grid";
 import { ProjectNeedsRow } from "@/components/feed/project-needs-row";
-import { ShortVideosRail } from "@/components/feed/short-videos-rail";
 import { AppShell } from "@/components/navigation/app-shell";
+import { VideoRail } from "@/components/video/video-rail";
 import { buttonVariants } from "@/components/ui/button";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
@@ -20,8 +20,8 @@ import {
   countOpenNeedsByProject,
   listOpenProjectNeeds,
   listPublishedProjects,
-  type ProjectWithDetails,
 } from "@/projects/data";
+import { listPublishedVideos } from "@/videos/data";
 
 export async function generateMetadata() {
   return { title: await pageMetadataTitle("home") };
@@ -56,11 +56,12 @@ export default async function HomePage() {
   const { supabase, user } = await getCurrentUser();
   const t = await getTranslations("home");
 
-  const [recommended, recentProjects, needs, organizations] = await Promise.all([
+  const [recommended, recentProjects, needs, organizations, publishedVideos] = await Promise.all([
     listPublishedProjects(supabase, { limit: 12, orderBy: "updated_at" }),
     listPublishedProjects(supabase, { limit: 8 }),
     listOpenProjectNeeds(supabase, { limit: 6 }),
     listOrganizations(supabase, { limit: 8 }),
+    listPublishedVideos(supabase, { limit: 12 }),
   ]);
 
   const [recommendedNeeds, orgProjectCounts] = await Promise.all([
@@ -73,10 +74,6 @@ export default async function HomePage() {
       organizations.map((organization) => organization.id),
     ),
   ]);
-
-  // FASE 3: la sección de vídeos cortos se alimentará de una tabla real de vídeos.
-  // Mientras no existan datos reales, la sección permanece oculta.
-  const videos: ProjectWithDetails[] = [];
 
   const hasContent =
     recommended.length > 0 ||
@@ -152,7 +149,7 @@ export default async function HomePage() {
               </FeedSection>
             )}
 
-            {videos.length > 0 && <ShortVideosRail videos={videos} />}
+            {publishedVideos.length > 0 && <VideoRail videos={publishedVideos} />}
 
             {organizations.length > 0 && (
               <FeedSection

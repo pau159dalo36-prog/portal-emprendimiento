@@ -108,6 +108,93 @@ RLS está activado en las cuatro tablas públicas. El proyecto tiene `auto_expos
 - `profile_interests_profile_id_idx`: consultas por usuario.
 - `profile_interests_profile_name_lower_unique`: sin duplicados de interés por perfil (case-insensitive).
 
+## FASE 3 — Storage y vídeos
+
+### `videos`
+
+Un solo registro por vídeo que combina metadatos del fichero y la publicación
+(no existe `video_publications`).
+
+| Columna            | Tipo        | Descripción                                                     |
+| ------------------ | ----------- | --------------------------------------------------------------- |
+| id                 | UUID (PK)   | Identificador del vídeo (URL `/videos/[id]`)                    |
+| owner_id           | UUID (FK)   | `profiles.id` (cascade)                                         |
+| project_id         | UUID (FK)   | `projects.id` (on delete set null)                              |
+| storage_bucket     | TEXT        | `public-videos` o `private-videos` (CHECK)                      |
+| storage_path       | TEXT        | Ruta `<uid>/<videoId>/<archivo>`; única con `storage_bucket`    |
+| original_filename  | TEXT        | Nombre original                                                 |
+| mime_type          | TEXT        | `video/%` (CHECK)                                               |
+| size_bytes         | BIGINT      | `>= 0` (CHECK)                                                  |
+| duration_seconds   | INTEGER     | `>= 0` o NULL (CHECK)                                           |
+| width / height     | INTEGER     | Ambas o NULL (CHECK)                                            |
+| aspect_ratio       | TEXT        | `NNNN:NNNN` (CHECK)                                             |
+| thumbnail_path / poster_path | TEXT | Rutas de la imagen |
+| thumbnail_bucket / poster_bucket | TEXT | Bucket de la imagen: `video-thumbnails` (clase pública) o `private-videos` (clase protegida) (CHECK) |
+| captions_path      | TEXT        | Subtítulos (.vtt)                                               |
+| transcript         | TEXT        | Transcripción                                                   |
+| original_language  | TEXT        | `es`/`en` (CHECK ISO)                                           |
+| title              | TEXT        | 2–120 caracteres (CHECK)                                        |
+| caption            | TEXT        | ≤ 2000 caracteres (CHECK)                                       |
+| processing_status  | TEXT        | `uploading/uploaded/validating/ready/failed/removed` (CHECK)    |
+| moderation_status  | TEXT        | `pending/approved/rejected/flagged` (CHECK)                     |
+| moderated_by       | UUID (FK)   | `profiles.id` (on delete set null), auditoría                   |
+| moderated_at       | TIMESTAMPTZ | Auditoría de moderación                                         |
+| moderation_reason  | TEXT        | Motivo de rechazo/flag, ≤ 500 (CHECK)                           |
+| visibility         | TEXT        | `public/unlisted/registered_users/project_members/private`      |
+| status             | TEXT        | `draft/published/hidden/removed/archived` (CHECK)               |
+| published_at       | TIMESTAMPTZ | Sincronizado por trigger con `status='published'`               |
+| created_at         | TIMESTAMPTZ  |                                                                 |
+| updated_at         | TIMESTAMPTZ  | Actualizado por trigger                                         |
+
+Índices: `videos_owner_id_idx`, `videos_project_id_idx`,
+`videos_visibility_idx`, `videos_processing_status_idx`, `videos_status_idx`,
+`videos_listing_idx (status, visibility, processing_status, published_at desc)`,
+`videos_published_at_idx`.
+
+Triggers: `videos_set_updated_at` (updated_at), `videos_prevent_id_change`
+(protege `id`), `videos_sync_published_at` (fija/limpia `published_at`),
+`videos_validate_state_change` (ciclo de vida + bloqueo de moderación admin y
+de revertir a `uploading`), `videos_validate_visibility_bucket` (congela
+bucket/clase tras subir), `videos_validate_thumbnail_visibility` (bucket de
+imagen obligatorio según clase).
+
+CHECKs de clase/moderación: `videos_bucket_visibility_check` (clase ↔ bucket),
+`videos_moderation_audit_check`, `videos_moderation_state_check`,
+`videos_moderation_reason_length`, `videos_thumbnail_bucket_check`,
+`videos_poster_bucket_check`, `videos_thumbnail_bucket_presence_check`,
+`videos_poster_bucket_presence_check`.
+
+Funciones de moderación (SECURITY DEFINER, `search_path=''`):
+`admin_approve_video(uuid)`, `admin_reject_video(uuid, text)`,
+`admin_flag_video(uuid, text)`. La clasificación de visibilidad se centraliza en
+`video_visibility_class(text)`, y `is_platform_admin()` (JWT
+`app_metadata.role='admin'`) es una función **invoker** (sin elevación de
+privilegios) usada por los triggers de validación.
+
+### `video_languages`
+
+Catálogo de idiomas de origen (`es`, `en`), solo lectura pública (RLS
+`video_languages_select_all`).
+
+### RLS de vídeos
+
+Ver [`RLS_POLICIES.md`](./RLS_POLICIES.md). Las lecturas públicas requieren
+`status='published'`, `processing_status='ready'` y
+`moderation_status='approved'`; el propietario siempre ve sus filas.
+
+### Storage — buckets de vídeo
+
+| Bucket             | Público | Límite | MIME                          |
+| ------------------ | ------- | ------ | ----------------------------- |
+| `public-videos`    | Sí      | 100 MB | `video/mp4`, `video/webm`     |
+| `private-videos`   | No      | 100 MB | `video/mp4`, `video/webm`     |
+| `video-thumbnails` | Sí      | 5 MB   | `image/png`, `image/jpeg`, `image/webp` |
+
+Políticas de aislamiento por carpeta `<auth.uid()>/…` y signed URLs para el
+bucket privado. `video-thumbnails` solo sirve por URL pública objetos
+referenciados por un vídeo publicado/listo/aprobado de clase pública (o del
+propio usuario). Detalle en [`STORAGE_POLICIES.md`](./STORAGE_POLICIES.md).
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`, `community_members`.
@@ -117,4 +204,6 @@ Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`, `co
 - Row Level Security activado en todas las tablas, definido en las propias migraciones.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
-- El esquema tipado se regenera desde el remoto (`supabase:types`); nunca se edita a mano el archivo `src/types/database.types.ts`.
+- El esquema tipado se regenera desde el remoto (`supabase:types`); mientras la
+  migración FASE 3 no se aplique en remoto, `src/types/database.types.ts` se ha
+  sincronizado a mano con la migración.

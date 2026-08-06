@@ -868,11 +868,182 @@ export type Database = {
         }
         Relationships: []
       }
+      video_languages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          aspect_ratio: string | null
+          caption: string | null
+          captions_path: string | null
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          mime_type: string
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          moderation_status: string
+          organization_id: string | null
+          original_filename: string | null
+          original_language: string
+          owner_id: string
+          poster_bucket: string | null
+          poster_path: string | null
+          processing_status: string
+          project_id: string | null
+          published_at: string | null
+          size_bytes: number
+          status: string
+          storage_bucket: string
+          storage_path: string
+          thumbnail_bucket: string | null
+          thumbnail_path: string | null
+          title: string
+          transcript: string | null
+          updated_at: string
+          visibility: string
+          width: number | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          caption?: string | null
+          captions_path?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          mime_type: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          organization_id?: string | null
+          original_filename?: string | null
+          original_language?: string
+          owner_id: string
+          poster_bucket?: string | null
+          poster_path?: string | null
+          processing_status?: string
+          project_id?: string | null
+          published_at?: string | null
+          size_bytes: number
+          status?: string
+          storage_bucket: string
+          storage_path: string
+          thumbnail_bucket?: string | null
+          thumbnail_path?: string | null
+          title: string
+          transcript?: string | null
+          updated_at?: string
+          visibility?: string
+          width?: number | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          caption?: string | null
+          captions_path?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          mime_type?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          organization_id?: string | null
+          original_filename?: string | null
+          original_language?: string
+          owner_id?: string
+          poster_bucket?: string | null
+          poster_path?: string | null
+          processing_status?: string
+          project_id?: string | null
+          published_at?: string | null
+          size_bytes?: number
+          status?: string
+          storage_bucket?: string
+          storage_path?: string
+          thumbnail_bucket?: string | null
+          thumbnail_path?: string | null
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+          visibility?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_approve_video: { Args: { p_video_id: string }; Returns: boolean }
+      admin_flag_video: {
+        Args: { p_reason?: string; p_video_id: string }
+        Returns: boolean
+      }
+      admin_reject_video: {
+        Args: { p_reason?: string; p_video_id: string }
+        Returns: boolean
+      }
+      can_access_video_storage: {
+        Args: { p_bucket: string; p_path: string }
+        Returns: boolean
+      }
       is_organization_manager: {
         Args: { p_organization_id: string }
         Returns: boolean
@@ -881,7 +1052,12 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { p_project_id: string }; Returns: boolean }
+      video_visibility_class: {
+        Args: { p_visibility: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

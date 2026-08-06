@@ -19,7 +19,11 @@
     "newProject": "Nuevo proyecto",
     "newOrganization": "Nueva organización",
     "editProject": "Editar proyecto",
-    "editOrganization": "Editar organización"
+    "editOrganization": "Editar organización",
+    "videos": "Vídeos",
+    "videoNew": "Publicar vídeo",
+    "editVideo": "Editar vídeo",
+    "panelVideos": "Mis vídeos"
   },
   "common": {
     "loading": "Cargando…",
@@ -44,7 +48,8 @@
     "organizations": "Organizaciones",
     "newProject": "Nuevo proyecto",
     "newOrganization": "Nueva organización",
-    "explore": "Explorar"
+    "explore": "Explorar",
+    "publishVideo": "Publicar vídeo"
   },
   "feed": {
     "forYou": "Para ti",
@@ -185,6 +190,9 @@
     "upcomingDescription": "Estas funcionalidades llegarán en los próximos días.",
     "upcomingBadge": "Próximamente",
     "howOthersSeeMe": "Ver cómo me ven los demás",
+    "videosTitle": "Vídeos",
+    "videosDescription": "Gestiona tus vídeos y su publicación.",
+    "manageVideos": "Gestionar vídeos",
     "sections": {
       "nombre": "Nombre público",
       "username": "Username",
@@ -244,7 +252,9 @@
     "noSkills": "Aún no ha añadido habilidades.",
     "interestsTitle": "Intereses",
     "noInterests": "Aún no ha añadido intereses.",
-    "collaborationTitle": "Busca colaborar así"
+    "collaborationTitle": "Busca colaborar así",
+    "videosTitle": "Vídeos",
+    "viewAllVideos": "Ver todos los vídeos"
   },
   "settings": {
     "profileTitle": "Configuración del perfil",
@@ -508,7 +518,9 @@
     "archivedBadge": "Archivado",
     "byOrganization": "De {name}",
     "noOrganization": "Proyecto personal",
-    "viewProfile": "Ver perfil"
+    "viewProfile": "Ver perfil",
+    "videosTitle": "Vídeos del proyecto",
+    "viewAllVideos": "Ver todos los vídeos"
   },
   "organizationForm": {
     "nameLabel": "Nombre *",
@@ -670,7 +682,106 @@
       "needAdded": "Necesidad añadida.",
       "linkAddFailed": "No se pudo añadir el enlace.",
       "linkAdded": "Enlace añadido."
+    },
+    "video": {
+      "validationGeneral": "Revisa los campos marcados.",
+      "saveFailed": "No se pudo guardar el vídeo. Inténtalo de nuevo.",
+      "draftSaved": "Borrador guardado.",
+      "invalidPublication": "Publicación de vídeo no válida.",
+      "invalidIntent": "Acción no válida.",
+      "notFound": "No se encontró el vídeo.",
+      "cannotPublishFailed": "El vídeo no se puede publicar porque falló su procesamiento.",
+      "publishFailed": "No se pudo publicar el vídeo. Inténtalo de nuevo.",
+      "updateFailed": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+      "published": "Vídeo publicado.",
+      "saved": "Cambios guardados.",
+      "statusInvalid": "Estado no válido.",
+      "visibilityClassMismatch": "La visibilidad elegida no es compatible con la clase del vídeo ya subido. Vuelve a subirlo para cambiarla."
+    },
+    "moderation": {
+      "unauthorized": "No tienes permiso para moderar vídeos.",
+      "invalidRequest": "Solicitud de moderación no válida.",
+      "reasonTooLong": "El motivo no puede superar los 500 caracteres.",
+      "moderationFailed": "No se pudo completar la moderación. Inténtalo de nuevo.",
+      "done": "Moderación aplicada."
     }
+  },
+  "videoStatuses": {
+    "uploading": "Subiendo",
+    "uploaded": "Subido",
+    "validating": "Validando",
+    "ready": "Listo",
+    "failed": "Falló",
+    "removed": "Eliminado",
+    "draft": "Borrador",
+    "published": "Publicado",
+    "hidden": "Oculto",
+    "archived": "Archivado"
+  },
+  "videos": {
+    "title": "Vídeos",
+    "description": "Vídeos cortos de la comunidad.",
+    "newTitle": "Publicar vídeo",
+    "newDescription": "Sube un vídeo de hasta 200 MB y compártelo con la comunidad.",
+    "editTitle": "Editar vídeo",
+    "editDescription": "Actualiza el título, la descripción y la visibilidad.",
+    "panelTitle": "Mis vídeos",
+    "panelDescription": "Administra tus vídeos y su publicación.",
+    "emptyTitle": "Todavía no hay vídeos",
+    "emptyDescription": "Cuando alguien publique un vídeo, aparecerá aquí.",
+    "emptyCta": "Publicar tu primer vídeo",
+    "anonymous": "Anónimo",
+    "publishedOn": "Publicado el {date}",
+    "inProject": "Proyecto:",
+    "edit": "Editar",
+    "view": "Ver",
+    "publish": "Publicar",
+    "hide": "Ocultar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar?"
+  },
+  "videoForm": {
+    "visibilityLabel": "Visibilidad",
+    "visibilityHint": "Decide quién puede ver el vídeo.",
+    "visibilityClassHint": "Esta clase de visibilidad está fijada por el vídeo subido. Para cambiarla, vuelve a subir el vídeo.",
+    "uploadPending": "Subiendo…",
+    "uploadSubmit": "Subir vídeo",
+    "dropzoneTitle": "Arrastra tu vídeo aquí o haz clic para elegirlo",
+    "dropzoneHint": "MP4, WebM, MOV o M4V · hasta 200 MB",
+    "errors": {
+      "authRequired": "Debes iniciar sesión para subir vídeos."
+    },
+    "titleLabel": "Título",
+    "titlePlaceholder": "Ponle un título claro al vídeo",
+    "captionLabel": "Descripción",
+    "captionPlaceholder": "Cuéntanos de qué trata el vídeo…",
+    "languageLabel": "Idioma",
+    "projectLabel": "Proyecto",
+    "projectNone": "Sin proyecto",
+    "projectHint": "Opcional: asocia el vídeo a uno de tus proyectos.",
+    "saveButton": "Guardar",
+    "publishButton": "Publicar",
+    "visibility": {
+      "public": "Público",
+      "unlisted": "Oculto (solo con enlace)",
+      "registeredUsers": "Usuarios registrados",
+      "projectMembers": "Equipo del proyecto",
+      "private": "Privado"
+    }
+  },
+  "videoValidation": {
+    "noFile": "Selecciona un archivo de vídeo.",
+    "tooLarge": "El vídeo no puede superar los 200 MB.",
+    "badFormat": "Formato no permitido. Usa MP4, WebM, MOV o M4V.",
+    "invalidMetadata": "No se pudieron leer los datos del vídeo.",
+    "durationTooLong": "El vídeo no puede durar más de 15 minutos.",
+    "uploadFailed": "No se pudo subir el vídeo. Inténtalo de nuevo.",
+    "thumbnailRequired": "Selecciona una imagen para la miniatura.",
+    "thumbnailTooLarge": "La imagen no puede superar los 10 MB.",
+    "thumbnailBadFormat": "Formato no permitido. Usa PNG, JPEG o WebP.",
+    "captionRequired": "Selecciona un archivo de subtítulos.",
+    "captionTooLarge": "El archivo de subtítulos no puede superar los 5 MB.",
+    "captionBadFormat": "Formato no permitido. Usa WebVTT (.vtt)."
   },
   "validation": {
     "nameMin": "Escribe tu nombre y apellidos.",
@@ -713,6 +824,8 @@
     "roleInvalid": "Rol no válido.",
     "stageInvalid": "Etapa no válida.",
     "statusInvalid": "Estado no válido.",
+    "languageInvalid": "Idioma no válido.",
+    "visibilityInvalid": "Visibilidad no válida.",
     "labels": {
       "fullName": "El nombre público",
       "headline": "El titular profesional",
@@ -737,7 +850,9 @@
       "linkLabel": "La etiqueta",
       "linkUrl": "La URL",
       "memberUsername": "El username",
-      "industries": "sector"
+      "industries": "sector",
+      "videoTitle": "El título del vídeo",
+      "videoCaption": "La descripción del vídeo"
     }
   }
 }

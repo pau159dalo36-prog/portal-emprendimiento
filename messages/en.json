@@ -19,7 +19,11 @@
     "newProject": "New project",
     "newOrganization": "New organization",
     "editProject": "Edit project",
-    "editOrganization": "Edit organization"
+    "editOrganization": "Edit organization",
+    "videos": "Videos",
+    "videoNew": "Publish video",
+    "editVideo": "Edit video",
+    "panelVideos": "My videos"
   },
   "common": {
     "loading": "Loading…",
@@ -44,7 +48,8 @@
     "organizations": "Organizations",
     "newProject": "New project",
     "newOrganization": "New organization",
-    "explore": "Explore"
+    "explore": "Explore",
+    "publishVideo": "Publish video"
   },
   "feed": {
     "forYou": "For you",
@@ -185,6 +190,9 @@
     "upcomingDescription": "These features will be available in the next few days.",
     "upcomingBadge": "Coming soon",
     "howOthersSeeMe": "See how others see me",
+    "videosTitle": "Videos",
+    "videosDescription": "Manage your videos and their publication.",
+    "manageVideos": "Manage videos",
     "sections": {
       "nombre": "Public name",
       "username": "Username",
@@ -244,7 +252,9 @@
     "noSkills": "They haven't added any skills yet.",
     "interestsTitle": "Interests",
     "noInterests": "They haven't added any interests yet.",
-    "collaborationTitle": "Looking to collaborate like this"
+    "collaborationTitle": "Looking to collaborate like this",
+    "videosTitle": "Videos",
+    "viewAllVideos": "View all videos"
   },
   "settings": {
     "profileTitle": "Profile settings",
@@ -508,7 +518,9 @@
     "archivedBadge": "Archived",
     "byOrganization": "By {name}",
     "noOrganization": "Personal project",
-    "viewProfile": "View profile"
+    "viewProfile": "View profile",
+    "videosTitle": "Project videos",
+    "viewAllVideos": "View all videos"
   },
   "organizationForm": {
     "nameLabel": "Name *",
@@ -670,7 +682,106 @@
       "needAdded": "Need added.",
       "linkAddFailed": "The link could not be added.",
       "linkAdded": "Link added."
+    },
+    "video": {
+      "validationGeneral": "Review the highlighted fields.",
+      "saveFailed": "The video could not be saved. Try again.",
+      "draftSaved": "Draft saved.",
+      "invalidPublication": "Invalid video publication.",
+      "invalidIntent": "Invalid action.",
+      "notFound": "Video not found.",
+      "cannotPublishFailed": "This video can't be published because its processing failed.",
+      "publishFailed": "The video could not be published. Try again.",
+      "updateFailed": "The changes could not be saved. Try again.",
+      "published": "Video published.",
+      "saved": "Changes saved.",
+      "statusInvalid": "Invalid status.",
+      "visibilityClassMismatch": "The chosen visibility is not compatible with the class of the uploaded video. Re-upload it to change it."
+    },
+    "moderation": {
+      "unauthorized": "You don't have permission to moderate videos.",
+      "invalidRequest": "Invalid moderation request.",
+      "reasonTooLong": "The reason can't exceed 500 characters.",
+      "moderationFailed": "The moderation could not be completed. Try again.",
+      "done": "Moderation applied."
     }
+  },
+  "videoStatuses": {
+    "uploading": "Uploading",
+    "uploaded": "Uploaded",
+    "validating": "Validating",
+    "ready": "Ready",
+    "failed": "Failed",
+    "removed": "Removed",
+    "draft": "Draft",
+    "published": "Published",
+    "hidden": "Hidden",
+    "archived": "Archived"
+  },
+  "videos": {
+    "title": "Videos",
+    "description": "Short videos from the community.",
+    "newTitle": "Publish video",
+    "newDescription": "Upload a video up to 200 MB and share it with the community.",
+    "editTitle": "Edit video",
+    "editDescription": "Update the title, description and visibility.",
+    "panelTitle": "My videos",
+    "panelDescription": "Manage your videos and their publication.",
+    "emptyTitle": "No videos yet",
+    "emptyDescription": "When someone publishes a video, it will show up here.",
+    "emptyCta": "Publish your first video",
+    "anonymous": "Anonymous",
+    "publishedOn": "Published on {date}",
+    "inProject": "Project:",
+    "edit": "Edit",
+    "view": "View",
+    "publish": "Publish",
+    "hide": "Hide",
+    "delete": "Delete",
+    "confirmDelete": "Delete?"
+  },
+  "videoForm": {
+    "visibilityLabel": "Visibility",
+    "visibilityHint": "Choose who can see this video.",
+    "visibilityClassHint": "This visibility class is fixed by the uploaded video. To change it, re-upload the video.",
+    "uploadPending": "Uploading…",
+    "uploadSubmit": "Upload video",
+    "dropzoneTitle": "Drag your video here or click to choose one",
+    "dropzoneHint": "MP4, WebM, MOV or M4V · up to 200 MB",
+    "errors": {
+      "authRequired": "You must sign in to upload videos."
+    },
+    "titleLabel": "Title",
+    "titlePlaceholder": "Give the video a clear title",
+    "captionLabel": "Description",
+    "captionPlaceholder": "Tell us what this video is about…",
+    "languageLabel": "Language",
+    "projectLabel": "Project",
+    "projectNone": "No project",
+    "projectHint": "Optional: link the video to one of your projects.",
+    "saveButton": "Save",
+    "publishButton": "Publish",
+    "visibility": {
+      "public": "Public",
+      "unlisted": "Unlisted (link only)",
+      "registeredUsers": "Registered users",
+      "projectMembers": "Project team",
+      "private": "Private"
+    }
+  },
+  "videoValidation": {
+    "noFile": "Choose a video file.",
+    "tooLarge": "The video cannot exceed 200 MB.",
+    "badFormat": "Format not allowed. Use MP4, WebM, MOV or M4V.",
+    "invalidMetadata": "Could not read the video metadata.",
+    "durationTooLong": "The video cannot be longer than 15 minutes.",
+    "uploadFailed": "The video could not be uploaded. Try again.",
+    "thumbnailRequired": "Choose an image for the thumbnail.",
+    "thumbnailTooLarge": "The image cannot exceed 10 MB.",
+    "thumbnailBadFormat": "Format not allowed. Use PNG, JPEG or WebP.",
+    "captionRequired": "Choose a captions file.",
+    "captionTooLarge": "The captions file cannot exceed 5 MB.",
+    "captionBadFormat": "Format not allowed. Use WebVTT (.vtt)."
   },
   "validation": {
     "nameMin": "Enter your full name.",
@@ -713,6 +824,8 @@
     "roleInvalid": "Invalid role.",
     "stageInvalid": "Invalid stage.",
     "statusInvalid": "Invalid status.",
+    "languageInvalid": "Invalid language.",
+    "visibilityInvalid": "Invalid visibility.",
     "labels": {
       "fullName": "The public name",
       "headline": "The professional headline",
@@ -737,7 +850,9 @@
       "linkLabel": "The label",
       "linkUrl": "The URL",
       "memberUsername": "The username",
-      "industries": "industry"
+      "industries": "industry",
+      "videoTitle": "The video title",
+      "videoCaption": "The video description"
     }
   }
 }

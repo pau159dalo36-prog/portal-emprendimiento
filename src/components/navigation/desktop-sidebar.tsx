@@ -43,6 +43,7 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/", label: t("home"), icon: Home, exact: true },
     { href: "/proyectos", label: t("explore"), icon: Compass },
     { href: "/organizaciones", label: t("organizations"), icon: Building2 },
+    { href: "/videos", label: t("videos"), icon: Video },
   ];
 
   const activityItems: SidebarItem[] = [
@@ -50,10 +51,10 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/perfil", label: t("profile"), icon: User },
     { href: "/proyectos/nuevo", label: nav("newProject"), icon: Plus },
     { href: "/organizaciones/nueva", label: nav("newOrganization"), icon: Plus },
+    { href: "/publicar/video", label: nav("publishVideo"), icon: Video },
   ];
 
   const comingSoonItems = [
-    { label: t("videos"), icon: Video },
     { label: t("posts"), icon: Newspaper },
     { label: t("jobs"), icon: Briefcase },
     { label: t("communities"), icon: MessageSquare },
