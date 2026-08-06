@@ -23,7 +23,8 @@
     "videos": "Videos",
     "videoNew": "Publish video",
     "editVideo": "Edit video",
-    "panelVideos": "My videos"
+    "panelVideos": "My videos",
+    "adminVideos": "Video moderation"
   },
   "common": {
     "loading": "Loading…",
@@ -696,7 +697,10 @@
       "published": "Video published.",
       "saved": "Changes saved.",
       "statusInvalid": "Invalid status.",
-      "visibilityClassMismatch": "The chosen visibility is not compatible with the class of the uploaded video. Re-upload it to change it."
+      "visibilityClassMismatch": "The chosen visibility is not compatible with the class of the uploaded video. Re-upload it to change it.",
+      "uploadNotFound": "The uploaded file could not be found. Try again.",
+      "imageSaved": "Image updated.",
+      "imageSaveFailed": "The image could not be saved. Try again."
     },
     "moderation": {
       "unauthorized": "You don't have permission to moderate videos.",
@@ -717,6 +721,22 @@
     "published": "Published",
     "hidden": "Hidden",
     "archived": "Archived"
+  },
+  "moderation": {
+    "title": "Video moderation",
+    "description": "Review and moderate community videos.",
+    "empty": "There are no videos pending moderation.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "Reason for rejection or flagging…",
+    "approve": "Approve",
+    "reject": "Reject",
+    "flag": "Flag"
+  },
+  "moderationStatuses": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "flagged": "Flagged"
   },
   "videos": {
     "title": "Videos",
@@ -746,8 +766,22 @@
     "visibilityClassHint": "This visibility class is fixed by the uploaded video. To change it, re-upload the video.",
     "uploadPending": "Uploading…",
     "uploadSubmit": "Upload video",
+    "uploadVerifying": "Verifying the file…",
+    "uploadPercent": "Uploading… {percent}%",
+    "uploadBytes": "{loaded} of {total}",
+    "cancelUpload": "Cancel upload",
+    "retryUpload": "Retry",
+    "uploadCancelled": "Upload cancelled.",
     "dropzoneTitle": "Drag your video here or click to choose one",
-    "dropzoneHint": "MP4, WebM, MOV or M4V · up to 200 MB",
+    "dropzoneHint": "MP4 or WebM · up to 100 MB",
+    "thumbnailLabel": "Thumbnail",
+    "posterLabel": "Cover",
+    "thumbnailHint": "Shown on cards and listings.",
+    "posterHint": "Large image shown before playback. Optional.",
+    "imageUpload": "Upload image",
+    "imageReplace": "Change",
+    "imageRemove": "Remove image",
+    "imageUploading": "Uploading image…",
     "errors": {
       "authRequired": "You must sign in to upload videos."
     },
@@ -771,16 +805,16 @@
   },
   "videoValidation": {
     "noFile": "Choose a video file.",
-    "tooLarge": "The video cannot exceed 200 MB.",
-    "badFormat": "Format not allowed. Use MP4, WebM, MOV or M4V.",
+    "tooLarge": "The video cannot exceed 100 MB.",
+    "badFormat": "Format not allowed. Use MP4 or WebM.",
     "invalidMetadata": "Could not read the video metadata.",
-    "durationTooLong": "The video cannot be longer than 15 minutes.",
+    "durationTooLong": "The video cannot be longer than 3 minutes.",
     "uploadFailed": "The video could not be uploaded. Try again.",
     "thumbnailRequired": "Choose an image for the thumbnail.",
-    "thumbnailTooLarge": "The image cannot exceed 10 MB.",
+    "thumbnailTooLarge": "The image cannot exceed 5 MB.",
     "thumbnailBadFormat": "Format not allowed. Use PNG, JPEG or WebP.",
     "captionRequired": "Choose a captions file.",
-    "captionTooLarge": "The captions file cannot exceed 5 MB.",
+    "captionTooLarge": "The captions file cannot exceed 1 MB.",
     "captionBadFormat": "Format not allowed. Use WebVTT (.vtt)."
   },
   "validation": {

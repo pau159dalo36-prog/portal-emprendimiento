@@ -243,6 +243,21 @@ Aplicación en el remoto (`efgmjuzcqolpibraymol`, 2026-08-06):
 - Sin commit ni push de git (pendiente de decisión del usuario).
 - No se ha tocado el proyecto `raqcchcvypeptywpjisn`.
 
+Correctivo de exposición pública (FASE 3.3, PASO 1, 2026-08-06):
+- Auditoría del PASO 1: la política `videos_public_read` original solo
+  comprobaba `bucket_id = 'public-videos'`, por lo que una URL directa servía
+  cualquier objeto del bucket (incluidos vídeos `pending`/`rejected`/`flagged`
+  o no publicados).
+- Migración aditiva `20260806000000_fix_videos_public_read.sql` aplicada en el
+  remoto: la lectura pública de `public-videos` exige ahora que el objeto
+  pertenezca al solicitante (`foldername(name)[1] = auth.uid()`) o que exista
+  un registro en `public.videos` con `status='published'`,
+  `processing_status='ready'`, `moderation_status='approved'`,
+  `visibility in ('public','unlisted')` y `storage_path = name`. Solo sustituye
+  la política de SELECT (sin DROP de tablas, buckets ni otras políticas).
+- `npx supabase migration list`: `20260806000000` presente en Local **y**
+  Remote. Tras el push: lint ✅ · typecheck ✅ · test ✅ (75) · build ✅ (29 rutas).
+
 Pendiente de FASE 3 (validación funcional en vivo):
 - Subir un vídeo real, publicarlo y comprobar listado/detalle/reproductor.
 - Verificar moderación admin (aprobar/rechazar/flag) y que el propietario no

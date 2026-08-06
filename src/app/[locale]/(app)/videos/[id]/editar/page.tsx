@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { requireUser } from "@/auth/session";
+import { VideoImageUploader } from "@/components/video/video-image-uploader";
 import { VideoPublicationForm } from "@/components/video/video-publication-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { pageMetadataTitle } from "@/i18n/metadata";
+import { resolveVideoImagePreviewUrl } from "@/lib/video/preview";
 import { listProjectsForUser } from "@/projects/data";
 import { getVideoById } from "@/videos/data";
 
@@ -28,6 +30,17 @@ export default async function EditVideoPage({ params }: EditVideoPageProps) {
 
   const projects = await listProjectsForUser(supabase, user.id);
 
+  const [thumbnailSrc, posterSrc] = await Promise.all([
+    resolveVideoImagePreviewUrl(supabase, {
+      bucket: video.thumbnail_bucket,
+      path: video.thumbnail_path,
+    }),
+    resolveVideoImagePreviewUrl(supabase, {
+      bucket: video.poster_bucket,
+      path: video.poster_path,
+    }),
+  ]);
+
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
       <div className="grid gap-1">
@@ -42,6 +55,12 @@ export default async function EditVideoPage({ params }: EditVideoPageProps) {
             video={video}
             projects={projects.map((project) => ({ id: project.id, name: project.name, slug: project.slug }))}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <VideoImageUploader videoId={id} thumbnailSrc={thumbnailSrc} posterSrc={posterSrc} />
         </CardContent>
       </Card>
     </div>

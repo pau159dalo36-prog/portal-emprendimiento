@@ -37,7 +37,7 @@ exigen, por lo que ningún usuario puede leer/sobrescribir los archivos de otro.
 
 | Política                    | Operación | Condición                                        |
 | --------------------------- | --------- | ------------------------------------------------ |
-| `videos_public_read`        | SELECT    | `bucket_id = 'public-videos'` (lectura pública)  |
+| `videos_public_read`        | SELECT    | `bucket_id = 'public-videos'` y (carpeta propia **o** objeto referenciado por un vídeo público publicado/listo/aprobado) |
 | `videos_public_insert_own`  | INSERT    | `bucket_id` y `foldername(name)[1] = auth.uid()` |
 | `videos_public_update_own`  | UPDATE    | Ídem con USING + WITH CHECK                       |
 | `videos_public_delete_own`  | DELETE    | Ídem                                             |
@@ -79,11 +79,33 @@ sirve si lo referencia un vídeo `published` + `ready` + `approved` de clase
 `public`/`unlisted`, o si el propio usuario lo solicita (previsualización de
 subida y panel).
 
+### `public-videos` — SELECT corregido (`20260806000000_fix_videos_public_read.sql`)
+
+La versión original de `videos_public_read` solo comprobaba el bucket y servía
+**cualquier** objeto de `public-videos` por URL directa (vídeos `pending`,
+`rejected`, `flagged` o no publicados incluidos). La migración correctiva
+`20260806000000_fix_videos_public_read.sql` (aditiva, solo `drop policy if
+exists` + `create policy` de esa política) exige ahora:
+
+- que el solicitante sea el propietario (`foldername(name)[1] = auth.uid()`),
+  **o**
+- que exista un registro en `public.videos` con `storage_bucket =
+  'public-videos'`, `storage_path = name`, `status = 'published'`,
+  `processing_status = 'ready'`, `moderation_status = 'approved'` y
+  `visibility in ('public', 'unlisted')`.
+
+Usa la misma subconsulta a `public.videos` que `video_thumbnails_public_read`
+(sin recursión: las políticas de `videos` no consultan `storage.objects`), así
+que la lectura pública cae de forma inmediata al retirar/archivar/rechazar un
+vídeo.
+
 ## Notas de seguridad
 
 - Los buckets se crean con `on conflict (id) do nothing` y los límites se fijan
   con `update`, de modo que la migración es idempotente y no destructiva.
-- `public-videos` expone contenido por URL directa; el control de visibilidad
+- `public-videos` expone contenido por URL directa **solo** cuando el registro
+  asociado está `published` + `ready` + `approved` de clase `public`/`unlisted`
+  (política corregida en `20260806000000`); el control de visibilidad
   `unlisted` se implementa a nivel de aplicación (no se lista en feeds, pero la
   URL es accesible).
 - **Clases de visibilidad con bucket obligatorio**: la clase pública

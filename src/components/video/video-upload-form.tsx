@@ -1,51 +1,33 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { FileVideo, Loader2 } from "lucide-react";
+import { FileVideo, Loader2, RotateCcw, X } from "lucide-react";
 
-import { saveVideoDraftAction } from "@/actions/videos";
-import { languageFromLocale, getVisibilityLabel, VIDEO_VISIBILITIES, type VideoVisibility } from "@/config/video";
-import { MAX_VIDEO_UPLOAD_BYTES } from "@/config/uploads";
-import { createSupabaseVideoProvider } from "@/lib/video/supabase-video-provider";
 import {
-  EXTRACTABLE_VIDEO_MIME_TYPES,
-  normalizeMime,
-  validateVideoFile,
-  validateVideoMetadata,
-  type VideoMetadataInput,
-} from "@/lib/video/validation";
-import { generateVideoObjectPath } from "@/lib/video/utils";
+  cancelVideoUploadAction,
+  completeVideoUploadAction,
+  createVideoUploadAction,
+} from "@/actions/videos";
+import { getVisibilityLabel, languageFromLocale, VIDEO_VISIBILITIES, type VideoVisibility } from "@/config/video";
+import { MAX_VIDEO_UPLOAD_BYTES } from "@/config/uploads";
+import { validateVideoFileFull } from "@/lib/video/file-validation";
+import { normalizeMime, type VideoMetadataInput } from "@/lib/video/validation";
+import { uploadFileToStorage, type UploadProgress } from "@/lib/video/upload";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { VideoUploadDropzone } from "@/components/ui/video-upload-dropzone";
 
-async function extractVideoMetadata(file: File): Promise<VideoMetadataInput> {
-  const mime = normalizeMime(file.type, file.name);
-  if (!(EXTRACTABLE_VIDEO_MIME_TYPES as readonly string[]).includes(mime)) {
-    return { durationSeconds: null, width: null, height: null };
-  }
+type UploadPhase = "idle" | "preparing" | "uploading" | "verifying" | "failed";
 
-  return new Promise((resolve) => {
-    const objectUrl = URL.createObjectURL(file);
-    const video = document.createElement("video");
-    const done = (metadata: VideoMetadataInput) => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(metadata);
-    };
+type PendingDraft = {
+  videoId: string;
+  storageBucket: string;
+  storagePath: string;
+};
 
-    video.preload = "metadata";
-    video.onloadedmetadata = () =>
-      done({
-        durationSeconds: Number.isFinite(video.duration) ? video.duration : null,
-        width: video.videoWidth || null,
-        height: video.videoHeight || null,
-      });
-    video.onerror = () => done({ durationSeconds: null, width: null, height: null });
-    video.src = objectUrl;
-  });
-}
+const BUSY_PHASES: readonly UploadPhase[] = ["preparing", "uploading", "verifying"];
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) {
@@ -63,82 +45,173 @@ export function VideoUploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<VideoVisibility>("public");
-  const [uploading, setUploading] = useState(false);
+  const [phase, setPhase] = useState<UploadPhase>("idle");
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const metadataRef = useRef<VideoMetadataInput>({ durationSeconds: null, width: null, height: null });
 
-  function handleFile(next: File) {
-    const errorKey = validateVideoFile(next);
-    if (errorKey) {
-      setFile(null);
-      setFileError(tv(errorKey));
+  const metadataRef = useRef<VideoMetadataInput>({
+    durationSeconds: null,
+    width: null,
+    height: null,
+  });
+  const pendingDraftRef = useRef<PendingDraft | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const isBusy = BUSY_PHASES.includes(phase);
+
+  useEffect(() => {
+    if (phase !== "uploading") {
       return;
     }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [phase]);
+
+  async function discardPendingDraft() {
+    const pending = pendingDraftRef.current;
+    if (pending) {
+      await cancelVideoUploadAction(pending.videoId);
+      pendingDraftRef.current = null;
+    }
+  }
+
+  async function resetToIdle() {
+    await discardPendingDraft();
+    abortRef.current = null;
+    setFile(null);
+    setProgress(null);
+    setFormError(null);
+    setFileError(null);
+    setPhase("idle");
+  }
+
+  async function handleFile(next: File) {
+    if (isBusy) {
+      return;
+    }
+    await discardPendingDraft();
+    abortRef.current = null;
+    setProgress(null);
+
+    const result = await validateVideoFileFull(next);
+    if (!result.ok) {
+      setFile(null);
+      setFileError(tv(result.errorKey));
+      setPhase("idle");
+      return;
+    }
+    metadataRef.current = result.metadata;
     setFile(next);
     setFileError(null);
     setFormError(null);
-    void extractVideoMetadata(next).then((metadata) => {
-      metadataRef.current = metadata;
-      const metadataError = validateVideoMetadata(metadata);
-      if (metadataError) {
-        setFile(null);
-        setFileError(tv(metadataError));
-      }
-    });
+    setPhase("idle");
   }
 
   async function handleUpload() {
-    if (!file || uploading) {
+    if (!file || isBusy) {
       return;
     }
-    setUploading(true);
     setFormError(null);
 
     const supabase = createClient();
     const { data: authData } = await supabase.auth.getUser();
     if (!authData.user) {
       setFormError(t("errors.authRequired"));
-      setUploading(false);
       return;
     }
 
-    const videoId = crypto.randomUUID();
-    const storagePath = generateVideoObjectPath(authData.user.id, videoId, file.name);
-    const provider = createSupabaseVideoProvider(supabase);
-    const storageBucket = provider.chooseVideoBucket(visibility);
+    let draft = pendingDraftRef.current;
+    if (!draft) {
+      setPhase("preparing");
+      const created = await createVideoUploadAction({
+        originalFilename: file.name,
+        mimeType: normalizeMime(file.type, file.name),
+        sizeBytes: file.size,
+        durationSeconds: metadataRef.current.durationSeconds,
+        width: metadataRef.current.width,
+        height: metadataRef.current.height,
+        visibility,
+        originalLanguage: languageFromLocale(locale),
+      });
 
-    const { error: uploadError } = await supabase.storage
-      .from(storageBucket)
-      .upload(storagePath, file, { contentType: file.type, cacheControl: "3600" });
+      if (created.status === "error") {
+        setPhase("failed");
+        setFormError(created.message);
+        return;
+      }
 
-    if (uploadError) {
-      setFormError(tv("uploadFailed"));
-      setUploading(false);
+      draft = {
+        videoId: created.videoId,
+        storageBucket: created.storageBucket,
+        storagePath: created.storagePath,
+      };
+      pendingDraftRef.current = draft;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      setPhase("failed");
+      setFormError(t("errors.authRequired"));
       return;
     }
 
-    const metadata = metadataRef.current;
-    const result = await saveVideoDraftAction({
-      videoId,
-      storageBucket,
-      storagePath,
-      originalFilename: file.name,
-      mimeType: normalizeMime(file.type, file.name),
-      sizeBytes: file.size,
-      durationSeconds: metadata.durationSeconds ?? null,
-      width: metadata.width ?? null,
-      height: metadata.height ?? null,
-      visibility,
-      originalLanguage: languageFromLocale(locale),
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setPhase("uploading");
+
+    const result = await uploadFileToStorage({
+      bucket: draft.storageBucket,
+      path: draft.storagePath,
+      file,
+      accessToken,
+      signal: controller.signal,
+      onProgress: setProgress,
     });
 
-    if (result.status === "success") {
-      router.push(`/videos/${videoId}/editar`);
+    if (!result.ok) {
+      abortRef.current = null;
+      if (result.error === "aborted") {
+        await resetToIdle();
+        setFormError(t("uploadCancelled"));
+        return;
+      }
+      setPhase("failed");
+      setFormError(tv("uploadFailed"));
       return;
     }
 
-    setFormError(result.message ?? tv("uploadFailed"));
-    setUploading(false);
+    setPhase("verifying");
+    const completed = await completeVideoUploadAction(draft.videoId);
+    abortRef.current = null;
+    pendingDraftRef.current = null;
+
+    if (completed.status === "success") {
+      router.push(`/videos/${draft.videoId}/editar`);
+      return;
+    }
+
+    setPhase("failed");
+    setFormError(completed.message ?? tv("uploadFailed"));
+  }
+
+  function handleCancel() {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      return;
+    }
+    void resetToIdle();
+  }
+
+  function handleRetry() {
+    if (!file) {
+      setPhase("idle");
+      return;
+    }
+    void handleUpload();
   }
 
   return (
@@ -146,8 +219,8 @@ export function VideoUploadForm() {
       <VideoUploadDropzone
         accept="video/mp4,video/webm"
         maxBytes={MAX_VIDEO_UPLOAD_BYTES}
-        disabled={uploading}
-        onFile={handleFile}
+        disabled={isBusy}
+        onFile={(nextFile) => void handleFile(nextFile)}
       />
 
       {file && (
@@ -157,16 +230,65 @@ export function VideoUploadForm() {
             <p className="truncate text-sm font-medium">{file.name}</p>
             <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
           </div>
+          {!isBusy && (
+            <button
+              type="button"
+              onClick={() => void resetToIdle()}
+              className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              aria-label={t("cancelUpload")}
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
 
+      {isBusy && (
+        <div className="grid gap-2 rounded-2xl border border-border/60 bg-card p-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+            <span>
+              {phase === "uploading"
+                ? progress
+                  ? t("uploadPercent", { percent: progress.percent })
+                  : t("uploadPending")
+                : t("uploadVerifying")}
+            </span>
+          </div>
+          {phase === "uploading" && progress && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width]"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              <span className="shrink-0">
+                {t("uploadBytes", {
+                  loaded: formatFileSize(progress.loaded),
+                  total: formatFileSize(progress.total),
+                })}
+              </span>
+            </div>
+          )}
+          {phase === "uploading" && (
+            <div>
+              <Button type="button" variant="outline" size="sm" onClick={handleCancel}>
+                {t("cancelUpload")}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {formError && <p className="text-sm text-destructive">{formError}</p>}
       {fileError && <p className="text-sm text-destructive">{fileError}</p>}
 
       <label className="grid gap-1.5">
         <span className="text-sm font-medium">{t("visibilityLabel")}</span>
         <select
           value={visibility}
-          disabled={uploading}
+          disabled={isBusy || phase === "failed"}
           onChange={(event) => setVisibility(event.target.value as VideoVisibility)}
           className="flex h-9 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 dark:bg-input/30 dark:border-input/60"
         >
@@ -179,18 +301,34 @@ export function VideoUploadForm() {
         <span className="text-xs text-muted-foreground">{t("visibilityHint")}</span>
       </label>
 
-      {formError && <p className="text-sm text-destructive">{formError}</p>}
-
-      <Button type="button" size="lg" disabled={!file || uploading} onClick={handleUpload}>
-        {uploading ? (
-          <>
-            <Loader2 className="animate-spin" aria-hidden="true" />
-            {t("uploadPending")}
-          </>
-        ) : (
-          t("uploadSubmit")
-        )}
-      </Button>
+      {phase === "failed" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" onClick={() => void resetToIdle()}>
+            <X aria-hidden="true" />
+            {t("cancelUpload")}
+          </Button>
+          <Button type="button" onClick={handleRetry}>
+            <RotateCcw aria-hidden="true" />
+            {t("retryUpload")}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          size="lg"
+          disabled={!file || isBusy}
+          onClick={() => void handleUpload()}
+        >
+          {isBusy ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden="true" />
+              {phase === "uploading" ? t("uploadPending") : t("uploadVerifying")}
+            </>
+          ) : (
+            t("uploadSubmit")
+          )}
+        </Button>
+      )}
     </div>
   );
 }
