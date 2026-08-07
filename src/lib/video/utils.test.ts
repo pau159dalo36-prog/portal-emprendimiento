@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   formatDurationSeconds,
+  formatPlaybackTime,
   generateImageObjectPath,
   generateVideoObjectPath,
   getPublicObjectUrl,
@@ -26,6 +27,28 @@ describe("formatDurationSeconds", () => {
     expect(formatDurationSeconds(undefined)).toBe("");
     expect(formatDurationSeconds(-1)).toBe("");
     expect(formatDurationSeconds(Number.NaN)).toBe("");
+  });
+});
+
+describe("formatPlaybackTime", () => {
+  test("devuelve m:ss para menos de una hora", () => {
+    expect(formatPlaybackTime(65)).toBe("1:05");
+    expect(formatPlaybackTime(0)).toBe("0:00");
+  });
+
+  test("devuelve h:mm:ss para una hora o más", () => {
+    expect(formatPlaybackTime(3661)).toBe("1:01:01");
+  });
+
+  test("trunca los segundos (no redondea)", () => {
+    expect(formatPlaybackTime(59.9)).toBe("0:59");
+  });
+
+  test("devuelve 0:00 para valores inválidos", () => {
+    expect(formatPlaybackTime(null)).toBe("0:00");
+    expect(formatPlaybackTime(undefined)).toBe("0:00");
+    expect(formatPlaybackTime(-1)).toBe("0:00");
+    expect(formatPlaybackTime(Number.NaN)).toBe("0:00");
   });
 });
 

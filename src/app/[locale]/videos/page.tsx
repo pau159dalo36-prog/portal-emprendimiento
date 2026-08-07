@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/auth/session";
 import { VideoCard } from "@/components/video/video-card";
 import { VideoEmptyState } from "@/components/video/video-empty-state";
+import { resolveVideoThumbnails } from "@/lib/video/preview";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { listPublishedVideos } from "@/videos/data";
 
@@ -15,6 +16,7 @@ export default async function VideosPage() {
   const t = await getTranslations("videos");
 
   const videos = await listPublishedVideos(supabase, { limit: 60 });
+  const thumbnails = await resolveVideoThumbnails(supabase, videos);
 
   return (
     <div className="grid gap-6">
@@ -28,7 +30,11 @@ export default async function VideosPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {videos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard
+              key={video.id}
+              video={video}
+              thumbnailSrc={thumbnails.get(video.id) ?? null}
+            />
           ))}
         </div>
       )}

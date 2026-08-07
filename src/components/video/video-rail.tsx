@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { Video } from "lucide-react";
 
+import { getCurrentUser } from "@/auth/session";
 import { VideoCard } from "@/components/video/video-card";
+import { resolveVideoThumbnails } from "@/lib/video/preview";
 import type { VideoWithDetails } from "@/videos/types";
 
 type VideoRailProps = {
@@ -14,6 +16,8 @@ export async function VideoRail({ videos }: VideoRailProps) {
   }
 
   const t = await getTranslations("videos");
+  const { supabase } = await getCurrentUser();
+  const thumbnails = await resolveVideoThumbnails(supabase, videos);
 
   return (
     <section className="grid gap-4">
@@ -27,7 +31,11 @@ export async function VideoRail({ videos }: VideoRailProps) {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
         {videos.map((video) => (
-          <VideoCard key={video.id} video={video} />
+          <VideoCard
+            key={video.id}
+            video={video}
+            thumbnailSrc={thumbnails.get(video.id) ?? null}
+          />
         ))}
       </div>
     </section>

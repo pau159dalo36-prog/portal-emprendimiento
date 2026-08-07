@@ -385,6 +385,10 @@ export async function saveVideoPublicationAction(
     return { status: "error", message: ta("cannotPublishFailed") };
   }
 
+  if (intent === "publish" && video.data.moderation_status !== "approved") {
+    return { status: "error", message: ta("cannotPublishUnapproved") };
+  }
+
   const targetBucket = getBucketForVisibility(parsed.data.visibility);
   if (targetBucket !== video.data.storage_bucket) {
     return { status: "error", message: ta("visibilityClassMismatch") };
@@ -436,7 +440,7 @@ export async function changeVideoStatusAction(formData: FormData): Promise<void>
   }
 
   if (parsed.data === "published") {
-    if (video.data.moderation_status === "rejected") {
+    if (video.data.moderation_status !== "approved") {
       return;
     }
     const { error: infoError } = await supabase.storage
@@ -476,7 +480,7 @@ export async function deleteVideoAction(formData: FormData): Promise<void> {
   const { data: video } = await supabase
     .from("videos")
     .select(
-      "storage_bucket, storage_path, thumbnail_path, thumbnail_bucket, poster_path, poster_bucket",
+      "storage_bucket, storage_path, thumbnail_path, thumbnail_bucket, poster_path, poster_bucket, captions_path",
     )
     .eq("id", videoId)
     .eq("owner_id", user.id)
@@ -496,6 +500,9 @@ export async function deleteVideoAction(formData: FormData): Promise<void> {
   }
   if (video.poster_path && video.poster_bucket) {
     cleanup.push({ bucket: video.poster_bucket, path: video.poster_path });
+  }
+  if (video.captions_path) {
+    cleanup.push({ bucket: video.storage_bucket, path: video.captions_path });
   }
 
   for (const { bucket, path } of cleanup) {

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { requireUser } from "@/auth/session";
+import { VideoCoverGenerator } from "@/components/video/video-cover-generator";
 import { VideoImageUploader } from "@/components/video/video-image-uploader";
 import { VideoPublicationForm } from "@/components/video/video-publication-form";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export default async function EditVideoPage({ params }: EditVideoPageProps) {
 
   const projects = await listProjectsForUser(supabase, user.id);
 
-  const [thumbnailSrc, posterSrc] = await Promise.all([
+  const [thumbnailSrc, posterSrc, videoSrc] = await Promise.all([
     resolveVideoImagePreviewUrl(supabase, {
       bucket: video.thumbnail_bucket,
       path: video.thumbnail_path,
@@ -39,6 +40,10 @@ export default async function EditVideoPage({ params }: EditVideoPageProps) {
       bucket: video.poster_bucket,
       path: video.poster_path,
     }),
+    supabase.storage
+      .from(video.storage_bucket)
+      .createSignedUrl(video.storage_path, 60 * 60)
+      .then(({ data }) => data?.signedUrl ?? null),
   ]);
 
   return (
@@ -61,6 +66,12 @@ export default async function EditVideoPage({ params }: EditVideoPageProps) {
       <Card>
         <CardContent>
           <VideoImageUploader videoId={id} thumbnailSrc={thumbnailSrc} posterSrc={posterSrc} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <VideoCoverGenerator videoId={id} videoSrc={videoSrc} />
         </CardContent>
       </Card>
     </div>

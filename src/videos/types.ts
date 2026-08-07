@@ -15,7 +15,14 @@ export type VideoProjectRef = {
   slug: string;
 };
 
+export type VideoOrganizationRef = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export type VideoWithDetails = VideoRow & {
   owner: VideoOwnerRef | null;
   project: VideoProjectRef | null;
+  organization: VideoOrganizationRef | null;
 };

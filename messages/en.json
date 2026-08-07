@@ -50,7 +50,9 @@
     "newProject": "New project",
     "newOrganization": "New organization",
     "explore": "Explore",
-    "publishVideo": "Publish video"
+    "publishVideo": "Publish video",
+    "myVideos": "My videos",
+    "adminVideos": "Video moderation"
   },
   "feed": {
     "forYou": "For you",
@@ -472,6 +474,8 @@
     "noLinks": "No links yet.",
     "projects": "Organization projects",
     "noProjects": "This organization does not have projects yet.",
+    "videosTitle": "Videos",
+    "noVideos": "This organization has no published videos yet.",
     "about": "About",
     "noDescription": "This organization has not added a description yet.",
     "edit": "Edit",
@@ -700,7 +704,8 @@
       "visibilityClassMismatch": "The chosen visibility is not compatible with the class of the uploaded video. Re-upload it to change it.",
       "uploadNotFound": "The uploaded file could not be found. Try again.",
       "imageSaved": "Image updated.",
-      "imageSaveFailed": "The image could not be saved. Try again."
+      "imageSaveFailed": "The image could not be saved. Try again.",
+      "cannotPublishUnapproved": "The video must be approved by moderation before it can be published."
     },
     "moderation": {
       "unauthorized": "You don't have permission to moderate videos.",
@@ -742,7 +747,7 @@
     "title": "Videos",
     "description": "Short videos from the community.",
     "newTitle": "Publish video",
-    "newDescription": "Upload a video up to 200 MB and share it with the community.",
+    "newDescription": "Upload a video up to 100 MB and share it with the community.",
     "editTitle": "Edit video",
     "editDescription": "Update the title, description and visibility.",
     "panelTitle": "My videos",
@@ -753,12 +758,34 @@
     "anonymous": "Anonymous",
     "publishedOn": "Published on {date}",
     "inProject": "Project:",
+    "inOrganization": "Organization:",
     "edit": "Edit",
     "view": "View",
     "publish": "Publish",
     "hide": "Hide",
+    "retract": "Unpublish",
+    "archive": "Archive",
+    "unarchive": "Restore",
     "delete": "Delete",
-    "confirmDelete": "Delete?"
+    "confirmDelete": "Delete?",
+    "noProject": "No project",
+    "noOrganization": "No organization",
+    "moderationReason": "Reason: {reason}",
+    "createdOn": "Uploaded on {date}",
+    "publishedAtLabel": "Published on {date}",
+    "panelItem": "video",
+    "panelItems": "videos",
+    "panelSections": {
+      "uploading": "Uploading",
+      "pending": "Under review",
+      "flagged": "Flagged by moderation",
+      "rejected": "Rejected",
+      "drafts": "Drafts",
+      "published": "Published",
+      "hidden": "Hidden",
+      "archived": "Archived",
+      "failed": "Upload errors"
+    }
   },
   "videoForm": {
     "visibilityLabel": "Visibility",
@@ -769,6 +796,7 @@
     "uploadVerifying": "Verifying the file…",
     "uploadPercent": "Uploading… {percent}%",
     "uploadBytes": "{loaded} of {total}",
+    "generatingCover": "Generating cover…",
     "cancelUpload": "Cancel upload",
     "retryUpload": "Retry",
     "uploadCancelled": "Upload cancelled.",
@@ -782,6 +810,17 @@
     "imageReplace": "Change",
     "imageRemove": "Remove image",
     "imageUploading": "Uploading image…",
+    "coverTitle": "Cover from the video",
+    "coverHint": "Pick a moment in the video to use as its cover. Upload is not blocked if your browser doesn't support it.",
+    "coverTimeLabel": "Moment",
+    "coverGenerate": "Generate cover",
+    "coverRegenerate": "Generate at another moment",
+    "coverPreview": "Preview",
+    "coverSave": "Use as cover",
+    "coverSaving": "Saving cover…",
+    "coverLoading": "Preparing the video…",
+    "coverUnavailable": "Automatic covers are not available for this video.",
+    "coverError": "Could not generate the cover. Pick another moment and try again.",
     "errors": {
       "authRequired": "You must sign in to upload videos."
     },
@@ -816,6 +855,23 @@
     "captionRequired": "Choose a captions file.",
     "captionTooLarge": "The captions file cannot exceed 1 MB.",
     "captionBadFormat": "Format not allowed. Use WebVTT (.vtt)."
+  },
+  "player": {
+    "play": "Play",
+    "pause": "Pause",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "volume": "Volume",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "error": "This video could not be played.",
+    "loading": "Loading…",
+    "captions": "Enable captions",
+    "captionsOff": "Disable captions",
+    "scrub": "Playback progress",
+    "controls": "Video player controls",
+    "timeCurrent": "Current time",
+    "timeDuration": "Duration"
   },
   "validation": {
     "nameMin": "Enter your full name.",

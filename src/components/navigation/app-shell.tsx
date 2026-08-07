@@ -8,6 +8,7 @@ export type ShellUser = {
   full_name: string | null;
   username: string | null;
   avatar_url: string | null;
+  role?: string;
 };
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
@@ -15,13 +16,19 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   let shellUser: ShellUser | null = null;
   if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, username, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (data) {
-      shellUser = data;
+    const [profile, claims] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase.auth.getClaims(),
+    ]);
+    if (profile.data) {
+      shellUser = {
+        ...profile.data,
+        role: claims.data?.claims?.app_metadata?.role ?? undefined,
+      };
     }
   }
 

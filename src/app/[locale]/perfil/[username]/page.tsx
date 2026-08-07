@@ -18,6 +18,7 @@ import { brand } from "@/config/brand";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 import { listPublishedVideos } from "@/videos/data";
+import { resolveVideoThumbnails } from "@/lib/video/preview";
 
 type PublicProfilePageProps = {
   params: Promise<{ username: string; locale: string }>;
@@ -75,6 +76,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   ]);
 
   const firstName = profile.full_name?.split(" ")[0];
+  const videoThumbnails = await resolveVideoThumbnails(supabase, publishedVideos);
 
   return (
     <div className="grid gap-6">
@@ -195,7 +197,11 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           <CardContent>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {publishedVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  thumbnailSrc={videoThumbnails.get(video.id) ?? null}
+                />
               ))}
             </div>
           </CardContent>

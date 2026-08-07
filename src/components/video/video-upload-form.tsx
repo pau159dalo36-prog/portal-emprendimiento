@@ -8,12 +8,15 @@ import {
   cancelVideoUploadAction,
   completeVideoUploadAction,
   createVideoUploadAction,
+  prepareVideoImageUploadAction,
+  saveVideoImagesAction,
 } from "@/actions/videos";
 import { getVisibilityLabel, languageFromLocale, VIDEO_VISIBILITIES, type VideoVisibility } from "@/config/video";
 import { MAX_VIDEO_UPLOAD_BYTES } from "@/config/uploads";
 import { validateVideoFileFull } from "@/lib/video/file-validation";
 import { normalizeMime, type VideoMetadataInput } from "@/lib/video/validation";
 import { uploadFileToStorage, type UploadProgress } from "@/lib/video/upload";
+import { extractVideoFrame } from "@/lib/video/frame";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -48,6 +51,7 @@ export function VideoUploadForm() {
   const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [generatingCover, setGeneratingCover] = useState(false);
 
   const metadataRef = useRef<VideoMetadataInput>({
     durationSeconds: null,
@@ -190,12 +194,64 @@ export function VideoUploadForm() {
     pendingDraftRef.current = null;
 
     if (completed.status === "success") {
+      await generateAndSaveCover(draft.videoId);
       router.push(`/videos/${draft.videoId}/editar`);
       return;
     }
 
     setPhase("failed");
     setFormError(completed.message ?? tv("uploadFailed"));
+  }
+
+  async function generateAndSaveCover(videoId: string) {
+    if (!file) {
+      return;
+    }
+    setGeneratingCover(true);
+    try {
+      const frame = await extractVideoFrame(file);
+      const posterFile = new File([frame.blob], `poster${frame.extension}`, {
+        type: frame.mimeType,
+      });
+
+      const prepared = await prepareVideoImageUploadAction(videoId, "poster", {
+        filename: posterFile.name,
+        mimeType: posterFile.type,
+        sizeBytes: posterFile.size,
+      });
+      if (prepared.status === "error") {
+        return;
+      }
+
+      const supabase = createClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        return;
+      }
+
+      const uploadResult = await uploadFileToStorage({
+        bucket: prepared.storageBucket,
+        path: prepared.storagePath,
+        file: posterFile,
+        accessToken,
+        upsert: true,
+      });
+      if (!uploadResult.ok) {
+        return;
+      }
+
+      await saveVideoImagesAction(videoId, {
+        poster: {
+          storageBucket: prepared.storageBucket,
+          storagePath: prepared.storagePath,
+        },
+      });
+    } catch {
+      // La portada es opcional: si falla, continuamos al editor.
+    } finally {
+      setGeneratingCover(false);
+    }
   }
 
   function handleCancel() {
@@ -248,11 +304,13 @@ export function VideoUploadForm() {
           <div className="flex items-center gap-2 text-sm font-medium">
             <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
             <span>
-              {phase === "uploading"
-                ? progress
-                  ? t("uploadPercent", { percent: progress.percent })
-                  : t("uploadPending")
-                : t("uploadVerifying")}
+              {generatingCover
+                ? t("generatingCover")
+                : phase === "uploading"
+                  ? progress
+                    ? t("uploadPercent", { percent: progress.percent })
+                    : t("uploadPending")
+                  : t("uploadVerifying")}
             </span>
           </div>
           {phase === "uploading" && progress && (

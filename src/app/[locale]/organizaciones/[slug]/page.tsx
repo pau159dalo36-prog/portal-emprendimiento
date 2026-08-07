@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ProjectCard } from "@/components/projects/project-card";
+import { VideoCard } from "@/components/video/video-card";
 import { brand } from "@/config/brand";
 import {
   getOrganizationBySlug,
@@ -22,6 +23,8 @@ import {
   isOrganizationManager,
 } from "@/organizations/data";
 import { listProjectsByOrganization } from "@/projects/data";
+import { listPublishedVideosForOrganization } from "@/videos/data";
+import { resolveVideoThumbnails } from "@/lib/video/preview";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 
@@ -60,12 +63,14 @@ export default async function OrganizationProfilePage({
     notFound();
   }
 
-  const [members, links, projects, canEdit] = await Promise.all([
+  const [members, links, projects, videos, canEdit] = await Promise.all([
     getOrganizationMembers(supabase, organization.id),
     getOrganizationLinks(supabase, organization.id),
     listProjectsByOrganization(supabase, organization.id),
+    listPublishedVideosForOrganization(supabase, organization.id, { limit: 12 }),
     user ? isOrganizationManager(supabase, organization.id, user.id) : Promise.resolve(false),
   ]);
+  const videoThumbnails = await resolveVideoThumbnails(supabase, videos);
 
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
     month: "long",
@@ -258,6 +263,25 @@ export default async function OrganizationProfilePage({
           )}
         </CardContent>
       </Card>
+
+      {videos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("videosTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {videos.map((video) => (
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  thumbnailSrc={videoThumbnails.get(video.id) ?? null}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {members.length > 0 && (
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

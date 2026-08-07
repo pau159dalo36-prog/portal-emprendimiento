@@ -8,7 +8,7 @@ export type ListPublishedVideosFilters = {
 };
 
 const VIDEO_WITH_DETAILS =
-  "*, owner:profiles!videos_owner_id_fkey(id, full_name, username, avatar_url), project:projects(id, name, slug)";
+  "*, owner:profiles!videos_owner_id_fkey(id, full_name, username, avatar_url), project:projects(id, name, slug), organization:organizations!videos_organization_id_fkey(id, name, slug)";
 
 export async function listPublishedVideos(
   supabase: SupabaseClient<Database>,
@@ -18,6 +18,8 @@ export async function listPublishedVideos(
     .from("videos")
     .select(VIDEO_WITH_DETAILS)
     .eq("status", "published")
+    .eq("processing_status", "ready")
+    .eq("moderation_status", "approved")
     .neq("visibility", "unlisted")
     .order("published_at", { ascending: false });
 
@@ -93,6 +95,8 @@ export async function listPublishedVideosForProject(
     .select(VIDEO_WITH_DETAILS)
     .eq("project_id", projectId)
     .eq("status", "published")
+    .eq("processing_status", "ready")
+    .eq("moderation_status", "approved")
     .neq("visibility", "unlisted")
     .order("published_at", { ascending: false });
 
@@ -102,4 +106,36 @@ export async function listPublishedVideosForProject(
 
   const { data } = await query;
   return data ?? [];
+}
+
+export async function listPublishedVideosForOrganization(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+  filters: ListPublishedVideosFilters = {},
+): Promise<VideoWithDetails[]> {
+  let query = supabase
+    .from("videos")
+    .select(VIDEO_WITH_DETAILS)
+    .eq("organization_id", organizationId)
+    .eq("status", "published")
+    .eq("processing_status", "ready")
+    .eq("moderation_status", "approved")
+    .neq("visibility", "unlisted")
+    .order("published_at", { ascending: false });
+
+  if (filters.limit != null) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data } = await query;
+  return data ?? [];
+}
+
+export function isVerticalVideo(video: VideoWithDetails): boolean {
+  const width = video.width;
+  const height = video.height;
+  if (!width || !height) {
+    return false;
+  }
+  return height > width;
 }

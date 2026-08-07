@@ -1,21 +1,31 @@
 import { getTranslations } from "next-intl/server";
-import { Languages } from "lucide-react";
+import { Languages, ShieldCheck, Video } from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-export async function SignedInNav() {
+export async function SignedInNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const t = await getTranslations("nav");
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Link href="/proyectos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         {t("projects")}
       </Link>
       <Link href="/organizaciones" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         {t("organizations")}
       </Link>
+      <Link href="/panel/videos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        <Video className="size-4" aria-hidden="true" />
+        {t("myVideos")}
+      </Link>
+      {isAdmin && (
+        <Link href="/admin/videos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          <ShieldCheck className="size-4" aria-hidden="true" />
+          {t("adminVideos")}
+        </Link>
+      )}
       <Link href="/panel" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         {t("panel")}
       </Link>

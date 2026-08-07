@@ -9,6 +9,7 @@ import { ProjectGrid } from "@/components/feed/project-grid";
 import { ProjectNeedsRow } from "@/components/feed/project-needs-row";
 import { AppShell } from "@/components/navigation/app-shell";
 import { VideoRail } from "@/components/video/video-rail";
+import { ShortVideosRail } from "@/components/video/short-videos-rail";
 import { buttonVariants } from "@/components/ui/button";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
@@ -79,7 +80,8 @@ export default async function HomePage() {
     recommended.length > 0 ||
     recentProjects.length > 0 ||
     needs.length > 0 ||
-    organizations.length > 0;
+    organizations.length > 0 ||
+    publishedVideos.length > 0;
 
   return (
     <AppShell>
@@ -150,6 +152,8 @@ export default async function HomePage() {
             )}
 
             {publishedVideos.length > 0 && <VideoRail videos={publishedVideos} />}
+
+            <ShortVideosRail videos={publishedVideos} />
 
             {organizations.length > 0 && (
               <FeedSection

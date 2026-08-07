@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import type { VideoWithDetails } from "@/videos/types";
 
-type VideoCardProps = {
+type VideoShortCardProps = {
   video: VideoWithDetails;
   className?: string;
   thumbnailSrc?: string | null;
 };
 
-export async function VideoCard({ video, className, thumbnailSrc }: VideoCardProps) {
+export async function VideoShortCard({ video, className, thumbnailSrc }: VideoShortCardProps) {
   const t = await getTranslations("videos");
   const supabaseUrl = getSupabaseUrl();
   const thumbnail =
@@ -28,7 +28,7 @@ export async function VideoCard({ video, className, thumbnailSrc }: VideoCardPro
         className,
       )}
     >
-      <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-muted">
+      <div className="relative aspect-[9/16] w-full shrink-0 overflow-hidden bg-muted">
         {thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

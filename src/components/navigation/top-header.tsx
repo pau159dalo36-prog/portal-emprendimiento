@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { LogOut, Plus, Search, Video } from "lucide-react";
+import { LogOut, Plus, Search, ShieldCheck, Video } from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
 import type { ShellUser } from "@/components/navigation/app-shell";
@@ -69,6 +69,22 @@ export function TopHeader({ user }: { user: ShellUser | null }) {
                 <Video className="size-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("publishVideo")}</span>
               </Link>
+              <Link
+                href="/panel/videos"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Video className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{t("myVideos")}</span>
+              </Link>
+              {user.role === "admin" && (
+                <Link
+                  href="/admin/videos"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  <ShieldCheck className="size-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t("adminVideos")}</span>
+                </Link>
+              )}
               <Link href="/perfil" aria-label={t("panel")}>
                 <Avatar name={user.full_name} src={user.avatar_url} size="sm" />
               </Link>

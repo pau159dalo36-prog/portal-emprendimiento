@@ -22,6 +22,7 @@ import {
   getProjectNeeds,
 } from "@/projects/data";
 import { listPublishedVideosForProject } from "@/videos/data";
+import { resolveVideoThumbnails } from "@/lib/video/preview";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 
@@ -68,6 +69,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   ]);
 
   const isOwner = user?.id === project.owner_id;
+  const thumbnails = await resolveVideoThumbnails(supabase, projectVideos);
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
     day: "numeric",
     month: "long",
@@ -325,7 +327,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           <CardContent>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {projectVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  thumbnailSrc={thumbnails.get(video.id) ?? null}
+                />
               ))}
             </div>
           </CardContent>

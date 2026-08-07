@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Newspaper,
   Plus,
+  ShieldCheck,
   Sparkles,
   User,
   Video,
@@ -49,9 +50,14 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
   const activityItems: SidebarItem[] = [
     { href: "/panel", label: nav("panel"), icon: LayoutDashboard },
     { href: "/perfil", label: t("profile"), icon: User },
+    { href: "/panel/videos", label: nav("myVideos"), icon: Video },
     { href: "/proyectos/nuevo", label: nav("newProject"), icon: Plus },
     { href: "/organizaciones/nueva", label: nav("newOrganization"), icon: Plus },
     { href: "/publicar/video", label: nav("publishVideo"), icon: Video },
+  ];
+
+  const adminItems: SidebarItem[] = [
+    { href: "/admin/videos", label: nav("adminVideos"), icon: ShieldCheck },
   ];
 
   const comingSoonItems = [
@@ -94,6 +100,34 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
             {t("activity")}
           </p>
           {activityItems.map((item) => {
+            const active = isActive(item.href, item.exact);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      {user?.role === "admin" && (
+        <nav aria-label={t("activity")} className="grid gap-1">
+          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("activity")}
+          </p>
+          {adminItems.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             return (
