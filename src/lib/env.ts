@@ -1,10 +1,6 @@
-type RequiredPublicEnvVar = "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
-
 const LOCALHOST_SITE_URL = "http://localhost:3000";
 
-function requireEnv(name: RequiredPublicEnvVar): string {
-  const value = process.env[name];
-
+function requireEnv(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(
       `Falta la variable de entorno "${name}". Configúrala en .env.local o en el proveedor de despliegue (consulta .env.example).`,
@@ -45,11 +41,14 @@ function normalizeSiteUrl(value: string): string {
 }
 
 export function getSupabaseUrl(): string {
-  return requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+  return requireEnv("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
 }
 
 export function getSupabasePublishableKey(): string {
-  return requireEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  return requireEnv(
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  );
 }
 
 export function getSiteUrl(): string {

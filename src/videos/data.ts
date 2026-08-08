@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { VIDEO_DISTRIBUTABLE_MODERATION_STATUSES } from "@/config/video";
 import type { VideoWithDetails } from "@/videos/types";
 
 export type ListPublishedVideosFilters = {
@@ -19,7 +20,7 @@ export async function listPublishedVideos(
     .select(VIDEO_WITH_DETAILS)
     .eq("status", "published")
     .eq("processing_status", "ready")
-    .eq("moderation_status", "approved")
+    .in("moderation_status", [...VIDEO_DISTRIBUTABLE_MODERATION_STATUSES])
     .neq("visibility", "unlisted")
     .order("published_at", { ascending: false });
 
@@ -61,7 +62,7 @@ export async function listVideosForUser(
 }
 
 const MODERATION_PRIORITY: Record<string, number> = {
-  pending: 0,
+  unreviewed: 0,
   flagged: 1,
   rejected: 2,
   approved: 3,
@@ -96,7 +97,7 @@ export async function listPublishedVideosForProject(
     .eq("project_id", projectId)
     .eq("status", "published")
     .eq("processing_status", "ready")
-    .eq("moderation_status", "approved")
+    .in("moderation_status", [...VIDEO_DISTRIBUTABLE_MODERATION_STATUSES])
     .neq("visibility", "unlisted")
     .order("published_at", { ascending: false });
 
@@ -119,7 +120,7 @@ export async function listPublishedVideosForOrganization(
     .eq("organization_id", organizationId)
     .eq("status", "published")
     .eq("processing_status", "ready")
-    .eq("moderation_status", "approved")
+    .in("moderation_status", [...VIDEO_DISTRIBUTABLE_MODERATION_STATUSES])
     .neq("visibility", "unlisted")
     .order("published_at", { ascending: false });
 

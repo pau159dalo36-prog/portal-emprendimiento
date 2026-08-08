@@ -14,7 +14,7 @@ import {
 const base = {
   processing_status: "uploaded",
   status: "draft",
-  moderation_status: "pending",
+  moderation_status: "unreviewed",
 };
 
 describe("getPanelSection", () => {
@@ -30,7 +30,7 @@ describe("getPanelSection", () => {
   });
 
   it("mapea por estado de moderación", () => {
-    expect(getPanelSection({ ...base, moderation_status: "pending" })).toBe("pending");
+    expect(getPanelSection({ ...base, moderation_status: "unreviewed" })).toBe("unreviewed");
     expect(getPanelSection({ ...base, moderation_status: "flagged" })).toBe("flagged");
     expect(getPanelSection({ ...base, moderation_status: "rejected" })).toBe("rejected");
     expect(getPanelSection({ ...base, moderation_status: "approved" })).toBe("drafts");
@@ -49,26 +49,23 @@ describe("PANEL_SECTION_ORDER", () => {
 });
 
 describe("canPublishVideo", () => {
-  it("solo permite publicar vídeos aprobados, no subiéndose y sin estado final", () => {
-    const approved = { ...base, moderation_status: "approved" };
-    expect(canPublishVideo(approved)).toBe(true);
-    expect(canPublishVideo({ ...approved, moderation_status: "pending" })).toBe(false);
-    expect(canPublishVideo({ ...approved, moderation_status: "flagged" })).toBe(false);
-    expect(canPublishVideo({ ...approved, moderation_status: "rejected" })).toBe(false);
+  it("permite publicar sin aprobación de moderación (publicación post-moderación)", () => {
+    expect(canPublishVideo({ ...base, moderation_status: "unreviewed" })).toBe(true);
+    expect(canPublishVideo({ ...base, moderation_status: "approved" })).toBe(true);
+    expect(canPublishVideo({ ...base, moderation_status: "flagged" })).toBe(true);
+    expect(canPublishVideo({ ...base, moderation_status: "rejected" })).toBe(true);
   });
 
   it("bloquea la publicación durante la subida o tras fallar", () => {
-    const approved = { ...base, moderation_status: "approved" };
-    expect(canPublishVideo({ ...approved, processing_status: "uploading" })).toBe(false);
-    expect(canPublishVideo({ ...approved, processing_status: "failed" })).toBe(false);
+    expect(canPublishVideo({ ...base, processing_status: "uploading" })).toBe(false);
+    expect(canPublishVideo({ ...base, processing_status: "failed" })).toBe(false);
   });
 
   it("bloquea la publicación en estados finales", () => {
-    const approved = { ...base, moderation_status: "approved" };
-    expect(canPublishVideo({ ...approved, status: "published" })).toBe(false);
-    expect(canPublishVideo({ ...approved, status: "hidden" })).toBe(false);
-    expect(canPublishVideo({ ...approved, status: "archived" })).toBe(false);
-    expect(canPublishVideo({ ...approved, status: "removed" })).toBe(false);
+    expect(canPublishVideo({ ...base, status: "published" })).toBe(false);
+    expect(canPublishVideo({ ...base, status: "hidden" })).toBe(false);
+    expect(canPublishVideo({ ...base, status: "archived" })).toBe(false);
+    expect(canPublishVideo({ ...base, status: "removed" })).toBe(false);
   });
 });
 

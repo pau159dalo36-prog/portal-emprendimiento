@@ -7,18 +7,18 @@ Fecha: 2026-08-07
 | Migración | Contenido |
 | --- | --- |
 | `20260805000000_fase3_storage_videos.sql` | Tabla `videos`, buckets, RLS, triggers, RPCs de moderación, storage público/privado/miniaturas. |
-| `20260806000000_fix_videos_public_read.sql` | Lectura de `public-videos` exige published+ready+approved (o ser propietario). |
+| `20260806000000_fix_videos_public_read.sql` | Lectura de `public-videos` exige published+ready+distributable (o ser propietario). |
 | `20260806010000_admin_videos_select.sql` | Política `videos_select_admin` para `is_platform_admin()`. |
 
 ## Invariantes verificados en el código
 
 - [x] Los listados públicos aplican `status='published'` + `processing_status='ready'`
-      + `moderation_status='approved'` (además del RLS).
+      + `video_is_publicly_distributable(moderation_status)` (además del RLS).
 - [x] `unlisted` se excluye de listados públicos.
 - [x] Signed URLs solo en servidor, nunca persistidas en BD.
-- [x] Publicar exige `moderation_status='approved'` en las server actions
-      (pendiente/marcado/rechazado se bloquean) y `storage.info` antes de
-      publicar de forma atómica (`published` + `ready`).
+- [x] Publicar no exige aprobación de moderación; las server actions verifican
+      estado/objeto y publican de forma atómica (`published` + `ready`).
+      Rechazado/marcado queda bloqueado en la distribución (no en su `status`).
 - [x] El panel no ofrece acciones imposibles (p. ej. publicar un vídeo `uploading`
       o `rejected`).
 - [x] El borrado limpia storage (vídeo + miniatura + portada + captions) y la fila.

@@ -71,8 +71,6 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
     path: video.poster_path,
   });
 
-  const isPublished = video.status === "published";
-
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
       <VideoPlayer src={playbackUrl} poster={poster} />
@@ -90,11 +88,13 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
               {statuses(video.status as Parameters<typeof statuses>[0])}
             </Badge>
           )}
-          {isOwner && video.moderation_status !== "approved" && (
-            <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              {moderation(video.moderation_status as Parameters<typeof moderation>[0])}
-            </Badge>
-          )}
+          {isOwner &&
+            (video.moderation_status === "rejected" ||
+              video.moderation_status === "flagged") && (
+              <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                {moderation(video.moderation_status as Parameters<typeof moderation>[0])}
+              </Badge>
+            )}
           {isAdmin && !isOwner && (
             <Badge className="border-border bg-muted text-muted-foreground">
               {statuses(video.status as Parameters<typeof statuses>[0])}
@@ -111,7 +111,7 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
           <p className="text-sm leading-6 text-muted-foreground">{video.caption}</p>
         )}
 
-        {!isPublished && isOwner && video.moderation_reason && (
+        {isOwner && video.moderation_reason && (
           <p className="text-sm text-muted-foreground">
             {t("moderationReason", { reason: video.moderation_reason })}
           </p>

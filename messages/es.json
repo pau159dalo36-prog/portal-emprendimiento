@@ -704,8 +704,7 @@
       "visibilityClassMismatch": "La visibilidad elegida no es compatible con la clase del vídeo ya subido. Vuelve a subirlo para cambiarla.",
       "uploadNotFound": "No se encontró el archivo subido. Inténtalo de nuevo.",
       "imageSaved": "Imagen actualizada.",
-      "imageSaveFailed": "No se pudo guardar la imagen. Inténtalo de nuevo.",
-      "cannotPublishUnapproved": "El vídeo debe estar aprobado por moderación para poder publicarse."
+      "imageSaveFailed": "No se pudo guardar la imagen. Inténtalo de nuevo."
     },
     "moderation": {
       "unauthorized": "No tienes permiso para moderar vídeos.",
@@ -729,7 +728,7 @@
   },
   "moderation": {
     "title": "Moderación de vídeos",
-    "description": "Revisa y modera los vídeos de la comunidad.",
+    "description": "Revisa los vídeos publicados y retira los que incumplan las normas.",
     "empty": "No hay vídeos pendientes de moderación.",
     "reasonLabel": "Motivo (opcional)",
     "reasonPlaceholder": "Motivo del rechazo o marcado…",
@@ -738,7 +737,7 @@
     "flag": "Marcar"
   },
   "moderationStatuses": {
-    "pending": "En espera",
+    "unreviewed": "Sin revisar",
     "approved": "Aprobado",
     "rejected": "Rechazado",
     "flagged": "Marcado"
@@ -777,7 +776,7 @@
     "panelItems": "vídeos",
     "panelSections": {
       "uploading": "Subiendo",
-      "pending": "En revisión",
+      "unreviewed": "Sin revisar",
       "flagged": "Marcado por moderación",
       "rejected": "Rechazado",
       "drafts": "Borradores",

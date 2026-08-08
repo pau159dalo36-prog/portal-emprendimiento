@@ -49,7 +49,7 @@ async function VideoPanelCard({
   const isFailed = video.processing_status === "failed";
   const isPublished = video.status === "published";
   const isRejected = video.moderation_status === "rejected";
-  const isModerationPending = video.moderation_status === "pending" || video.moderation_status === "flagged";
+  const isModerationPending = video.moderation_status === "unreviewed" || video.moderation_status === "flagged";
 
   const publishable = canPublishVideo(video);
   const editable = canEditVideo(video);

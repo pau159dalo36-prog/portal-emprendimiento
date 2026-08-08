@@ -704,8 +704,7 @@
       "visibilityClassMismatch": "The chosen visibility is not compatible with the class of the uploaded video. Re-upload it to change it.",
       "uploadNotFound": "The uploaded file could not be found. Try again.",
       "imageSaved": "Image updated.",
-      "imageSaveFailed": "The image could not be saved. Try again.",
-      "cannotPublishUnapproved": "The video must be approved by moderation before it can be published."
+      "imageSaveFailed": "The image could not be saved. Try again."
     },
     "moderation": {
       "unauthorized": "You don't have permission to moderate videos.",
@@ -729,7 +728,7 @@
   },
   "moderation": {
     "title": "Video moderation",
-    "description": "Review and moderate community videos.",
+    "description": "Review published videos and take down any that break the rules.",
     "empty": "There are no videos pending moderation.",
     "reasonLabel": "Reason (optional)",
     "reasonPlaceholder": "Reason for rejection or flagging…",
@@ -738,7 +737,7 @@
     "flag": "Flag"
   },
   "moderationStatuses": {
-    "pending": "Pending",
+    "unreviewed": "Unreviewed",
     "approved": "Approved",
     "rejected": "Rejected",
     "flagged": "Flagged"
@@ -777,7 +776,7 @@
     "panelItems": "videos",
     "panelSections": {
       "uploading": "Uploading",
-      "pending": "Under review",
+      "unreviewed": "Unreviewed",
       "flagged": "Flagged by moderation",
       "rejected": "Rejected",
       "drafts": "Drafts",

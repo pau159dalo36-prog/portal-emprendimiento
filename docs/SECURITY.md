@@ -46,9 +46,14 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   `poster_bucket` fijan dónde vive cada imagen. La clase pública solo puede usar
   `video-thumbnails`; la clase protegida solo `private-videos` (o no tener
   imagen). La lectura pública de `video-thumbnails` exige además que el objeto
-  esté referenciado por un vídeo publicado, listo y aprobado (o ser del propio
-  usuario), de modo que un vídeo pendiente/protegido nunca filtra su portada.
-- **Moderación solo administrativa**: `is_platform_admin()` comprueba
+  esté referenciado por un vídeo publicado, listo y distributable (o ser del
+  propio usuario), de modo que un vídeo rechazado, marcado, no publicado o
+  protegido nunca filtra su portada.
+- **Moderación solo administrativa y post-publicación**: el propietario publica
+  sin aprobación previa (`status='published'` + `processing_status='ready'`); la
+  moderación actúa después, retirando de la distribución pública cualquier vídeo
+  `rejected`/`flagged` (RLS, storage y signed URLs lo bloquean de inmediato, sin
+  cambiar `status` ni `published_at`). `is_platform_admin()` comprueba
   únicamente `app_metadata.role = 'admin'` del JWT y es una función **normal**
   (no `SECURITY DEFINER`), por lo que no eleva privilegios. Las RPCs
   `admin_approve_video`/`admin_reject_video`/`admin_flag_video` verifican el rol
@@ -57,7 +62,9 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   `videos_validate_state_change` bloquea cualquier cambio de moderación salvo
   que el autor de la sentencia sea un administrador distinto del propietario
   (verificado con `auth.jwt()`; **no** existe ningún guard de transacción
-  manipulable por el cliente).
+  manipulable por el cliente). El predicado canónico
+  `video_is_publicly_distributable` es la única fuente de verdad que decide si
+  un vídeo publicado se sirve al público.
 - **Sin proveedores externos**: no se integran Mux/Cloudflare ni se firman
   URLs con claves de servicio.
 - **Código nunca introduce secretos**: los paths de Storage se construyen solo
@@ -65,10 +72,10 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
 
 ## Estado y limitaciones conocidas
 
-- La moderación ya **filtra las lecturas**: `videos_select_public`,
-  `videos_select_registered`, `videos_select_project_members` y el helper de
-  storage exigen `moderation_status='approved'`. Un vídeo pendiente solo lo ve
-  su propietario.
+- La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:
+  `videos_select_public`, `videos_select_registered`, `videos_select_project_members`
+  y el helper de storage usan `video_is_publicly_distributable`, que excluye
+  `rejected`/`flagged`. Un vídeo rechazado/marcado solo lo ve su propietario.
 - Las signed URLs caducan (1 h); el reproductor debe regenerarlas si expiran
   durante la sesión.
 - Los subtítulos/miniaturas aún no tienen UI de subida (ver

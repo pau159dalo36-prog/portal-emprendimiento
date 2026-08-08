@@ -1,7 +1,7 @@
 export type PanelSectionKey =
   | "uploading"
   | "drafts"
-  | "pending"
+  | "unreviewed"
   | "flagged"
   | "rejected"
   | "published"
@@ -11,7 +11,7 @@ export type PanelSectionKey =
 
 export const PANEL_SECTION_ORDER: readonly PanelSectionKey[] = [
   "uploading",
-  "pending",
+  "unreviewed",
   "flagged",
   "rejected",
   "drafts",
@@ -46,8 +46,8 @@ export function getPanelSection(video: PanelVideoState): PanelSectionKey | null 
   if (video.status === "archived") {
     return "archived";
   }
-  if (video.moderation_status === "pending") {
-    return "pending";
+  if (video.moderation_status === "unreviewed") {
+    return "unreviewed";
   }
   if (video.moderation_status === "flagged") {
     return "flagged";
@@ -73,7 +73,7 @@ export function canPublishVideo(video: PanelVideoState): boolean {
   ) {
     return false;
   }
-  return video.moderation_status === "approved";
+  return true;
 }
 
 export function canRetractVideo(video: PanelVideoState): boolean {

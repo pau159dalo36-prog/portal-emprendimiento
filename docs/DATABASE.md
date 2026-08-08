@@ -136,7 +136,7 @@ Un solo registro por vídeo que combina metadatos del fichero y la publicación
 | title              | TEXT        | 2–120 caracteres (CHECK)                                        |
 | caption            | TEXT        | ≤ 2000 caracteres (CHECK)                                       |
 | processing_status  | TEXT        | `uploading/uploaded/validating/ready/failed/removed` (CHECK)    |
-| moderation_status  | TEXT        | `pending/approved/rejected/flagged` (CHECK)                     |
+| moderation_status  | TEXT        | `unreviewed/approved/rejected/flagged` (CHECK); default `unreviewed` |
 | moderated_by       | UUID (FK)   | `profiles.id` (on delete set null), auditoría                   |
 | moderated_at       | TIMESTAMPTZ | Auditoría de moderación                                         |
 | moderation_reason  | TEXT        | Motivo de rechazo/flag, ≤ 500 (CHECK)                           |
@@ -169,7 +169,10 @@ Funciones de moderación (SECURITY DEFINER, `search_path=''`):
 `admin_flag_video(uuid, text)`. La clasificación de visibilidad se centraliza en
 `video_visibility_class(text)`, y `is_platform_admin()` (JWT
 `app_metadata.role='admin'`) es una función **invoker** (sin elevación de
-privilegios) usada por los triggers de validación.
+privilegios) usada por los triggers de validación. El predicado de distribución
+`video_is_publicly_distributable(text)` (true salvo `rejected`/`flagged`) se usa
+en RLS, storage y `can_access_video_storage`: la publicación no exige aprobación;
+la moderación es post-publicación.
 
 ### `video_languages`
 
@@ -180,7 +183,8 @@ Catálogo de idiomas de origen (`es`, `en`), solo lectura pública (RLS
 
 Ver [`RLS_POLICIES.md`](./RLS_POLICIES.md). Las lecturas públicas requieren
 `status='published'`, `processing_status='ready'` y
-`moderation_status='approved'`; el propietario siempre ve sus filas.
+`video_is_publicly_distributable(moderation_status)`; el propietario siempre ve
+sus filas.
 
 ### Storage — buckets de vídeo
 
@@ -192,7 +196,7 @@ Ver [`RLS_POLICIES.md`](./RLS_POLICIES.md). Las lecturas públicas requieren
 
 Políticas de aislamiento por carpeta `<auth.uid()>/…` y signed URLs para el
 bucket privado. `video-thumbnails` solo sirve por URL pública objetos
-referenciados por un vídeo publicado/listo/aprobado de clase pública (o del
+referenciados por un vídeo publicado/listo/distributable de clase pública (o del
 propio usuario). Detalle en [`STORAGE_POLICIES.md`](./STORAGE_POLICIES.md).
 
 ## Esquema futuro (no implementado)

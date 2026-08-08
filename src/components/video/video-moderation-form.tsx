@@ -31,24 +31,17 @@ export function VideoModerationForm({ video }: VideoModerationFormProps) {
   const t = useTranslations("moderation");
   const [state, formAction, pending] = useActionState(moderateVideoAction, initialFormState);
 
-  function submit(intent: "approve" | "reject" | "flag") {
-    if (pending) {
-      return;
-    }
-    const form = new FormData();
-    form.set("video_id", video.id);
-    form.set("intent", intent);
-    const reasonInput = document.getElementById(`moderation-reason-${video.id}`) as
-      | HTMLTextAreaElement
-      | null;
-    if (reasonInput?.value) {
-      form.set("reason", reasonInput.value);
-    }
-    formAction(form);
+  function createSubmitter(intent: "approve" | "reject" | "flag") {
+    return (formData: FormData) => {
+      formData.set("video_id", video.id);
+      formData.set("intent", intent);
+      formAction(formData);
+    };
   }
 
   return (
-    <div className="grid gap-3">
+    <form action={formAction} noValidate className="grid gap-3">
+      <input type="hidden" name="video_id" value={video.id} />
       <div className="flex flex-wrap items-center gap-2">
         <BadgeCheck className="size-4 text-primary" aria-hidden="true" />
         <span className="text-sm font-semibold">{video.title}</span>
@@ -76,15 +69,32 @@ export function VideoModerationForm({ video }: VideoModerationFormProps) {
       {state.status === "error" && <FormMessage status="error">{state.message}</FormMessage>}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" disabled={pending} onClick={() => submit("approve")}>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={pending}
+          formAction={createSubmitter("approve")}
+        >
           {pending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />}
           {t("approve")}
         </Button>
-        <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => submit("reject")}>
+        <Button
+          type="submit"
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          formAction={createSubmitter("reject")}
+        >
           <X aria-hidden="true" />
           {t("reject")}
         </Button>
-        <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => submit("flag")}>
+        <Button
+          type="submit"
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          formAction={createSubmitter("flag")}
+        >
           <Flag aria-hidden="true" />
           {t("flag")}
         </Button>
@@ -96,6 +106,6 @@ export function VideoModerationForm({ video }: VideoModerationFormProps) {
           <p className="text-muted-foreground">{video.moderationReason}</p>
         </div>
       )}
-    </div>
+    </form>
   );
 }

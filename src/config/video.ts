@@ -28,7 +28,9 @@ export const VIDEO_PROCESSING_STATUSES = [
   "removed",
 ] as const;
 
-export const VIDEO_MODERATION_STATUSES = ["pending", "approved", "rejected", "flagged"] as const;
+export const VIDEO_MODERATION_STATUSES = ["unreviewed", "approved", "rejected", "flagged"] as const;
+
+export const VIDEO_DISTRIBUTABLE_MODERATION_STATUSES = ["unreviewed", "approved"] as const;
 
 export const VIDEO_PUBLICATION_STATUSES = ["draft", "published", "hidden", "removed", "archived"] as const;
 

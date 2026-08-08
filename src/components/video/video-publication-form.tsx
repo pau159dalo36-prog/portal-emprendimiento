@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Save, Send } from "lucide-react";
@@ -50,7 +50,6 @@ export function VideoPublicationForm({
     () => toVideoFormData(video ?? null) ?? emptyVideoFormData,
   );
   const [lastIntent, setLastIntent] = useState<VideoSaveIntent | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   const visibilityClass = getClassForBucket(video?.storage_bucket ?? null);
   const visibilityOptions = getVisibilitiesForClass(visibilityClass);
@@ -66,20 +65,19 @@ export function VideoPublicationForm({
     }
   }, [state.status, lastIntent, videoId, router]);
 
-  function submit(intent: VideoSaveIntent) {
-    const form = formRef.current;
-    if (!form || pending) {
-      return;
-    }
-    setLastIntent(intent);
-    const formData = new FormData(form);
-    formData.set("intent", intent);
-    formData.set("video_id", videoId);
-    formAction(formData);
+  function createSubmitter(intent: VideoSaveIntent) {
+    return (formData: FormData) => {
+      formData.set("video_id", videoId);
+      formData.set("intent", intent);
+      setLastIntent(intent);
+      formAction(formData);
+    };
   }
 
   return (
-    <form ref={formRef} action={formAction} noValidate className="grid gap-6">
+    <form action={formAction} noValidate className="grid gap-6">
+      <input type="hidden" name="video_id" value={videoId} />
+      <input type="hidden" name="intent" value="save" />
       <div className="grid gap-2">
         <Label htmlFor="video-title">{t("titleLabel")}</Label>
         <Input
@@ -176,7 +174,12 @@ export function VideoPublicationForm({
       {state.status === "error" && <FormMessage status="error">{state.message}</FormMessage>}
 
       <div className="flex flex-wrap gap-3">
-        <Button type="button" variant="outline" disabled={pending} onClick={() => submit("save")}>
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={pending}
+          formAction={createSubmitter("save")}
+        >
           {pending ? (
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
@@ -184,7 +187,7 @@ export function VideoPublicationForm({
           )}
           {t("saveButton")}
         </Button>
-        <Button type="button" disabled={pending} onClick={() => submit("publish")}>
+        <Button type="submit" disabled={pending} formAction={createSubmitter("publish")}>
           {pending ? (
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (

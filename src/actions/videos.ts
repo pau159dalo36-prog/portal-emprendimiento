@@ -109,7 +109,7 @@ export async function createVideoUploadAction(
     original_language: parsed.data.originalLanguage,
     title: titleFromFilename(parsed.data.originalFilename),
     processing_status: "uploading",
-    moderation_status: "pending",
+    moderation_status: "unreviewed",
     status: "draft",
   });
 
@@ -385,10 +385,6 @@ export async function saveVideoPublicationAction(
     return { status: "error", message: ta("cannotPublishFailed") };
   }
 
-  if (intent === "publish" && video.data.moderation_status !== "approved") {
-    return { status: "error", message: ta("cannotPublishUnapproved") };
-  }
-
   const targetBucket = getBucketForVisibility(parsed.data.visibility);
   if (targetBucket !== video.data.storage_bucket) {
     return { status: "error", message: ta("visibilityClassMismatch") };
@@ -440,9 +436,6 @@ export async function changeVideoStatusAction(formData: FormData): Promise<void>
   }
 
   if (parsed.data === "published") {
-    if (video.data.moderation_status !== "approved") {
-      return;
-    }
     const { error: infoError } = await supabase.storage
       .from(video.data.storage_bucket)
       .info(video.data.storage_path);

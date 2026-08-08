@@ -45,9 +45,9 @@ Prerequisitos: tres migraciones aplicadas en local y remoto
 
 ## 4. Publicación y estados
 
-- [ ] Un vídeo `uploaded` + `approved` se puede publicar (publicado + ready).
-- [ ] Publicar un vídeo no aprobado (pendiente/marcado/rechazado) se bloquea.
+- [ ] Un vídeo `uploaded` (sin revisar) se puede publicar (publicado + ready).
 - [ ] Publicar un vídeo `uploading` o `failed` se bloquea.
+- [ ] Publicar un vídeo `rejected`/`flagged` se bloquea (solo editar/eliminar).
 - [ ] Retirar (published → hidden) lo quita de listados públicos.
 - [ ] Archivar (draft/hidden → archived) y desarchivar funcionan.
 
@@ -58,7 +58,7 @@ Prerequisitos: tres migraciones aplicadas en local y remoto
 - [ ] Cada tarjeta muestra proyecto, organización (si existe), fecha de creación y
       de publicación (si publicada) y el motivo de rechazo cuando aplica.
 - [ ] Solo aparecen acciones posibles en cada estado.
-- [ ] Publicar solo aparece si `moderation_status = approved`.
+- [ ] Publicar solo aparece si el vídeo está listo y no está rechazado/marcado.
 - [ ] El botón eliminar pide confirmación (3 s) y borra fila + storage.
 
 ## 6. Moderación (`/admin/videos`)
@@ -70,16 +70,16 @@ Prerequisitos: tres migraciones aplicadas en local y remoto
 
 ## 7. Reproducción por rol
 
-- [ ] Visitante: solo vídeos publicados+ready+approved y públicos/unlisted.
+- [ ] Visitante: solo vídeos publicados+ready+distributivos y públicos/unlisted.
 - [ ] Registrado: además `registered_users`.
 - [ ] Miembro del proyecto: además `project_members` de sus proyectos.
 - [ ] Propietario: ve sus borradores/rechazados y badges de estado, botón editar.
-- [ ] Admin: ve vídeos de terceros pendientes.
+- [ ] Admin: ve todos los vídeos, incluidos los sin revisar.
 - [ ] Vídeos protegidos reproducen vía signed URL.
 
 ## 8. Listados
 
-- [ ] `/videos` y portada solo muestran publicados+ready+approved (no unlisted).
+- [ ] `/videos` y portada solo muestran publicados+ready+distributivos (no unlisted).
 - [ ] Portada: `ShortVideosRail` solo si hay vídeos verticales reales.
 - [ ] Proyecto/perfil/organización muestran sus vídeos publicados.
 - [ ] Miniaturas de vídeos protegidos se cargan (signed URL), sin romper visibilidad.

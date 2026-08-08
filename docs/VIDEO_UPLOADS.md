@@ -5,7 +5,7 @@
 1. **Selección y validación** (`VideoUploadForm`, `validateVideoFileFull`):
    MP4/WebM, ≤ 100 MB, ≤ 180 s; se leen duración y dimensiones.
 2. **Creación del borrador** (`createVideoUploadAction`): inserta en `videos`
-   como `draft`/`uploading`/`pending`, calcula ruta determinista
+   como `draft`/`uploading`/`unreviewed`, calcula ruta determinista
    `{uid}/{videoId}/{archivo}.{ext}` y devuelve bucket+ruta.
 3. **Subida directa** (`uploadFileToStorage`): XHR con `Authorization` y `x-upsert`,
    progreso real; cada usuario solo escribe en su carpeta `{uid}/...`.
@@ -21,9 +21,11 @@
    (`loadVideoElement` + `seekVideoTo` + `captureVideoFrame`); se sube como poster
    con upsert (misma ruta determinista) y respeta el límite de 5 MB.
 8. **Publicación** (`saveVideoPublicationAction`/`changeVideoStatusAction`):
-   verifica el objeto, exige `moderation_status = 'approved'` y publica
-   atómicamente `status='published'` + `processing_status='ready'`.
+   verifica el objeto y publica atómicamente `status='published'` +
+   `processing_status='ready'` (no exige aprobación de moderación).
 9. **Moderación**: un admin revisa en `/admin/videos` (aprobar/rechazar/marcar).
+   Es **post-publicación**: rechazar/marcar bloquea la distribución pública de
+   inmediato (RLS, storage y signed URLs) sin cambiar `status` ni `published_at`.
 10. **Borrado** (`deleteVideoAction`): elimina la fila y los objetos de storage
    (vídeo + miniatura + portada + captions si existe).
 

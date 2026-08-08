@@ -1,6 +1,8 @@
 # Políticas de Storage
 
-Buckets creados en la migración FASE 3 (`20260805000000_fase3_storage_videos.sql`).
+Buckets creados en la migración FASE 3 (`20260805000000_fase3_storage_videos.sql`);
+la distribución sin revisión previa se habilita en FASE 4
+(`20260807000000_fase4_moderation_post_publication.sql`).
 
 ## Buckets
 
@@ -11,10 +13,10 @@ Buckets creados en la migración FASE 3 (`20260805000000_fase3_storage_videos.sq
 | `video-thumbnails` | Sí      | 5 MB   | `image/png`, `image/jpeg`, `image/webp` |
 
 > `video-thumbnails` es público pero **solo** para objetos referenciados por un
-> vídeo publicado, listo y aprobado de clase pública (o del propio usuario):
-> nunca debe contener contenido sensible de vídeos pendientes/protegidos.
-> `private-videos` **nunca** es público. Los vídeos de clase protegida **no
-> pueden** referenciar miniaturas públicas: el trigger
+> vídeo publicado, listo y distributable de clase pública (o del propio usuario):
+> nunca debe contener contenido sensible de vídeos rechazados, marcados o
+> protegidos. `private-videos` **nunca** es público. Los vídeos de clase
+> protegida **no pueden** referenciar miniaturas públicas: el trigger
 > `videos_validate_thumbnail_visibility` exige que su `thumbnail_bucket`/
 > `poster_bucket` sea `private-videos` (o nulo).
 
@@ -37,7 +39,7 @@ exigen, por lo que ningún usuario puede leer/sobrescribir los archivos de otro.
 
 | Política                    | Operación | Condición                                        |
 | --------------------------- | --------- | ------------------------------------------------ |
-| `videos_public_read`        | SELECT    | `bucket_id = 'public-videos'` y (carpeta propia **o** objeto referenciado por un vídeo público publicado/listo/aprobado) |
+| `videos_public_read`        | SELECT    | `bucket_id = 'public-videos'` y (carpeta propia **o** objeto referenciado por un vídeo público publicado/listo/distributable) |
 | `videos_public_insert_own`  | INSERT    | `bucket_id` y `foldername(name)[1] = auth.uid()` |
 | `videos_public_update_own`  | UPDATE    | Ídem con USING + WITH CHECK                       |
 | `videos_public_delete_own`  | DELETE    | Ídem                                             |
@@ -56,8 +58,8 @@ La política de SELECT usa un helper `SECURITY DEFINER`
 `public.videos` con privilegios del dueño de la migración (postgres) y comprueba
 
 - `owner_id = auth.uid()`, **o**
-- vídeo `published` + `ready` + `approved` y `visibility = 'registered_users'`, **o**
-- vídeo `published` + `ready` + `approved`, `visibility = 'project_members'` y
+- vídeo `published` + `ready` + distributable y `visibility = 'registered_users'`, **o**
+- vídeo `published` + `ready` + distributable, `visibility = 'project_members'` y
   `public.is_project_member(project_id)`.
 
 También autoriza `thumbnail_path`/`poster_path` de la clase protegida que
@@ -68,21 +70,21 @@ Esto permite generar signed URLs solo a quien tiene derecho de visión.
 
 | Política                       | Operación | Condición                                        |
 | ------------------------------ | --------- | ------------------------------------------------ |
-| `video_thumbnails_public_read` | SELECT    | `bucket_id = 'video-thumbnails'` y (carpeta propia **o** objeto referenciado por un vídeo público publicado/listo/aprobado) |
+| `video_thumbnails_public_read` | SELECT    | `bucket_id = 'video-thumbnails'` y (carpeta propia **o** objeto referenciado por un vídeo público publicado/listo/distributable) |
 | `video_thumbnails_insert_own`  | INSERT    | `foldername(name)[1] = auth.uid()`               |
 | `video_thumbnails_update_own`  | UPDATE    | Ídem con USING + WITH CHECK                      |
 | `video_thumbnails_delete_own`  | DELETE    | Ídem                                             |
 
-La condición de SELECT impide que una miniatura/póster de un vídeo pendiente,
-rechazado, marcado o protegido sea legible por URL pública: el objeto solo se
-sirve si lo referencia un vídeo `published` + `ready` + `approved` de clase
+La condición de SELECT impide que una miniatura/póster de un vídeo rechazado,
+marcado, no publicado o protegido sea legible por URL pública: el objeto solo se
+sirve si lo referencia un vídeo `published` + `ready` + distributable de clase
 `public`/`unlisted`, o si el propio usuario lo solicita (previsualización de
 subida y panel).
 
 ### `public-videos` — SELECT corregido (`20260806000000_fix_videos_public_read.sql`)
 
 La versión original de `videos_public_read` solo comprobaba el bucket y servía
-**cualquier** objeto de `public-videos` por URL directa (vídeos `pending`,
+**cualquier** objeto de `public-videos` por URL directa (vídeos `unreviewed`,
 `rejected`, `flagged` o no publicados incluidos). La migración correctiva
 `20260806000000_fix_videos_public_read.sql` (aditiva, solo `drop policy if
 exists` + `create policy` de esa política) exige ahora:
@@ -91,23 +93,24 @@ exists` + `create policy` de esa política) exige ahora:
   **o**
 - que exista un registro en `public.videos` con `storage_bucket =
   'public-videos'`, `storage_path = name`, `status = 'published'`,
-  `processing_status = 'ready'`, `moderation_status = 'approved'` y
+  `processing_status = 'ready'`,
+  `public.video_is_publicly_distributable(moderation_status)` y
   `visibility in ('public', 'unlisted')`.
 
 Usa la misma subconsulta a `public.videos` que `video_thumbnails_public_read`
 (sin recursión: las políticas de `videos` no consultan `storage.objects`), así
-que la lectura pública cae de forma inmediata al retirar/archivar/rechazar un
-vídeo.
+que la lectura pública cae de forma inmediata al retirar/archivar/rechazar/marcar
+un vídeo.
 
 ## Notas de seguridad
 
 - Los buckets se crean con `on conflict (id) do nothing` y los límites se fijan
   con `update`, de modo que la migración es idempotente y no destructiva.
 - `public-videos` expone contenido por URL directa **solo** cuando el registro
-  asociado está `published` + `ready` + `approved` de clase `public`/`unlisted`
-  (política corregida en `20260806000000`); el control de visibilidad
-  `unlisted` se implementa a nivel de aplicación (no se lista en feeds, pero la
-  URL es accesible).
+  asociado está `published` + `ready` + distributable de clase `public`/`unlisted`
+  (política corregida en `20260806000000` y actualizada en FASE 4); el control
+  de visibilidad `unlisted` se implementa a nivel de aplicación (no se lista en
+  feeds, pero la URL es accesible).
 - **Clases de visibilidad con bucket obligatorio**: la clase pública
   (`public`/`unlisted`) solo vive en `public-videos` y la clase protegida
   (`registered_users`/`project_members`/`private`) solo en `private-videos`. Lo

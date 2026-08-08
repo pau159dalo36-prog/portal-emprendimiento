@@ -14,7 +14,7 @@ La publicación se hace directamente sobre la tabla `public.videos`
 - **Publicación**: `title`, `caption`, `status` (`draft|published|hidden|removed|archived`),
   `published_at`.
 - **Procesado**: `processing_status` (`uploading|uploaded|validating|ready|failed|removed`).
-- **Moderación**: `moderation_status` (`pending|approved|rejected|flagged`),
+- **Moderación**: `moderation_status` (`unreviewed|approved|rejected|flagged`),
   `moderated_by`, `moderated_at`, `moderation_reason`.
 - **Visibilidad**: `visibility` (`public|unlisted|registered_users|project_members|private`).
 - **Idioma**: `original_language` (catálogo `video_languages`).
@@ -23,7 +23,7 @@ La publicación se hace directamente sobre la tabla `public.videos`
 
 | Clase | Visibilidades | Bucket | Lectura |
 | --- | --- | --- | --- |
-| Pública | `public`, `unlisted` | `public-videos` | URL pública solo si publicado+ready+approved |
+| Pública | `public`, `unlisted` | `public-videos` | URL pública solo si publicado+ready+distributable |
 | Protegida | `registered_users`, `project_members`, `private` | `private-videos` | signed URL servidor (`can_access_video_storage`) |
 
 - La clase queda congelada tras completar la subida (`videos_validate_visibility_bucket`).
@@ -32,15 +32,17 @@ La publicación se hace directamente sobre la tabla `public.videos`
 
 ## Invariantes de seguridad
 
-- Lecturas públicas exigen `status='published'` + `processing_status='ready'`
-  + `moderation_status='approved'` (RLS y políticas de storage).
-- La moderación es solo administrativa: `is_platform_admin()` lee el JWT;
-  las RPCs `admin_*_video` son `SECURITY DEFINER`, rechazan moderar vídeos propios
-  y el trigger bloquea cualquier cambio de moderación no administrativo.
+- Las lecturas públicas exigen `status='published'` + `processing_status='ready'`
+  + `video_is_publicly_distributable(moderation_status)` (RLS y políticas de
+  storage): un vídeo publicado sin revisar se sirve; `rejected`/`flagged` quedan
+  bloqueados de inmediato.
+- La moderación es **post-publicación y solo administrativa**: el propietario
+  publica sin aprobación; `is_platform_admin()` lee el JWT; las RPCs
+  `admin_*_video` son `SECURITY DEFINER`, rechazan moderar vídeos propios y el
+  trigger bloquea cualquier cambio de moderación no administrativo.
 - Un vídeo solo puede asociarse a un proyecto/organización donde el autor es miembro.
-- El propietario no puede cambiar `owner_id`, no puede autoaprobarse, no puede marcar
-  `ready` sin publicar, no puede publicar un vídeo no listo y no puede publicar sin
-  aprobación de moderación (`moderation_status = 'approved'`).
+- El propietario no puede cambiar `owner_id`, no puede autoaprobarse, no puede
+  marcar `ready` sin publicar y no puede publicar un vídeo no listo.
 
 ## Navegación y páginas
 
@@ -50,8 +52,9 @@ La publicación se hace directamente sobre la tabla `public.videos`
 - **Reproducción** (`/[locale]/videos/[id]`): `VideoPlayer` custom con URL pública o
   signed URL según visibilidad; badges de estado visibles solo para propietario/admin.
 - **Panel** (`/[locale]/(app)/panel/videos`): secciones por estado con acciones
-  condicionadas (publicar solo si aprobado, retirar/archivar/eliminar) y metadatos
-  (proyecto, organización, fechas de creación/publicación, motivo de rechazo).
+  condicionadas (publicar sin requisito de moderación, retirar/archivar/eliminar)
+  y metadatos (proyecto, organización, fechas de creación/publicación, motivo de
+  rechazo).
 - **Edición** (`/[locale]/(app)/videos/[id]/editar`): `VideoPublicationForm` +
   `VideoImageUploader` + `VideoCoverGenerator`.
 - **Moderación** (`/[locale]/(app)/admin/videos`): `VideoModerationForm` (admin).
