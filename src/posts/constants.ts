@@ -1,0 +1,18 @@
+import {
+  POST_DISTRIBUTABLE_PUBLICATION_STATUSES,
+  POST_PUBLICATION_STATUSES,
+  POST_TYPES,
+  POST_VISIBILITIES,
+  type PostPublicationStatus,
+  type PostType,
+  type PostVisibility,
+} from "@/config/post";
+
+export const POST_TYPES_LIST = POST_TYPES;
+export const POST_PUBLICATION_STATUSES_LIST = POST_PUBLICATION_STATUSES;
+export const POST_DISTRIBUTABLE_PUBLICATION_STATUSES_LIST = POST_DISTRIBUTABLE_PUBLICATION_STATUSES;
+export const POST_VISIBILITIES_LIST = POST_VISIBILITIES;
+
+export type { PostPublicationStatus, PostType, PostVisibility };
+
+export const MAX_POST_BODY_LENGTH = 5000;

@@ -70,6 +70,36 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
 - **Código nunca introduce secretos**: los paths de Storage se construyen solo
   con UUIDs y nombres normalizados (sin emails ni datos personales).
 
+## FASE 4.1 — Entidad genérica `posts`
+
+- **Envelope de distribución, no fuente de verdad**: `posts` es un sobre
+  genérico distribuible. Para los vídeos, `videos` sigue siendo la única fuente
+  de verdad de contenido, visibilidad y estados; el post se sincroniza por
+  trigger (`posts_sync_from_video`, idempotente vía `UNIQUE(video_id)`) y su
+  distributividad se deriva del vídeo con el predicado canónico
+  `post_is_publicly_distributable` (fail-closed). Un vídeo
+  `rejected`/`flagged`/retirado/archivado deja de distribuirse al instante a
+  través de su post, y un `approved` posterior lo restaura sin re-publicar.
+- **Sin duplicados por vídeo**: `UNIQUE(video_id)` + `INSERT ... ON CONFLICT`
+  garantizan exactamente un post por vídeo publicado, aunque la publicación se
+  repita (idempotencia).
+- **No se pueden publicar contenidos ajenos**: el usuario solo crea posts como
+  sí mismo (`posts_insert_own` con `auth.uid() = author_id`) y el trigger
+  `posts_validate_video_ownership` exige que el post de un vídeo pertenezca a su
+  propietario y que `project_id`/`organization_id` coincidan con los del vídeo.
+  `video_id` y `author_id` son inmutables.
+- **Sin DELETE directo**: no existe política DELETE ni GRANT delete sobre
+  `posts`; el ciclo de vida se gestiona por el contenido (cascade al borrar el
+  vídeo o el perfil).
+- **Sin SECURITY DEFINER nuevo**: los triggers son invoker y el predicado es una
+  función normal `STABLE` (`search_path=''`), mismo patrón que
+  `video_is_publicly_distributable`. Los únicos SECURITY DEFINER usados son los
+  helpers de membresía existentes de FASE 2 (`is_project_member`,
+  `is_organization_member`).
+- **Privacidad**: `private`/`protected` nunca se distribuyen públicamente;
+  `unlisted` solo es accesible por enlace directo y queda fuera de los listados
+  del feed (capa de aplicación). `service_role` nunca se usa en el frontend.
+
 ## Estado y limitaciones conocidas
 
 - La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:

@@ -150,6 +150,80 @@ export type Database = {
           },
         ]
       }
+      posts: {
+        Row: {
+          author_id: string
+          body: string | null
+          created_at: string
+          id: string
+          organization_id: string | null
+          post_type: string
+          project_id: string | null
+          publication_status: string
+          published_at: string | null
+          updated_at: string
+          video_id: string | null
+          visibility: string
+        }
+        Insert: {
+          author_id: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          post_type?: string
+          project_id?: string | null
+          publication_status?: string
+          published_at?: string | null
+          updated_at?: string
+          video_id?: string | null
+          visibility?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          post_type?: string
+          project_id?: string | null
+          publication_status?: string
+          published_at?: string | null
+          updated_at?: string
+          video_id?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: true
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_roles: {
         Row: {
           created_at: string
@@ -1054,6 +1128,18 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { p_project_id: string }; Returns: boolean }
+      post_is_publicly_distributable: {
+        Args: {
+          p_publication_status: string
+          p_video_id: string
+          p_visibility: string
+        }
+        Returns: boolean
+      }
+      video_is_publicly_distributable: {
+        Args: { p_moderation_status: string }
+        Returns: boolean
+      }
       video_visibility_class: {
         Args: { p_visibility: string }
         Returns: string

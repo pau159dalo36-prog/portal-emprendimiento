@@ -1,8 +1,46 @@
-# Row Level Security — FASE 4 (vídeos, moderación post-publicación)
+# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts)
 
-RLS está activado en `public.videos` y `public.video_languages`. El proyecto
-tiene `auto_expose_new_tables` desactivado, por lo que además de las políticas
-se conceden `GRANT` explícitos.
+RLS está activado en `public.videos`, `public.video_languages` y
+`public.posts`. El proyecto tiene `auto_expose_new_tables` desactivado, por lo
+que además de las políticas se conceden `GRANT` explícitos.
+
+## `posts`
+
+| Política                    | Operación | Condición                                                                  |
+| --------------------------- | --------- | -------------------------------------------------------------------------- |
+| `posts_select_public`       | SELECT    | `post_is_publicly_distributable(...)` y `visibility = 'public'` |
+| `posts_select_own`          | SELECT    | `auth.uid() = author_id` (incluye borradores y contenido retirado)         |
+| `posts_select_registered`   | SELECT    | `authenticated`, distribuible y `visibility='registered_users'`            |
+| `posts_select_project_members` | SELECT | `authenticated`, distribuible, `visibility='project_members'`, `project_id` no nulo y `public.is_project_member(project_id)` |
+| `posts_select_admin`        | SELECT    | `authenticated` y `public.is_platform_admin()` (lectura total)             |
+| `posts_insert_own`          | INSERT    | `auth.uid() = author_id`, vídeo propio (o nulo), proyecto/organización de los que es miembro |
+| `posts_update_own`          | UPDATE    | USING + WITH CHECK: `auth.uid() = author_id`, proyecto/organización de los que es miembro |
+| (DELETE)                    | —         | No hay política DELETE ni GRANT delete: el ciclo de vida se gestiona por el contenido |
+
+Notas:
+
+- La distributividad de un post de vídeo se **deriva por completo del vídeo**
+  mediante `post_is_publicly_distributable(publication_status, visibility,
+  video_id)` (predicado canónico, función normal `STABLE` invoker con
+  `search_path=''`): exige `publication_status='published'` y, si hay vídeo,
+  que el vídeo esté `published` + `ready` + `video_is_publicly_distributable`
+  (no `rejected`/`flagged`) + visibilidad coherente. Fail-closed: cualquier
+  divergencia deja de distribuir. El predicado no valora el nivel de visibilidad:
+  ese tier lo gobierna cada política (anon solo `visibility='public'`).
+- `unlisted` NO es enumerable mediante un SELECT público genérico de `posts`: la
+  RLS exige `visibility='public'` para anónimos, por lo que no aparece ni en el
+  feed ni en ningún listado. El acceso por enlace/ID se reserva para el futuro
+  (mecanismo específico, sin SECURITY DEFINER nuevo en FASE 4.1).
+  `registered_users`, `project_members` y `private` nunca se distribuyen
+  públicamente.
+- El usuario solo crea posts como sí mismo (`auth.uid() = author_id`) y solo
+  puede enlazar vídeos propios; los triggers refuerzan la misma invariante
+  (propietario + proyecto/organización coherentes con el vídeo).
+- La moderación post-publicación se propaga automáticamente: rechazar o marcar
+  el vídeo retira su post de la distribución al instante; aprobar lo restaura,
+  sin borrar ni re-crear el post.
+- `posts_select_admin` está restringida a `authenticated` (mismo patrón que
+  `videos_select_admin`).
 
 ## `videos`
 
@@ -50,6 +88,9 @@ Catálogo de solo lectura para cualquier rol.
 grant usage on schema public to anon, authenticated;
 grant select on public.video_languages, public.videos to anon, authenticated;
 grant select, insert, update, delete on public.videos to authenticated;
+
+grant select on public.posts to anon, authenticated;
+grant select, insert, update on public.posts to authenticated;
 ```
 
 ## Moderación administrativa

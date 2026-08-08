@@ -1,49 +1,63 @@
-# Estado del proyecto — FASE 3 (Vídeos)
+# Estado del proyecto — FASE 4.1 (Entidad genérica `posts`)
 
 ## Estado general
 
-- ✅ **PASOS 1–8 completados y verificados** (subida, imágenes, publicación,
-  moderación). Lint, typecheck, tests y build en verde.
-- ✅ **PASO 9**: panel `/panel/videos` con secciones por estado y acciones
-  condicionadas (publicar sin requisito de moderación;
-  retirar/archivar/desarchivar/eliminar).
-- ✅ **PASO 10**: reproducción por rol respetando RLS; signed URLs en servidor;
-  organización, idioma y estados en `/videos/[id]`.
-- ✅ **PASO 10b**: reproductor de vídeo custom (`video-player.tsx`) con controles
-  de play/pause, progreso, volumen/mute, fullscreen, captions y atajos de teclado.
-- ✅ **PASO 11**: vídeos en proyecto, perfil y organización; `VIDEO_WITH_DETAILS`
-  incluye `organization`; filtros explícitos `ready` + `distributable`.
-- ✅ **PASO 12**: portada con vídeos reales; `ShortVideosRail` solo con vídeos
-  verticales reales (`isVerticalVideo`).
-- ✅ **PASO 13**: navegación con "Publicar vídeo", "Mis vídeos" y enlace admin
-  condicionado al rol.
-- ✅ **PASO 14**: portada automática desde frame del vídeo por instante
-  (`VideoCoverGenerator` + `frame.ts`: `loadVideoElement`, `seekVideoTo`,
-  `captureVideoFrame` → WebP/JPEG).
-- ✅ **PASO 15**: borrado completo (vídeo + miniatura + portada + captions).
-- ✅ **PASO 16**: i18n es/en con las claves nuevas (797 simétricas; namespace
-  `player` y claves `cover*`, `createdOn`, `publishedAtLabel`, `noOrganization`).
-- ✅ **PASO 17**: tests ampliados (109 en total, 11 archivos; incluye
-  `src/videos/panel.test.ts` y `formatPlaybackTime` en `utils.test.ts`).
-- 📝 **PASO 18/19**: documentación creada (este directorio).
+- ⏳ **FASE 4.1 preparada y PENDIENTE DE APROBACIÓN** (no aplicada).
+- ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
+  reproductor, portada, panel, tests y docs).
 
-## Verificación actual
+## FASE 4.1 — Entidad `posts` (capa base distribuible)
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260809000000_fase4_posts.sql`: tabla `posts`
+  (envelope genérico con `UNIQUE(video_id)`), índices orientados al feed,
+  predicado `post_is_publicly_distributable`, triggers de sincronización
+  idempotente `posts_sync_from_video` + validación de propiedad
+  (`posts_validate_video_ownership`), RLS completa y backfill idempotente de
+  los vídeos publicados existentes. Sin SECURITY DEFINER nuevo.
+- `supabase/tests/fase4_posts.sql`: script de verificación SQL (transacción
+  que se revierte) con 13 bloques de tests: invariante 1 post/vídeo,
+  idempotencia, ciclo de vida, matriz de visibilidad anónima, registered,
+  project_members, private, admin, restricciones de creación, inmutabilidad,
+  sin DELETE, moderación rejected/flagged propagada al post y predicado
+  fail-closed.
+- `src/posts/`: capa de acceso a datos (`data.ts`, `types.ts`, `schemas.ts`,
+  `constants.ts`) + `src/config/post.ts`. Server Components por defecto.
+- `src/posts/data.test.ts`: tests unitarios de la capa de datos y constantes.
+- `src/types/database.types.ts`: sincronizado a mano con `posts` y
+  `post_is_publicly_distributable` (hasta regenerar con `supabase:types` tras
+  aplicar la migración en remoto).
+- Docs actualizadas: `DATABASE.md`, `RLS_POLICIES.md`, `SECURITY.md`,
+  `ARCHITECTURE.md` (carpeta `src/posts`).
+
+### Verificación actual
 
 - `npm run lint` ✅
 - `npm run typecheck` ✅
-- `npm run test` ✅ (109)
-- `npm run build` ✅ (30 rutas)
+- `npm run test` ✅ (se añadió `src/posts/data.test.ts`)
+- `npm run build` ✅
 
-## Pendiente / decisiones
+### Pendiente / decisiones
 
-- El propietario no puede "reenviar a moderación" (el trigger exige admin para
-  cambiar `moderation_status`). Los rechazados solo se pueden editar/eliminar.
-- La publicación **no** exige aprobación: el propietario publica sin revisión y
-  la moderación es post-publicación. Las server actions cierran la invariante
-  también fuera de la UI (`canPublishVideo` + checks de estado/objeto).
-- La lógica de secciones y acciones del panel vive en `src/videos/panel.ts`
-  (exportada y probada en `panel.test.ts`).
-- Los captions se limpian con el bucket del vídeo (no existe `captions_bucket`).
+- **La migración NO se ha aplicado** (ni `db push` ni `db reset`): pendiente de
+  revisión y aprobación de la arquitectura.
+- Tras aprobar: `npm run supabase:db:push` → `npm run supabase:types` →
+  ejecutar `supabase/tests/fase4_posts.sql` contra el stack local.
+- FASE 4.2 (feed/algoritmo), 4.3 (interacciones) y 4.4 (seguir) NO empiezan.
+
+## FASE 3 — Estado previo (para referencia)
+
+- ✅ **PASOS 1–18 completados y verificados** (subida, imágenes, publicación,
+  moderación, reproductor, portada, panel, i18n, tests, docs).
+- Verificación: `npm run lint` ✅ · `npm run typecheck` ✅ · `npm run test` ✅
+  (109 antes de 4.1) · `npm run build` ✅ (30 rutas).
+- Pendiente / decisiones:
+  - El propietario no puede "reenviar a moderación"; los rechazados solo se
+    pueden editar/eliminar. La publicación no exige aprobación (moderación
+    post-publicación) y las server actions cierran la invariante.
+  - Lógica de secciones/acciones del panel en `src/videos/panel.ts`.
+  - Los captions se limpian con el bucket del vídeo.
 
 ## Remoto
 

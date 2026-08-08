@@ -26,6 +26,7 @@ src/
 ├── lib/
 │   ├── env.ts      # Acceso seguro a variables de entorno
 │   └── supabase/   # Clientes Supabase (client, server, proxy)
+├── posts/          # Entidad genérica distribuible (data, types, schemas, constants)
 ├── profiles/       # Lógica de perfiles (constantes, datos, completitud, avatar, map)
 ├── proxy.ts        # Proxy de Next.js 16 (renovación de sesión)
 ├── supabase/       # Cliente y configuración de Supabase

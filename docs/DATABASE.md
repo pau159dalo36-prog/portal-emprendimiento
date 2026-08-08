@@ -199,15 +199,97 @@ bucket privado. `video-thumbnails` solo sirve por URL pública objetos
 referenciados por un vídeo publicado/listo/distributable de clase pública (o del
 propio usuario). Detalle en [`STORAGE_POLICIES.md`](./STORAGE_POLICIES.md).
 
+## FASE 4.1 — Entidad genérica `posts`
+
+Capa base distribuible sobre la que se construirán el feed, los vídeos, los
+proyectos, los perfiles, las organizaciones, los comentarios, las reacciones,
+los guardados, el empleo y las comunidades. `videos` sigue siendo la fuente de
+verdad del contenido audiovisual y de su visibilidad/estados; `posts` es un
+sobre (envelope) genérico de distribución que apunta a un vídeo como mucho.
+
+### `posts`
+
+| Columna            | Tipo        | Descripción                                                          |
+| ------------------ | ----------- | -------------------------------------------------------------------- |
+| id                 | UUID (PK)   | Identificador del post                                               |
+| author_id          | UUID (FK)   | `profiles.id` (cascade); el autor debe ser el propietario del vídeo  |
+| post_type          | TEXT        | `video/text/project_update/opportunity/article` (CHECK)              |
+| body               | TEXT        | Opcional, 1–5000 (CHECK); `NULL` para posts de vídeo (fuente única)  |
+| video_id           | UUID (FK)   | `videos.id` (cascade), **UNIQUE** → un solo post por vídeo           |
+| project_id         | UUID (FK)   | `projects.id` (set null); debe coincidir con el del vídeo si lo hay  |
+| organization_id    | UUID (FK)   | `organizations.id` (set null); ídem                                  |
+| visibility         | TEXT        | `public/unlisted/registered_users/project_members/private` (CHECK)   |
+| publication_status | TEXT        | `draft/published/hidden/removed` (CHECK)                             |
+| published_at       | TIMESTAMPTZ | Obligatorio si `publication_status='published'` (CHECK)              |
+| created_at / updated_at | TIMESTAMPTZ |                                          |
+
+CHECKs adicionales: `posts_video_type_check` (tipo `video` ⇒ `video_id` no
+nulo; resto ⇒ `video_id` nulo), `posts_body_video_check` (tipo `video` ⇒
+`body` nulo), `posts_body_length`, `posts_published_at_check`.
+
+Índices (orientados al feed futuro): `posts_published_at_idx (published_at
+desc)`, `posts_author_id_idx`, `posts_project_id_idx`,
+`posts_organization_id_idx`, `posts_visibility_idx`,
+`posts_publication_status_idx`, `posts_post_type_idx`,
+`posts_listing_idx (publication_status, visibility, published_at desc)`.
+
+Triggers:
+
+- `posts_set_updated_at` / `posts_prevent_id_change` (helpers comunes).
+- `posts_validate_video_ownership` (BEFORE INSERT/UPDATE): el autor del post
+  debe ser el propietario del vídeo y `project_id`/`organization_id` deben
+  coincidir exactamente con los del vídeo.
+- `posts_prevent_video_change` (BEFORE UPDATE): `video_id` y `author_id` son
+  inmutables; el ciclo de vida se gestiona a través del vídeo.
+- `posts_sync_from_video` (AFTER INSERT/UPDATE/DELETE en `videos`): al publicar
+  un vídeo garantiza EXACTAMENTE un post asociado mediante
+  `INSERT ... ON CONFLICT (video_id) DO UPDATE` (idempotente: repetir la
+  publicación no duplica). Cuando el vídeo deja de estar publicado
+  (hidden/archived/removed) el post deja de distribuirse y limpia
+  `published_at`.
+
+Funciones:
+
+- `post_is_publicly_distributable(text, text, uuid)` (función normal `STABLE`,
+  invoker, `search_path=''`): predicado canónico de distributividad. Para posts
+  de vídeo se deriva del vídeo (status `published` + processing `ready` +
+  `video_is_publicly_distributable(moderation_status)` + coherencia de
+  visibilidad); fail-closed ante divergencias. Los tipos futuros sin vídeo
+  dependen solo de `publication_status`.
+
+No hay política DELETE ni GRANT delete sobre `posts`: el ciclo de vida se
+gestiona por el contenido asociado (los posts de vídeo se eliminan en cascada al
+borrar el vídeo o el perfil). Esto preserva la invariante "un vídeo publicado ⇒
+exactamente un post".
+
+### RLS de posts
+
+Ver [`RLS_POLICIES.md`](./RLS_POLICIES.md). Resumen: el público lee SOLO posts
+distribuibles con visibilidad estrictamente `public` (unlisted no es enumerable
+por un SELECT público genérico de `posts`: el acceso por enlace/ID se reserva
+para el futuro); `registered_users` requiere autenticación; `project_members`
+requiere ser miembro del proyecto; `private` solo el autor; el admin lee todo.
+El usuario solo crea posts como sí mismo y solo puede enlazar vídeos propios;
+el contenido moderado (rejected/flagged) nunca vuelve a ser visible a través de
+un post porque la distributividad se deriva del vídeo.
+
+### Backfill
+
+La migración crea el post de cada vídeo `published` existente
+(`insert ... select ... on conflict (video_id) do update`): no borra ni recrea
+vídeos y es idempotente.
+
 ## Esquema futuro (no implementado)
 
-Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`, `community_members`.
+Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,
+`community_members`. Los tipos de post `text`, `project_update`, `opportunity`
+y `article` están preparados en `posts.post_type` pero aún no se crean.
 
 ## Seguridad
 
 - Row Level Security activado en todas las tablas, definido en las propias migraciones.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
-- El esquema tipado se regenera desde el remoto (`supabase:types`); mientras la
-  migración FASE 3 no se aplique en remoto, `src/types/database.types.ts` se ha
-  sincronizado a mano con la migración.
+- El esquema tipado se regenera desde el remoto (`supabase:types`); mientras las
+  migraciones FASE 3 y FASE 4.1 no se apliquen en remoto,
+  `src/types/database.types.ts` se ha sincronizado a mano con las migraciones.
