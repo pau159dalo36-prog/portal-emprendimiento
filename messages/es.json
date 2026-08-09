@@ -257,7 +257,11 @@
     "noInterests": "Aún no ha añadido intereses.",
     "collaborationTitle": "Busca colaborar así",
     "videosTitle": "Vídeos",
-    "viewAllVideos": "Ver todos los vídeos"
+    "viewAllVideos": "Ver todos los vídeos",
+    "follow": "Seguir",
+    "unfollow": "Siguiendo",
+    "followers": "{count, plural, one {# seguidor} other {# seguidores}}",
+    "following": "{count, plural, one {# siguiendo} other {# siguiendo}}"
   },
   "settings": {
     "profileTitle": "Configuración del perfil",
@@ -712,6 +716,12 @@
       "reasonTooLong": "El motivo no puede superar los 500 caracteres.",
       "moderationFailed": "No se pudo completar la moderación. Inténtalo de nuevo.",
       "done": "Moderación aplicada."
+    },
+    "follow": {
+      "invalidTarget": "Destino no válido.",
+      "blocked": "No puedes seguir a esta persona.",
+      "failed": "No se pudo completar la acción. Inténtalo de nuevo.",
+      "done": "Seguimiento actualizado."
     }
   },
   "videoStatuses": {

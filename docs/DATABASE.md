@@ -279,6 +279,33 @@ La migración crea el post de cada vídeo `published` existente
 (`insert ... select ... on conflict (video_id) do update`): no borra ni recrea
 vídeos y es idempotente.
 
+## FASE 4.2 — Seguimiento (`follows`)
+
+Migración: `supabase/migrations/20260810000000_fase4_follows.sql`.
+
+- **Tablas**: `profile_follows`, `project_follows`, `organization_follows`
+  (idempotentes vía `ON CONFLICT DO NOTHING` y `UNIQUE` compuestas:
+  `(follower_id, followed_id)`, `(follower_id, project_id)`,
+  `(follower_id, organization_id)`).
+- **Triggers** (invoker, no `SECURITY DEFINER`):
+  - `project_follows_check` / `organization_follows_check`:
+    `follower_id = auth.uid()`, no auto-seguirse, y quien sigue debe existir.
+  - `profile_follows_check`: además, comprueba el bloqueo simétrico
+    (`follows_blocked`).
+  - `profile_blocks_cleanup_follows`: al bloquear/desbloquear un perfil,
+    elimina `(A,B)` y `(B,A)` en `profile_follows`.
+- **RPCs**: `follow_profile`, `follow_project`, `follow_organization`,
+  `unfollow_profile`, `unfollow_project`, `unfollow_organization` (INSERT/DELETE
+  únicos, invoker, dependen de las políticas `insert_own`/`delete_own`) y
+  `get_profile_follow_counts` / `get_project_follow_counts` /
+  `get_organization_follow_counts` (`SECURITY DEFINER`, solo conteos).
+- **RLS**: `insert_own`/`delete_own` (ver `RLS_POLICIES.md`). Sin SELECT
+  directo; los conteos públicos pasan por las RPCs. Grants solo a
+  `authenticated`.
+- **Capa de datos**: `src/follows/data.ts` expone las funciones tipadas
+  (`follow*`, `unfollow*`, `isFollowing*`, `getFollowed*Ids`, `get*FollowCounts`)
+  usadas por las páginas públicas de perfil, proyecto y organización.
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,
@@ -290,6 +317,6 @@ y `article` están preparados en `posts.post_type` pero aún no se crean.
 - Row Level Security activado en todas las tablas, definido en las propias migraciones.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
-- El esquema tipado se regenera desde el remoto (`supabase:types`); mientras las
-  migraciones FASE 3 y FASE 4.1 no se apliquen en remoto,
-  `src/types/database.types.ts` se ha sincronizado a mano con las migraciones.
+- El esquema tipado se regenera desde el remoto (`supabase:types`); todas las
+  migraciones FASE 3, FASE 4.1 y FASE 4.2 están aplicadas en remoto, por lo que
+  `src/types/database.types.ts` refleja el esquema real.

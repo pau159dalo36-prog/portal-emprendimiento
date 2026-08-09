@@ -1,8 +1,9 @@
-# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts)
+# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts, seguimiento)
 
-RLS está activado en `public.videos`, `public.video_languages` y
-`public.posts`. El proyecto tiene `auto_expose_new_tables` desactivado, por lo
-que además de las políticas se conceden `GRANT` explícitos.
+RLS está activado en `public.videos`, `public.video_languages`,
+`public.posts`, `public.profile_follows`, `public.project_follows` y
+`public.organization_follows`. El proyecto tiene `auto_expose_new_tables`
+desactivado, por lo que además de las políticas se conceden `GRANT` explícitos.
 
 ## `posts`
 
@@ -132,3 +133,49 @@ usa en la política de SELECT de `storage.objects` para evitar consultar `videos
 directamente desde la política (recursión RLS). Igual que el resto de helpers
 (`is_organization_member`, `is_project_member`), usa `security definer` y
 `set search_path = ''`.
+
+## FASE 4.2 — Seguimiento (`profile_follows`, `project_follows`, `organization_follows`)
+
+| Tabla                  | Política         | Operación | Condición                                                        |
+| ---------------------- | ---------------- | --------- | ---------------------------------------------------------------- |
+| `profile_follows`      | `insert_own`     | INSERT    | `auth.uid() = follower_id`                                       |
+| `profile_follows`      | `delete_own`     | DELETE    | `auth.uid() = follower_id`                                       |
+| `project_follows`      | `insert_own`     | INSERT    | `auth.uid() = follower_id`                                       |
+| `project_follows`      | `delete_own`     | DELETE    | `auth.uid() = follower_id`                                       |
+| `organization_follows` | `insert_own`     | INSERT    | `auth.uid() = follower_id`                                       |
+| `organization_follows` | `delete_own`     | DELETE    | `auth.uid() = follower_id`                                       |
+
+Notas:
+
+- **Sin SELECT**: nadie puede enumerar seguidores/seguidos directamente sobre
+  estas tablas (ni siquiera el propio usuario). Los conteos públicos se exponen
+  solo mediante las RPCs `get_profile_follow_counts` /
+  `get_project_follow_counts` / `get_organization_follow_counts`
+  (`SECURITY DEFINER`, invoker-only vía `grant execute` a `authenticated`), que
+  solo devuelven el número de seguidores y seguidos, no identidades.
+- **Los triggers no son `SECURITY DEFINER`** (invoker): exigen que el usuario
+  tenga el rol `authenticated` en el JWT actual (`get_claim('app_metadata.role')
+  = 'authenticated'`) y aplican el saneamiento simétrico de bloqueos. Un
+  trigger invoker depende de la política de INSERT (por eso `insert_own` existe);
+  los seguidos/seguidores y la restricción `follows_blocked` se comprueban solo
+  si `auth.uid() IS NOT NULL`, de modo que el alta de datos vía SQL/scripts no
+  queda bloqueada.
+- **Cada usuario sigue solo como sí mismo**: los CHECK `follows_actor_is_follower`
+  (`follower_id = auth.uid()`) y `follows_not_self_follow` (`follower_id <>
+  followed_id`) son inmutables por RLS; además `insert_own` fija el actor.
+- **Saneamiento simétrico de bloqueos**: si A bloquea a B, el trigger
+  `profile_blocks_cleanup_follows` elimina `(A,B)` y `(B,A)` en
+  `profile_follows`; y `profile_follows_check` impide que un usuario seguido por
+  quien le bloquea vuelva a seguirlo. La relación `(B,A)` queda bloqueada por
+  ambas direcciones aunque la política no la permita escribir.
+- **Unicidad**: `UNIQUE (follower_id, followed_id)` y `UNIQUE
+  (follower_id, project_id)` / `(follower_id, organization_id)` garantizan que
+  un seguidor no siga dos veces el mismo objetivo. `ON CONFLICT DO NOTHING` en
+  las RPCs `follow_*` hace el follow idempotente.
+- **Conteos**: las RPCs de conteo realizan un único `count(*)` filtrado
+  (fail-closed: fila inexistente devuelve `0`) y se usan en las páginas públicas
+  de perfil/proyecto/organización. No hay autoincrementos manuales que puedan
+  desincronizarse.
+- **Grants**: `select/insert/delete` sobre las tres tablas solo para el rol
+  `authenticated`; nada para `anon`. Las RPCs de conteo y follow se conceden
+  solo a `authenticated`.

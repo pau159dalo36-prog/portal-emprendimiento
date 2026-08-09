@@ -257,7 +257,11 @@
     "noInterests": "They haven't added any interests yet.",
     "collaborationTitle": "Looking to collaborate like this",
     "videosTitle": "Videos",
-    "viewAllVideos": "View all videos"
+    "viewAllVideos": "View all videos",
+    "follow": "Follow",
+    "unfollow": "Following",
+    "followers": "{count, plural, one {# follower} other {# followers}}",
+    "following": "{count, plural, one {# following} other {# following}}"
   },
   "settings": {
     "profileTitle": "Profile settings",
@@ -710,8 +714,14 @@
       "unauthorized": "You don't have permission to moderate videos.",
       "invalidRequest": "Invalid moderation request.",
       "reasonTooLong": "The reason can't exceed 500 characters.",
-      "moderationFailed": "The moderation could not be completed. Try again.",
+      "moderationFailed": "Moderation couldn't be completed. Try again.",
       "done": "Moderation applied."
+    },
+    "follow": {
+      "invalidTarget": "Invalid target.",
+      "blocked": "You can't follow this person.",
+      "failed": "The action couldn't be completed. Try again.",
+      "done": "Following updated."
     }
   },
   "videoStatuses": {

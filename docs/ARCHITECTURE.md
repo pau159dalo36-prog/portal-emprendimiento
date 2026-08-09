@@ -23,6 +23,7 @@ src/
 │   ├── profile/    # Onboarding, edición de perfil y avatar (client)
 │   ├── shared/     # Componentes compartidos entre módulos
 │   └── ui/         # Componentes base (shadcn/ui)
+├── follows/         # Seguimiento social (data, types, tests)
 ├── lib/
 │   ├── env.ts      # Acceso seguro a variables de entorno
 │   └── supabase/   # Clientes Supabase (client, server, proxy)

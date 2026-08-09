@@ -14,6 +14,7 @@ export const features = {
     proyectos: true,
     videos: false,
     publicaciones: false,
+    seguimiento: true,
     feed: true,
     explorar: true,
     busqueda: false,

@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { FollowButton } from "@/components/follows/follow-button";
 import {
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import {
 import { ProjectCard } from "@/components/projects/project-card";
 import { VideoCard } from "@/components/video/video-card";
 import { brand } from "@/config/brand";
+import { getOrganizationFollowCount, isFollowingOrganization } from "@/follows/data";
 import {
   getOrganizationBySlug,
   getOrganizationLinks,
@@ -57,19 +59,25 @@ export default async function OrganizationProfilePage({
   const t = await getTranslations("organizations");
   const industries = await getTranslations("industries");
   const common = await getTranslations("common");
+  const followT = await getTranslations("publicProfile");
 
   const organization = await getOrganizationBySlug(supabase, slug);
   if (!organization) {
     notFound();
   }
 
-  const [members, links, projects, videos, canEdit] = await Promise.all([
+  const [members, links, projects, videos, canEdit, followCount] = await Promise.all([
     getOrganizationMembers(supabase, organization.id),
     getOrganizationLinks(supabase, organization.id),
     listProjectsByOrganization(supabase, organization.id),
     listPublishedVideosForOrganization(supabase, organization.id, { limit: 12 }),
     user ? isOrganizationManager(supabase, organization.id, user.id) : Promise.resolve(false),
+    getOrganizationFollowCount(supabase, organization.id),
   ]);
+  const canFollow = !!user && !canEdit;
+  const isFollowing = canFollow
+    ? await isFollowingOrganization(supabase, user.id, organization.id)
+    : false;
   const videoThumbnails = await resolveVideoThumbnails(supabase, videos);
 
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
@@ -121,6 +129,16 @@ export default async function OrganizationProfilePage({
               {t("edit")}
             </Link>
           )}
+          {canFollow && (
+            <FollowButton
+              targetId={organization.id}
+              targetType="organization"
+              isFollowing={isFollowing}
+            />
+          )}
+          <span className="text-sm text-muted-foreground">
+            {followT("followers", { count: followCount })}
+          </span>
         </CardHeader>
         <CardContent className="grid gap-4">
           {organization.industries.length > 0 && (

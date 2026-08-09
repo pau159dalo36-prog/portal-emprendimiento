@@ -100,6 +100,32 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   `unlisted` solo es accesible por enlace directo y queda fuera de los listados
   del feed (capa de aplicación). `service_role` nunca se usa en el frontend.
 
+## FASE 4.2 — Seguimiento (`profile_follows`, `project_follows`, `organization_follows`)
+
+- **Solo uno mismo puede seguir/deseguir**: cada política (`insert_own` /
+  `delete_own`) exige `auth.uid() = follower_id`, y los triggers refuerzan la
+  misma invariante en SQL. Los CHECK (`follows_actor_is_follower`,
+  `follows_not_self_follow`) cierran la puerta a auto-seguirse y a escrituras
+  con actores ajenos, inmutables por RLS.
+- **Sin enumeración de seguidores**: no hay política SELECT sobre las tablas de
+  follows (ni siquiera el propio usuario puede listar quién sigue a quién). Los
+  conteos públicos se sirven solo mediante RPCs `SECURITY DEFINER`
+  (`get_*_follow_counts`) que devuelven exclusivamente números; `service_role`
+  nunca se usa en el frontend.
+- **Los triggers no elevan privilegios**: `project_follows_check`,
+  `organization_follows_check`, `profile_follows_check` y
+  `profile_blocks_cleanup_follows` son **invoker** (no `SECURITY DEFINER`) y
+  validan el rol `authenticated` con `get_claim('app_metadata.role')` del JWT.
+  Un trigger invoker depende de la política de INSERT, por lo que un usuario sin
+  rol en la sesión no puede crear follows (fail-closed).
+- **Saneamiento simétrico de bloqueos**: bloquear a un perfil elimina las
+  relaciones de seguimiento en ambas direcciones y el trigger impide que un
+  usuario bloqueado vuelva a seguir a quien le bloquea (y viceversa).
+- **Fail-closed en los conteos**: una fila inexistente devuelve `0`; los
+  triggers solo comprueban la relación `follows_blocked` cuando
+  `auth.uid()` no es nulo, de modo que el alta de datos por scripts no queda
+  bloqueada.
+
 ## Estado y limitaciones conocidas
 
 - La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:

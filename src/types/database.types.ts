@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      organization_follows: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_follows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_follows_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_links: {
         Row: {
           created_at: string
@@ -712,6 +748,42 @@ export type Database = {
         }
         Relationships: []
       }
+      project_follows: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_follows_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_follows_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_links: {
         Row: {
           created_at: string
@@ -1117,6 +1189,22 @@ export type Database = {
       can_access_video_storage: {
         Args: { p_bucket: string; p_path: string }
         Returns: boolean
+      }
+      count_organization_followers: {
+        Args: { p_organization_id: string }
+        Returns: number
+      }
+      count_profile_followers: {
+        Args: { p_profile_id: string }
+        Returns: number
+      }
+      count_profile_following: {
+        Args: { p_profile_id: string }
+        Returns: number
+      }
+      count_project_followers: {
+        Args: { p_project_id: string }
+        Returns: number
       }
       is_organization_manager: {
         Args: { p_organization_id: string }

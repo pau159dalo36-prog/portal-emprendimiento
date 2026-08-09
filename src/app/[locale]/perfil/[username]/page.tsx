@@ -14,6 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getProfileInterests, getProfileSkills } from "@/profiles/data";
+import { FollowButton } from "@/components/follows/follow-button";
+import { getProfileFollowCounts, isFollowingProfile } from "@/follows/data";
 import { brand } from "@/config/brand";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
@@ -69,10 +71,14 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     year: "numeric",
   }).format(new Date(profile.created_at));
 
-  const [skills, interests, publishedVideos] = await Promise.all([
+  const canFollow = !!user && !isOwner;
+
+  const [skills, interests, publishedVideos, followCounts, isFollowing] = await Promise.all([
     getProfileSkills(supabase, profile.id),
     getProfileInterests(supabase, profile.id),
     listPublishedVideos(supabase, { authorId: profile.id, limit: 12 }),
+    getProfileFollowCounts(supabase, profile.id),
+    canFollow ? isFollowingProfile(supabase, user.id, profile.id) : Promise.resolve(false),
   ]);
 
   const firstName = profile.full_name?.split(" ")[0];
@@ -98,6 +104,19 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
               <p className="text-sm text-muted-foreground">@{profile.username}</p>
             )}
             {profile.headline && <p className="text-sm">{profile.headline}</p>}
+          </div>
+          <div className="ml-auto flex shrink-0 flex-col items-end gap-2">
+            {canFollow && (
+              <FollowButton
+                targetId={profile.id}
+                targetType="profile"
+                isFollowing={isFollowing}
+              />
+            )}
+            <span className="text-sm text-muted-foreground">
+              {t("followers", { count: followCounts.followers })} ·{" "}
+              {t("following", { count: followCounts.following })}
+            </span>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">

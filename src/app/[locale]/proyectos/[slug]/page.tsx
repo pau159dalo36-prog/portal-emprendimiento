@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { FollowButton } from "@/components/follows/follow-button";
 import { VideoCard } from "@/components/video/video-card";
 import {
   Card,
@@ -15,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { brand } from "@/config/brand";
+import { getProjectFollowCount, isFollowingProject } from "@/follows/data";
 import {
   getProjectBySlug,
   getProjectLinks,
@@ -55,20 +57,24 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const stages = await getTranslations("projectStages");
   const statuses = await getTranslations("projectStatuses");
   const needStatuses = await getTranslations("needStatuses");
+  const followT = await getTranslations("publicProfile");
 
   const project = await getProjectBySlug(supabase, slug);
   if (!project) {
     notFound();
   }
 
-  const [members, needs, links, projectVideos] = await Promise.all([
+  const isOwner = user?.id === project.owner_id;
+  const canFollow = !!user && !isOwner;
+
+  const [members, needs, links, projectVideos, followCount, isFollowing] = await Promise.all([
     getProjectMembers(supabase, project.id),
     getProjectNeeds(supabase, project.id),
     getProjectLinks(supabase, project.id),
     listPublishedVideosForProject(supabase, project.id, { limit: 12 }),
+    getProjectFollowCount(supabase, project.id),
+    canFollow ? isFollowingProject(supabase, user.id, project.id) : Promise.resolve(false),
   ]);
-
-  const isOwner = user?.id === project.owner_id;
   const thumbnails = await resolveVideoThumbnails(supabase, projectVideos);
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
     day: "numeric",
@@ -146,6 +152,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 {t("edit")}
               </Link>
             )}
+            {canFollow && (
+              <FollowButton
+                targetId={project.id}
+                targetType="project"
+                isFollowing={isFollowing}
+              />
+            )}
+            <span className="text-sm text-muted-foreground">
+              {followT("followers", { count: followCount })}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
