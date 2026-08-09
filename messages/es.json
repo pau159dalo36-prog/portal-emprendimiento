@@ -782,6 +782,12 @@
     "moderationReason": "Motivo: {reason}",
     "createdOn": "Subido el {date}",
     "publishedAtLabel": "Publicado el {date}",
+    "viewsCount": "{count, plural, one {# vista} other {# vistas}}",
+    "metrics": {
+      "qualifiedViews": "Vistas cualificadas: {count}",
+      "averageWatch": "Tiempo medio visto: {seconds} s",
+      "averageProgress": "Progreso medio: {rate} %"
+    },
     "panelItem": "vídeo",
     "panelItems": "vídeos",
     "panelSections": {

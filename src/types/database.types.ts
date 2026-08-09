@@ -1038,6 +1038,79 @@ export type Database = {
         }
         Relationships: []
       }
+      video_view_sessions: {
+        Row: {
+          anonymous_session_id: string | null
+          completed: boolean
+          created_at: string
+          id: string
+          last_seen_at: string
+          max_progress: number
+          plays: number
+          post_id: string | null
+          qualified: boolean
+          started_at: string
+          updated_at: string
+          video_id: string
+          viewer_id: string | null
+          watch_seconds: number
+        }
+        Insert: {
+          anonymous_session_id?: string | null
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          max_progress?: number
+          plays?: number
+          post_id?: string | null
+          qualified?: boolean
+          started_at?: string
+          updated_at?: string
+          video_id: string
+          viewer_id?: string | null
+          watch_seconds?: number
+        }
+        Update: {
+          anonymous_session_id?: string | null
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          max_progress?: number
+          plays?: number
+          post_id?: string | null
+          qualified?: boolean
+          started_at?: string
+          updated_at?: string
+          video_id?: string
+          viewer_id?: string | null
+          watch_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_view_sessions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_view_sessions_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_view_sessions_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
           aspect_ratio: string | null
@@ -1177,6 +1250,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _video_metrics_aggregate: {
+        Args: { p_video_id: string }
+        Returns: {
+          average_progress: number
+          average_watch_seconds: number
+          completion_rate: number
+          last_interaction: string
+          plays: number
+          qualified_views: number
+          total_watch_seconds: number
+          unique_viewers: number
+        }[]
+      }
       admin_approve_video: { Args: { p_video_id: string }; Returns: boolean }
       admin_flag_video: {
         Args: { p_reason?: string; p_video_id: string }
@@ -1206,6 +1292,36 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: number
       }
+      get_post_metrics: {
+        Args: { p_post_id: string }
+        Returns: {
+          average_progress: number
+          average_watch_seconds: number
+          completion_rate: number
+          last_interaction: string
+          plays: number
+          qualified_views: number
+          total_watch_seconds: number
+          unique_viewers: number
+        }[]
+      }
+      get_public_video_views_count: {
+        Args: { p_video_id: string }
+        Returns: number
+      }
+      get_video_metrics: {
+        Args: { p_video_id: string }
+        Returns: {
+          average_progress: number
+          average_watch_seconds: number
+          completion_rate: number
+          last_interaction: string
+          plays: number
+          qualified_views: number
+          total_watch_seconds: number
+          unique_viewers: number
+        }[]
+      }
       is_organization_manager: {
         Args: { p_organization_id: string }
         Returns: boolean
@@ -1224,6 +1340,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      report_video_view: {
+        Args: {
+          p_anonymous_session_id?: string
+          p_progress?: number
+          p_video_id: string
+          p_watch_delta?: number
+        }
+        Returns: {
+          completed: boolean
+          max_progress: number
+          qualified: boolean
+          watch_seconds: number
+        }[]
+      }
+      video_analytics_access: { Args: { p_video_id: string }; Returns: string }
       video_is_publicly_distributable: {
         Args: { p_moderation_status: string }
         Returns: boolean

@@ -12,6 +12,7 @@ import {
   VolumeX,
 } from "lucide-react";
 
+import { useVideoAnalytics } from "@/analytics/use-video-analytics";
 import { formatPlaybackTime } from "@/lib/video/utils";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ type VideoPlayerProps = {
   poster?: string | null;
   className?: string;
   tracks?: VideoTrack[];
+  videoId?: string;
 };
 
 const SEEK_STEP_SECONDS = 5;
@@ -39,8 +41,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function VideoPlayer({ src, poster, className, tracks = [] }: VideoPlayerProps) {
+export function VideoPlayer({ src, poster, className, tracks = [], videoId }: VideoPlayerProps) {
   const t = useTranslations("player");
+  const analytics = useVideoAnalytics(videoId);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -204,10 +207,14 @@ export function VideoPlayer({ src, poster, className, tracks = [] }: VideoPlayer
           setDuration(0);
         }}
         onPlay={() => {
+          analytics.onPlay();
           setIsPlaying(true);
           setStatus("ready");
         }}
-        onPause={() => setIsPlaying(false)}
+        onPause={() => {
+          analytics.onPause();
+          setIsPlaying(false);
+        }}
         onWaiting={() => setStatus("loading")}
         onPlaying={() => setStatus("ready")}
         onCanPlay={() => setStatus("ready")}
@@ -217,7 +224,15 @@ export function VideoPlayer({ src, poster, className, tracks = [] }: VideoPlayer
           }
           setStatus("ready");
         }}
-        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onTimeUpdate={(event) => {
+          const element = event.currentTarget;
+          setCurrentTime(element.currentTime);
+          const duration = Number.isFinite(element.duration) && element.duration > 0 ? element.duration : 0;
+          analytics.setProgress(duration > 0 ? element.currentTime / duration : 0);
+          analytics.onTimeUpdate(element.currentTime);
+        }}
+        onSeeked={() => analytics.onSeek()}
+        onEnded={() => analytics.onEnded()}
         onDurationChange={(event) => {
           if (Number.isFinite(event.currentTarget.duration)) {
             setDuration(event.currentTarget.duration);

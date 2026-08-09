@@ -1,13 +1,92 @@
-# Estado del proyecto — FASE 4.2 (Seguimiento social)
+# Estado del proyecto — FASE 4.3 (Analytics de vídeo)
 
 ## Estado general
 
+- 🚧 **FASE 4.3 en curso** (analytics de vídeo): migración, test SQL y capa
+  cliente creados y verificados con lint/typecheck/test/build; **pendiente** de
+  aplicar en remoto (`supabase:db:push`) y de regenerar tipos. El seguimiento en
+  el player y las métricas del panel ya están integrados.
 - ✅ **FASE 4.2 aplicada en remoto** (`20260810000000_fase4_follows.sql` +
   corrección `20260811000000_fase4_2_min_priv_follows.sql`), tipos regenerados
   y verificaciones read-only correctas.
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 4.3 — Analytics de vídeo (vistas, watch time y métricas)
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260812000000_fase4_3_analytics.sql`: tabla
+  `video_view_sessions` (una fila agregada por (identidad, vídeo), identidad
+  disjunta viewer_id XOR token anónimo, checks de formato/rango), índices
+  parciales de unicidad y de consulta, helper `video_analytics_access`
+  (owner/ok/denied reutilizando `video_is_publicly_distributable`), única vía
+  de escritura `report_video_view` (SECURITY DEFINER, fail-closed, anti-inflado
+  en **tiempo de pared REAL**: la PRIMERA petición de una sesión nueva solo CREA
+  la fila con `watch_seconds = 0`; delta acotado a 60 s por petición, a
+  `elapsed * 1 + 2,5 s` y a `session_age * 1 − ya contado` — sin margen +30/+60,
+  de modo que una llamada inmediata suma 0 y una qualified view exige ~3 s
+  reales—; `plays` solo con ≥ 120 s; qualified idempotente ≥ 3 s — o vídeo
+  corto ≤ 10 s con progress ≥ 0.5 y watch ≥ 2 —; completed con progress ≥ 0.95
+  y watch ≥ min(5, 50 % duración)), matriz de moderación (solo
+  `unreviewed`/`approved` aceptan watch time; `rejected`/`flagged` fallan en
+  caliente sin crear filas), RPCs de lectura agregadas SECURITY DEFINER
+  (`get_video_metrics`, `get_post_metrics`, `_video_metrics_aggregate` interno,
+  `get_public_video_views_count` fail-closed) y permisos mínimos (tabla sin
+  GRANT ni políticas SELECT; RPCs concedidas solo a anon/authenticated según
+  rol).
+- `supabase/tests/fase4_analytics.sql`: script de verificación SQL (transacción
+  que se revierte) con 18 bloques de tests que cubren los comportamientos
+  requeridos (primera petición crea fila watch=0, seek al final sin watch no
+  marca, refresh inmediato no infla — watch=0 —, acumulación tras tiempo real
+  acotada al tiempo de pared, un vídeo largo no se completa con un seek ni con
+  2 s reales, plays solo con ≥ 120 s, umbral qualified idempotente, completion,
+  delta por petición ≤ 60 s, aislamiento por identidad + RLS, nadie lee la
+  tabla, métricas de propietario sin identidades, fail-closed del no
+  propietario, private/rejected/flagged rechazan anon sin sesiones, sin
+  auto-vistas del propietario, métricas por post + contador público, umbral de
+  vídeo corto, tokens anónimos malformados, matriz de moderación con vídeo
+  `approved`).
+- `src/analytics/`: capa de acceso a datos (`data.ts` con `reportVideoView`,
+  `getVideoMetrics`, `getPostMetrics`, `getPublicVideoViewsCount` — todas
+  fail-closed devolviendo null ante error o entrada inválida —, `types.ts`,
+  `schemas.ts` (zod), `config.ts` con los umbrales espejo del SQL y el umbral de
+  flush, `anonymous-session.ts` con token aleatorio de 128 bits + TTL 30 días en
+  localStorage, `player-tracker.ts` que acumula segundos reales ignorando
+  seeks, `reporter.ts` con la lógica pura de envío (throttle por delta real,
+  flush en pausa/seek/ended/desmontaje, fail-closed) y el hook
+  `use-video-analytics.ts` que conecta el player con Supabase y la sesión
+  anónima).
+- `src/analytics/data.test.ts` y `src/analytics/reporter.test.ts`: tests
+  unitarios de la capa de datos, la sesión anónima, el tracker y el reporter.
+- Player integrado: `src/components/video/video-player.tsx` acepta `videoId`
+  opcional y reporta watch time/progreso cuando se proporciona.
+- Página pública del vídeo: `src/app/[locale]/videos/[id]/page.tsx` pasa
+  `videoId` al player y muestra el contador público de vistas cualificadas solo
+  para vídeos públicamente distribuibles.
+- Panel del propietario: `src/app/[locale]/(app)/panel/videos/page.tsx` muestra
+  por tarjeta vistas cualificadas, horas reproducidas y % completado
+  (`get_video_metrics`).
+- i18n: claves `viewsCount` y `metrics.*` en `messages/es.json` y `en.json`.
+- `src/types/database.types.ts`: sincronizado a mano con `video_view_sessions`
+  y las RPCs de analytics (hasta regenerar con `supabase:types` tras aplicar la
+  migración en remoto).
+
+### Verificación actual
+
+- `npm run lint` ✅
+- `npm run typecheck` ✅
+- `npm run test` ✅ (172 tests, incluidos 8 de `src/analytics/reporter.test.ts`)
+- `npm run build` ✅
+- Test SQL `supabase/tests/fase4_analytics.sql` **sin ejecutar** (requiere stack
+  local/Docker; NO debe ejecutarse contra producción).
+
+### Pendiente / decisiones
+
+- Ejecutar el test SQL contra el stack local cuando Docker esté disponible.
+- Aplicar la migración en remoto (`npm run supabase:db:push`) tras aprobación y
+  regenerar tipos con `npm run supabase:types`.
 
 ## FASE 4.2 — Seguimiento (`follows`)
 
@@ -65,7 +144,6 @@ Deliverables creados y revisados:
 - Ejecutar `supabase/tests/fase4_follows.sql` contra el stack local cuando
   Docker esté disponible (verificación completa de los caminos autenticados de
   follows/bloqueos).
-- La FASE 4.3 (interacciones) aún no empieza.
 
 ## FASE 4.1 — Entidad `posts` (capa base distribuible)
 

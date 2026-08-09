@@ -3,6 +3,8 @@ import { Archive, Eye, Pencil, Play, RotateCcw } from "lucide-react";
 
 import { requireUser } from "@/auth/session";
 import { changeVideoStatusAction } from "@/actions/videos";
+import { getVideoMetrics } from "@/analytics/data";
+import type { VideoMetrics } from "@/analytics/types";
 import { VideoDeleteButton } from "@/components/video/video-delete-button";
 import { VideoEmptyState } from "@/components/video/video-empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +32,11 @@ import type { VideoWithDetails } from "@/videos/types";
 async function VideoPanelCard({
   video,
   thumbnailUrl,
+  metrics,
 }: {
   video: VideoWithDetails;
   thumbnailUrl: string | null;
+  metrics: VideoMetrics | null;
 }) {
   const t = await getTranslations("videos");
   const statuses = await getTranslations("videoStatuses");
@@ -132,6 +136,20 @@ async function VideoPanelCard({
                 })}`
               : null}
           </p>
+
+          {metrics && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("metrics.qualifiedViews", { count: metrics.qualified_views })}
+              {" · "}
+              {t("metrics.averageWatch", {
+                seconds: Math.round(metrics.average_watch_seconds),
+              })}
+              {" · "}
+              {t("metrics.averageProgress", {
+                rate: Math.round(metrics.average_progress * 100),
+              })}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -215,6 +233,7 @@ export default async function PanelVideosPage() {
 
   const sections = new Map<PanelSectionKey, VideoWithDetails[]>();
   const previews = new Map<string, string | null>();
+  const metricsByVideo = new Map<string, VideoMetrics | null>();
   for (const video of videos) {
     const key = getPanelSection(video);
     if (key) {
@@ -226,6 +245,7 @@ export default async function PanelVideosPage() {
           path: video.thumbnail_path,
         }),
       );
+      metricsByVideo.set(video.id, await getVideoMetrics(supabase, video.id));
     }
   }
 
@@ -260,7 +280,12 @@ export default async function PanelVideosPage() {
               </div>
               <div className="grid gap-3">
                 {sections.get(key)!.map((video) => (
-                  <VideoPanelCard key={video.id} video={video} thumbnailUrl={previews.get(video.id) ?? null} />
+                  <VideoPanelCard
+                    key={video.id}
+                    video={video}
+                    thumbnailUrl={previews.get(video.id) ?? null}
+                    metrics={metricsByVideo.get(video.id) ?? null}
+                  />
                 ))}
               </div>
             </section>

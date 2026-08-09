@@ -4,12 +4,18 @@ import { getTranslations } from "next-intl/server";
 import { Pencil } from "lucide-react";
 
 import { getCurrentUser } from "@/auth/session";
+import { getPublicVideoViewsCount } from "@/analytics/data";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/video/video-player";
 import { brand } from "@/config/brand";
-import { getLanguageLabel, getVisibilityLabel, type VideoVisibility } from "@/config/video";
+import {
+  getLanguageLabel,
+  getVisibilityLabel,
+  VIDEO_DISTRIBUTABLE_MODERATION_STATUSES,
+  type VideoVisibility,
+} from "@/config/video";
 import { createSupabaseVideoProvider } from "@/lib/video/supabase-video-provider";
 import { resolveVideoImagePreviewUrl } from "@/lib/video/preview";
 import { pageMetadataTitle } from "@/i18n/metadata";
@@ -71,9 +77,23 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
     path: video.poster_path,
   });
 
+  // Contador público: solo tiene sentido en vídeos públicamente distribuibles
+  // (published + ready + distributable + visibility public/unlisted). Para el
+  // resto se oculta (la RPC devolvería 0 y no es un vector para sondear IDs).
+  const isPubliclyCountable =
+    video.status === "published" &&
+    video.processing_status === "ready" &&
+    (video.visibility === "public" || video.visibility === "unlisted") &&
+    (VIDEO_DISTRIBUTABLE_MODERATION_STATUSES as readonly string[]).includes(
+      video.moderation_status,
+    );
+  const viewsCount = isPubliclyCountable
+    ? await getPublicVideoViewsCount(supabase, video.id)
+    : null;
+
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
-      <VideoPlayer src={playbackUrl} poster={poster} />
+      <VideoPlayer src={playbackUrl} poster={poster} videoId={video.id} />
 
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -134,6 +154,11 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
               date: dateFormatter.format(new Date(video.published_at ?? video.created_at)),
             })}
           </span>
+          {viewsCount != null && (
+            <span aria-label={t("viewsCount", { count: viewsCount })}>
+              {t("viewsCount", { count: viewsCount })}
+            </span>
+          )}
         </div>
 
         {video.project && (
