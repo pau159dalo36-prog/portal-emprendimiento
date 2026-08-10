@@ -75,14 +75,14 @@ describe("analytics (capa de datos)", () => {
     });
   });
 
-  it("reportVideoView envía anonymous_session_id null y acota el delta a 60 s", async () => {
+  it("reportVideoView omite anonymous_session_id y acota el delta a 60 s", async () => {
     const { supabase, calls } = createQuerySpy();
 
     await reportVideoView(supabase, { videoId: UUID_V1, watchDelta: 120, progress: 0 });
 
     const args = rpcCall(calls, "report_video_view");
     expect(args).toMatchObject({
-      p_anonymous_session_id: null,
+      p_anonymous_session_id: undefined,
       p_watch_delta: MAX_WATCH_DELTA_PER_REPORT,
     });
   });

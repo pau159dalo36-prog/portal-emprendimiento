@@ -2,10 +2,13 @@
 
 ## Estado general
 
-- 🚧 **FASE 4.3 en curso** (analytics de vídeo): migración, test SQL y capa
-  cliente creados y verificados con lint/typecheck/test/build; **pendiente** de
-  aplicar en remoto (`supabase:db:push`) y de regenerar tipos. El seguimiento en
-  el player y las métricas del panel ya están integrados.
+- ✅ **FASE 4.3 aplicada en remoto**: migración `20260812000000_fase4_3_analytics.sql`
+  + corrección de mínimo privilegio `20260813000000_fase4_3_min_priv_analytics.sql`
+  aplicadas (migration list local=remoto 13/13), tipos regenerados con
+  `npm run supabase:types` (sin diff: ya estaban en sincronía) y verificación
+  completa `npm run check` en verde. Se corrigió un test de `src/analytics/data.test.ts`
+  que esperaba `p_anonymous_session_id: null` cuando la capa de datos envía
+  `undefined` (alineado con los tipos generados; la RPC usa default null).
 - ✅ **FASE 4.2 aplicada en remoto** (`20260810000000_fase4_follows.sql` +
   corrección `20260811000000_fase4_2_min_priv_follows.sql`), tipos regenerados
   y verificaciones read-only correctas.
@@ -69,24 +72,27 @@ Deliverables creados y revisados:
   por tarjeta vistas cualificadas, horas reproducidas y % completado
   (`get_video_metrics`).
 - i18n: claves `viewsCount` y `metrics.*` en `messages/es.json` y `en.json`.
-- `src/types/database.types.ts`: sincronizado a mano con `video_view_sessions`
-  y las RPCs de analytics (hasta regenerar con `supabase:types` tras aplicar la
-  migración en remoto).
+- `src/types/database.types.ts`: regenerado con `npm run supabase:types` tras
+  aplicar la migración en remoto (incluye `video_view_sessions` y las RPCs de
+  analytics).
 
 ### Verificación actual
 
 - `npm run lint` ✅
 - `npm run typecheck` ✅
-- `npm run test` ✅ (172 tests, incluidos 8 de `src/analytics/reporter.test.ts`)
+- `npm run test` ✅ (175 tests, incluidos 10 de `src/analytics/reporter.test.ts`
+  y 18 de `src/analytics/data.test.ts`)
 - `npm run build` ✅
+- Migraciones `20260812000000` y `20260813000000` **aplicadas en remoto**;
+  `migration list` local=remoto (13/13).
 - Test SQL `supabase/tests/fase4_analytics.sql` **sin ejecutar** (requiere stack
   local/Docker; NO debe ejecutarse contra producción).
 
 ### Pendiente / decisiones
 
-- Ejecutar el test SQL contra el stack local cuando Docker esté disponible.
-- Aplicar la migración en remoto (`npm run supabase:db:push`) tras aprobación y
-  regenerar tipos con `npm run supabase:types`.
+- Ejecutar el test SQL contra el stack local cuando Docker esté disponible
+  (verificación completa de los caminos autenticados y anti-inflado de
+  `report_video_view`).
 
 ## FASE 4.2 — Seguimiento (`follows`)
 
