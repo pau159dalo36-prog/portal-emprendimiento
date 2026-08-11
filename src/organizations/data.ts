@@ -51,30 +51,6 @@ export async function listOrganizations(
   return data ?? [];
 }
 
-export async function countPublishedProjectsByOrganizations(
-  supabase: SupabaseClient<Database>,
-  organizationIds: string[],
-): Promise<Map<string, number>> {
-  if (organizationIds.length === 0) {
-    return new Map();
-  }
-
-  const { data } = await supabase
-    .from("projects")
-    .select("organization_id")
-    .eq("is_public", true)
-    .eq("status", "published")
-    .in("organization_id", organizationIds);
-
-  const counts = new Map<string, number>();
-  for (const row of data ?? []) {
-    if (row.organization_id) {
-      counts.set(row.organization_id, (counts.get(row.organization_id) ?? 0) + 1);
-    }
-  }
-  return counts;
-}
-
 export async function isOrganizationMember(
   supabase: SupabaseClient<Database>,
   organizationId: string,

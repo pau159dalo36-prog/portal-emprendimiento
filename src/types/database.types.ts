@@ -1292,6 +1292,94 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: number
       }
+      get_following_feed: {
+        Args: {
+          p_cursor_id?: string
+          p_cursor_published_at?: string
+          p_limit?: number
+        }
+        Returns: {
+          author_avatar_url: string
+          author_full_name: string
+          author_id: string
+          author_username: string
+          average_progress: number
+          average_watch_seconds: number
+          completion_rate: number
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          plays: number
+          post_body: string
+          post_created_at: string
+          post_id: string
+          post_post_type: string
+          post_updated_at: string
+          project_id: string
+          project_name: string
+          project_slug: string
+          published_at: string
+          qualified_views: number
+          video_caption: string
+          video_duration_seconds: number
+          video_height: number
+          video_id: string
+          video_poster_bucket: string
+          video_poster_path: string
+          video_thumbnail_bucket: string
+          video_thumbnail_path: string
+          video_title: string
+          video_width: number
+        }[]
+      }
+      get_for_you_feed: {
+        Args: {
+          p_cursor_id?: string
+          p_cursor_published_at?: string
+          p_cursor_score?: number
+          p_limit?: number
+        }
+        Returns: {
+          affinity_score: number
+          author_avatar_url: string
+          author_full_name: string
+          author_id: string
+          author_username: string
+          average_progress: number
+          average_watch_seconds: number
+          completion_rate: number
+          completion_score: number
+          exploration_score: number
+          final_score: number
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          plays: number
+          post_body: string
+          post_created_at: string
+          post_id: string
+          post_post_type: string
+          post_updated_at: string
+          project_id: string
+          project_name: string
+          project_slug: string
+          published_at: string
+          qualified_views: number
+          recency_score: number
+          video_caption: string
+          video_duration_seconds: number
+          video_height: number
+          video_id: string
+          video_poster_bucket: string
+          video_poster_path: string
+          video_thumbnail_bucket: string
+          video_thumbnail_path: string
+          video_title: string
+          video_width: number
+          views_score: number
+          watch_score: number
+        }[]
+      }
       get_post_metrics: {
         Args: { p_post_id: string }
         Returns: {
