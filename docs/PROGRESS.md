@@ -1,20 +1,99 @@
-# Estado del proyecto — FASE 4.3 (Analytics de vídeo)
+# Estado del proyecto — FASE 4 COMPLETA
 
 ## Estado general
 
+- ✅ **FASE 4 COMPLETA** (4.1 posts, 4.2 follows, 4.3 analytics, 4.4 feed y cierre
+  4.5): todo verificado (`lint`/`typecheck`/`test`/`build` en verde), remoto
+  sincronizado y documentado. Pendiente solo la ejecución de los tests SQL
+  `fase4_posts/follows/analytics/feed.sql` contra un stack local (Docker no
+  disponible; NO ejecutarlos contra producción).
+- ✅ **FASE 4.4 aplicada en remoto**: migración
+  `20260814000000_fase4_4_feed.sql` (migration list local=remoto 13/13), tipos
+  regenerados con `npm run supabase:types` (+88 filas solo RPC feed) y ACL
+  auditadas estructural y conductualmente contra el remoto.
 - ✅ **FASE 4.3 aplicada en remoto**: migración `20260812000000_fase4_3_analytics.sql`
   + corrección de mínimo privilegio `20260813000000_fase4_3_min_priv_analytics.sql`
-  aplicadas (migration list local=remoto 13/13), tipos regenerados con
-  `npm run supabase:types` (sin diff: ya estaban en sincronía) y verificación
-  completa `npm run check` en verde. Se corrigió un test de `src/analytics/data.test.ts`
-  que esperaba `p_anonymous_session_id: null` cuando la capa de datos envía
-  `undefined` (alineado con los tipos generados; la RPC usa default null).
+  aplicadas, tipos regenerados y verificación completa `npm run check` en verde.
 - ✅ **FASE 4.2 aplicada en remoto** (`20260810000000_fase4_follows.sql` +
   corrección `20260811000000_fase4_2_min_priv_follows.sql`), tipos regenerados
   y verificaciones read-only correctas.
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 4.4 — Feed ("Para ti" y "Siguiendo")
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260814000000_fase4_4_feed.sql`: dos RPC `SECURITY
+  DEFINER` (`get_for_you_feed`, `get_following_feed`) que devuelven en UNA
+  llamada el post + vídeo + autor + proyecto + organización + métricas agregadas
+  (sin N+1; los índices existentes cubren el plan). Ranking "Para ti"
+  determinista con la fórmula espejada en `src/feed/config.ts` y `ranking.ts`:
+  `0.35*recency` (half-life 168 h) + `0.15*affinity` (cap 1.0) +
+  `0.20*watch` + `0.10*completion` (smoothing bayesiano prior 10 vistas) +
+  `0.10*views` (log1p/10) + `0.10*explore` (exp(-log1p/20)), score en `[0,1]`
+  redondeado a 6 decimales; cursor `(score, published_at, id)`. "Siguiendo" es
+  cronológico (`published_at DESC, id DESC`) sin reordenar. Excluye contenido no
+  distribuible, `unlisted`, moderación `rejected`/`flagged` y a los autores que
+  bloquean al lector (y al revés). Anónimos reciben "Para ti" (afinidad 0).
+  ACL: `get_for_you_feed` anon+authenticated, `get_following_feed` solo
+  authenticated; se concedió EXECUTE de los predicados
+  `post_is_publicly_distributable`/`video_is_publicly_distributable` a
+  anon+authenticated porque las políticas RLS los invocan con los privilegios
+  del llamador. Sin tablas/triggers/índices nuevos.
+- `src/feed/`: `config.ts` (pesos/límites espejo), `ranking.ts` (capa pura
+  determinista con breakdown), `diversity.ts` (reordena DENTRO de cada página;
+  máx 2 autores consecutivos, sin eliminar candidatos, no toca el cursor),
+  `schemas.ts` (cursor opaco versionado, límite [1,50]), `data.ts` (RPC +
+  frontera con nullabilidad real de LEFT JOIN — `ForYouFeedRow`/
+  `FollowingFeedRow` — y `video: null` cuando no hay vídeo), `home.ts`
+  (primera página server-side, elimina los `scores` del payload), `types.ts`
+  (`PublicFeedItem` sin scores para la UI).
+- UI: `src/app/[locale]/page.tsx` (homepage = feed), `feed-tabs.tsx` (dos
+  pestañas, "Siguiendo" gated a sesión, "Cargar más" con cursor sin OFFSET,
+  merge sin duplicados por `post.id`, el error NUNCA descarta items ya
+  cargados, reintentar, estados vacíos con CTA Explorar), `feed-post-card.tsx`
+  (tarjeta con fallback de miniatura, autor/avatar, vistas públicas).
+- Homepage verificada: `src/app/[locale]/page.tsx` → `loadHomeFeed` →
+  `FeedTabs`. `/videos`, `/proyectos`, `/organizaciones` siguen siendo
+  directorios propios (la homepage solo aloja el feed).
+- Tipos regenerados (`supabase:types`): +88 solo de las dos RPC del feed.
+  Nota: el generador marca `returns table` como non-null; en runtime las
+  columnas de LEFT JOIN devuelven `null` reales, por eso la frontera
+  `src/feed/data.ts` hace el cast honesto (y `video: null` cuando `video_id`
+  es nulo) con su test.
+- Auditoría de ACL contra el remoto (estructural + conductual con
+  `db query --linked` + `set local role`/`request.jwt.claim.sub`): anon puede
+  ejecutar `get_for_you_feed` y los predicados de distribución; `get_following_feed`
+  y `_video_metrics_aggregate` NO son ejecutables por anon; no hay suplantación
+  de identidad (las RPC usan `auth.uid()`, no un `p_user_id`).
+- Prueba read-only del feed contra producción (transacción con rollback):
+  paginación 12+5 sin duplicados ni overlap, contenido no distribuible excluido,
+  moderación `rejected`/`flagged` excluida.
+- Cierre 4.5: se eliminó `listFeedPosts` (`src/posts/data.ts`), primitiva
+  supersedida por las RPC del feed (solo la usaban sus tests); se conservan los
+  tests de la matriz de distribución. `getPostById`/`listPostsForUser` y
+  `getPostMetrics` quedan como capas de datos testeadas para páginas futuras de
+  detalle de post.
+
+### Verificación actual
+
+- `npm run lint` ✅
+- `npm run typecheck` ✅
+- `npm run test` ✅ (235 tests en 20 archivos)
+- `npm run build` ✅
+- Migración `20260814000000` **aplicada en remoto**; `migration list`
+  local=remoto (13/13); `supabase db push --dry-run` → "Remote database is up
+  to date."
+- Test SQL `supabase/tests/fase4_feed.sql` **sin ejecutar** (requiere stack
+  local/Docker; NO debe ejecutarse contra producción).
+
+### Pendiente / decisiones
+
+- Ejecutar `fase4_feed.sql` (y `fase4_posts/follows/analytics`) contra el stack
+  local cuando Docker esté disponible.
+- FASE 5 NO ha empezado (este cierre deja FASE 4 COMPLETA).
 
 ## FASE 4.3 — Analytics de vídeo (vistas, watch time y métricas)
 
@@ -207,4 +286,8 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
+- Migraciones local=remoto: 13/13 (hasta `20260814000000_fase4_4_feed.sql`);
+  `db push --dry-run` → up to date.
+- Los tests SQL de FASE 4 (posts/follows/analytics/feed) NO deben ejecutarse
+  contra producción; quedan para el stack local.
 - Sin commit/push pendiente de autorización.

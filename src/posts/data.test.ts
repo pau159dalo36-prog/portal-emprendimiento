@@ -7,7 +7,7 @@ import {
   POST_TYPES,
   POST_VISIBILITIES,
 } from "@/config/post";
-import { getPostById, listFeedPosts, listPostsForUser } from "@/posts/data";
+import { getPostById, listPostsForUser } from "@/posts/data";
 import {
   listPostsFiltersSchema,
   postBodySchema,
@@ -16,74 +16,6 @@ import {
   postVisibilitySchema,
 } from "@/posts/schemas";
 import type { Database } from "@/types/database.types";
-
-describe("listFeedPosts (primitiva del feed)", () => {
-  function createQuerySpy() {
-    const calls: { method: string; args: unknown[] }[] = [];
-    const handler: ProxyHandler<object> = {
-      get(_target, prop, receiver) {
-        if (prop === "then") {
-          return undefined;
-        }
-        if (typeof prop !== "string") {
-          return undefined;
-        }
-        return (...args: unknown[]) => {
-          calls.push({ method: prop, args });
-          return receiver;
-        };
-      },
-    };
-    const builder = new Proxy({}, handler);
-    const supabase = { from: () => builder };
-    return {
-      supabase: supabase as unknown as SupabaseClient<Database>,
-      calls,
-    };
-  }
-
-  function filterCalls(
-    calls: { method: string; args: unknown[] }[],
-    method: string,
-    column: string,
-  ) {
-    return calls.find((call) => call.method === method && call.args[0] === column)?.args;
-  }
-
-  it("solo consulta posts publicados distribuibles", async () => {
-    const { supabase, calls } = createQuerySpy();
-    await listFeedPosts(supabase);
-
-    expect(filterCalls(calls, "in", "publication_status")?.[1]).toEqual(["published"]);
-    expect(POST_DISTRIBUTABLE_PUBLICATION_STATUSES).toEqual(["published"]);
-  });
-
-  it("excluye 'unlisted' del feed (solo distribuye posts estrictamente públicos)", async () => {
-    const { supabase, calls } = createQuerySpy();
-    await listFeedPosts(supabase);
-
-    expect(filterCalls(calls, "eq", "visibility")?.[1]).toBe("public");
-    expect(POST_VISIBILITIES).toContain("unlisted");
-    expect(POST_VISIBILITIES).toContain("private");
-  });
-
-  it("ordena por published_at descendente (feed cronológico)", async () => {
-    const { supabase, calls } = createQuerySpy();
-    await listFeedPosts(supabase);
-
-    const orderCall = calls.find((call) => call.method === "order");
-    expect(orderCall?.args[0]).toBe("published_at");
-    expect(orderCall?.args[1]).toEqual({ ascending: false });
-  });
-
-  it("aplica el filtro de autor y el límite cuando se indican", async () => {
-    const { supabase, calls } = createQuerySpy();
-    await listFeedPosts(supabase, { authorId: "author-1", limit: 5 });
-
-    expect(filterCalls(calls, "eq", "author_id")?.[1]).toBe("author-1");
-    expect(calls.find((call) => call.method === "limit")?.args[0]).toBe(5);
-  });
-});
 
 describe("getPostById / listPostsForUser", () => {
   function createQuerySpy() {

@@ -15,38 +15,52 @@
 
 ```
 src/
-├── actions/        # Server Actions (auth, profile, avatar, form-state)
+├── actions/        # Server Actions (auth, profile, avatar, videos, follows, form-state)
+├── analytics/      # Telemetría de vídeo (data, config, schemas, tracker, reporter, hook)
 ├── app/            # Páginas y layouts (Next.js App Router)
 ├── auth/           # Lógica de autenticación (session, getClaims)
 ├── components/
+│   ├── feed/       # FeedTabs, FeedPostCard, ProjectGrid, ProjectVideoCard
+│   ├── follows/    # FollowButton
+│   ├── video/      # VideoPlayer, VideoCard, upload/preview/delete/empty-state
 │   ├── portal/     # Componentes específicos del portal
 │   ├── profile/    # Onboarding, edición de perfil y avatar (client)
 │   ├── shared/     # Componentes compartidos entre módulos
 │   └── ui/         # Componentes base (shadcn/ui)
-├── follows/         # Seguimiento social (data, types, tests)
+├── config/         # Constantes de dominio (posts, videos, uploads)
+├── feed/           # Feed "Para ti"/"Siguiendo" (config, ranking, diversity, schemas, data, home, types)
+├── follows/        # Seguimiento social (data, types, tests)
 ├── lib/
 │   ├── env.ts      # Acceso seguro a variables de entorno
-│   └── supabase/   # Clientes Supabase (client, server, proxy)
+│   ├── supabase/   # Clientes Supabase (client, server, proxy)
+│   └── video/      # Utilidades de vídeo (utils, preview, file-names, validation)
 ├── posts/          # Entidad genérica distribuible (data, types, schemas, constants)
 ├── profiles/       # Lógica de perfiles (constantes, datos, completitud, avatar, map)
 ├── proxy.ts        # Proxy de Next.js 16 (renovación de sesión)
 ├── supabase/       # Cliente y configuración de Supabase
 ├── types/          # Tipos TypeScript compartidos
 │   └── database.types.ts  # Tipos generados desde Supabase
-└── validations/    # Schemas de validación (Zod)
+├── validations/    # Schemas de validación (Zod)
+└── videos/         # Lógica de vídeos (data, panel, types)
 ```
 
 ## Rutas principales
 
 | Ruta                          | Acceso           | Descripción                                            |
 | ----------------------------- | ---------------- | ------------------------------------------------------ |
-| `/`                           | Público          | Portada                                                |
+| `/`                           | Público          | Homepage = feed (pestañas Para ti / Siguiendo)          |
 | `/registrarse`, `/iniciar-sesion` | Público      | Autenticación (grupo `(auth)`)                         |
 | `/onboarding`                 | Autenticado      | Onboarding por 5 pasos (redirige a `/panel` si acabado) |
 | `/panel`                      | Autenticado      | Panel privado (redirige a `/onboarding` si incompleto) |
+| `/panel/videos`               | Autenticado      | Panel del propietario (métricas de vídeo, publicar/editar/archivar) |
 | `/configuracion/perfil`       | Autenticado      | Edición completa del perfil + avatar                   |
 | `/perfil/[username]`          | Público          | Perfil público con layout propio (respeta RLS)         |
 | `/perfil`                     | Autenticado      | Redirige al perfil público del propio usuario          |
+| `/videos`                     | Público          | Exploración de vídeos (grid de `VideoCard`)            |
+| `/videos/[id]`                | Público          | Página pública del vídeo (player + contador público)   |
+| `/publicar/video`             | Autenticado      | Subida y publicación de vídeo                          |
+| `/proyectos`, `/organizaciones` | Público       | Directorios de proyectos/organizaciones                |
+| `/proyectos/[slug]`, `/organizaciones/[slug]` | Público | Detalle con vídeos y FollowButton |
 
 ## Principios arquitectónicos
 

@@ -126,6 +126,45 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   `auth.uid()` no es nulo, de modo que el alta de datos por scripts no queda
   bloqueada.
 
+## FASE 4.3 — Analytics de vídeo
+
+- **Fail-closed en toda la capa**: `report_video_view` y las RPC de métricas
+  devuelven null/error ante entrada inválida o fallo; el player nunca se rompe
+  por métricas. `get_video_metrics`/`get_post_metrics` solo sirven al
+  propietario/admin y agregan sin exponer identidades.
+- **La tabla `video_view_sessions` no se puede leer**: sin políticas SELECT ni
+  GRANT. Todo pasa por RPCs `SECURITY DEFINER`.
+- **Anti-inflado en tiempo de pared real**: la primera petición solo crea la
+  fila (watch=0); los deltas se acotan (60 s/petición, `elapsed + 2,5 s`,
+  `session_age − ya contado`), de modo que una qualified view exige ~3 s reales
+  y una sesión no puede inflar su watch time con llamadas rápidas ni con seeks.
+- **Identidad disjunta y aislada**: `viewer_id XOR anonymous_session_id`; el
+  token anónimo es aleatorio (128 bits, TTL 30 días). Una sesión anónima no
+  puede adulterar métricas ajenas y un usuario autenticado nunca se
+  auto-contabiliza.
+- **Moderación integrada**: `rejected`/`flagged` rechazan watch time en caliente
+  (sin crear filas); solo `unreviewed`/`approved` acumulan.
+
+## FASE 4.4 — Feed
+
+- **Las RPC del feed son `SECURITY DEFINER` y aplican ellas mismas los
+  filtros**: distributividad, moderación (`rejected`/`flagged` fuera),
+  `unlisted` excluido, visibilidad, y exclusión de autores que bloquean al
+  lector (y al revés). El cliente nunca recibe filas crudas de `posts`/`videos`:
+  recibe el payload paginado ya filtrado.
+- **Identidad del lector por `auth.uid()`**: las RPC NO aceptan un `p_user_id`;
+  el feed "Siguiendo" solo existe para `authenticated` (anon recibe
+  `permission denied`). Nadie puede pedir el feed de otro.
+- **Anónimos con "Para ti" no personalizado**: pueden usar el feed público
+  (afinidad 0); la personalización por follows y los bloqueos requieren sesión.
+- **ACL mínima verificada contra el remoto**: EXECUTE concedido exactamente a
+  los roles que lo necesitan (predicados de distribución también a anon, porque
+  las políticas RLS de SELECT los invocan con los privilegios del llamador; son
+  funciones normales invoker, sin elevación).
+- **La diversidad no filtra contenido**: reordena dentro de cada página sin
+  eliminar candidatos y sin alterar la paginación (cursor del orden SQL), por lo
+  que no puede usarse para censurar u ocultar posts.
+
 ## Estado y limitaciones conocidas
 
 - La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:

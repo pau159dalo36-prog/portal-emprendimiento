@@ -306,6 +306,88 @@ Migración: `supabase/migrations/20260810000000_fase4_follows.sql`.
   (`follow*`, `unfollow*`, `isFollowing*`, `getFollowed*Ids`, `get*FollowCounts`)
   usadas por las páginas públicas de perfil, proyecto y organización.
 
+## FASE 4.3 — Analytics de vídeo
+
+Migración: `20260812000000_fase4_3_analytics.sql` (+ mínimo privilegio
+`20260813000000_fase4_3_min_priv_analytics.sql`).
+
+### `video_view_sessions`
+
+Una fila agregada por (identidad, vídeo): el estado que permite acumular watch
+time y cualificar vistas con idempotencia. La identidad es **disjunta**:
+`viewer_id XOR anonymous_session_id` (solo uno puede ser no nulo).
+
+| Columna              | Tipo        | Descripción                                                     |
+| -------------------- | ----------- | --------------------------------------------------------------- |
+| id                   | UUID (PK)   |                                                                 |
+| video_id             | UUID (FK)   | `videos.id` (cascade)                                           |
+| viewer_id            | UUID (FK)   | `profiles.id` (set null); NULL si es sesión anónima             |
+| anonymous_session_id | TEXT        | Token anónimo (128 bits); NULL si es usuario autenticado        |
+| plays                | INTEGER     | Conteos de reproducción (solo con ≥ 120 s)                      |
+| qualified_views      | INTEGER     | Vista cualificada idempotente (≥ 3 s reales, o vídeo corto con progress ≥ 0.5) |
+| completed            | INTEGER     | Completados (progress ≥ 0.95 y watch suficiente)                |
+| watch_seconds        | DOUBLE      | Tiempo de pared REAL acumulado (delta por petición acotado)     |
+| last_report_at       | TIMESTAMPTZ |                                                                 |
+| created_at / updated_at | TIMESTAMPTZ |                                              |
+
+Índices parciales de unicidad (`(video_id, viewer_id)` y
+`(video_id, anonymous_session_id)`), de agregación y de búsqueda. **Sin GRANT
+ni políticas SELECT**: nadie lee la tabla directamente; las métricas solo salen
+por RPC.
+
+- **Única vía de escritura**: `report_video_view(p_video_id, p_anonymous_session_id,
+  p_watch_delta, p_progress)` (`SECURITY DEFINER`, fail-closed). Anti-inflado en
+  **tiempo de pared real**: la primera petición de una sesión solo crea la fila
+  con `watch_seconds = 0`; el delta se acota a 60 s/petición, a `elapsed + 2,5 s`
+  y a `session_age − ya contado`. Una llamada inmediata suma 0; una qualified
+  view exige ~3 s reales. `plays` solo con ≥ 120 s; `completed` con
+  `progress ≥ 0.95` y `watch ≥ min(5, 50 % duración)`. Matriz de moderación:
+  solo `unreviewed`/`approved` aceptan watch time; `rejected`/`flagged` fallan
+  en caliente sin crear filas. El propietario nunca se auto-contabiliza.
+- **RPCs de lectura** (`SECURITY DEFINER`): `get_video_metrics(p_video_id)`,
+  `get_post_metrics(p_post_id)` (solo owner/admin, sin identidades),
+  `get_public_video_views_count(p_video_id)` (contador público fail-closed) e
+  interna `_video_metrics_aggregate` (sin EXECUTE público).
+- **Grants**: tabla sin GRANT; RPCs concedidas según rol (anon solo las
+  públicas; `_video_metrics_aggregate` a nadie).
+
+### Espejo cliente
+
+`src/analytics/` replica los umbrales (`config.ts`), valida con zod
+(`schemas.ts`), acumula segundos reales ignorando seeks (`player-tracker.ts`),
+envía por delta/flush (`reporter.ts`, fail-closed) y conecta el player con
+Supabase + sesión anónima (token 128 bits, TTL 30 días) vía `use-video-analytics.ts`.
+
+## FASE 4.4 — Feed (RPCs "Para ti" y "Siguiendo")
+
+Migración: `supabase/migrations/20260814000000_fase4_4_feed.sql`. **No crea
+tablas ni índices**: define dos funciones SQL puras que reutilizan los índices
+existentes.
+
+- `get_for_you_feed(p_limit integer default 12, p_cursor_score numeric default
+  null, p_cursor_published_at timestamptz default null, p_cursor_id uuid default
+  null)`: ranking "Para ti" determinista, anon+authenticated.
+- `get_following_feed(p_limit integer default 12, p_cursor_published_at
+  timestamptz default null, p_cursor_id uuid default null)`: cronológico, solo
+  authenticated.
+- Ambas son `SECURITY DEFINER`, devuelven el payload completo en una llamada
+  (post + vídeo + autor + proyecto + organización + métricas agregadas) y
+  excluyen contenido no distribuible, `unlisted`, moderación
+  `rejected`/`flagged` y autores que bloquean al lector (y al revés). El cursor
+  usa `(score, published_at, id)` en "Para ti" y `(published_at, id)` en
+  "Siguiendo" (sin OFFSET). Fórmula de score espejada en `src/feed/config.ts`
+  y `ranking.ts` (pesos suman 1.0; half-life recency 168 h; caps/smoothing).
+- La diversidad (`src/feed/diversity.ts`) reordena DENTRO de cada página sin
+  eliminar candidatos y sin alterar el cursor (que se deriva del último item del
+  orden SQL del lote).
+- ACL: `get_for_you_feed` → anon+authenticated; `get_following_feed` →
+  authenticated. Se concedió `EXECUTE` de `post_is_publicly_distributable` y
+  `video_is_publicly_distributable` a anon+authenticated: las políticas RLS
+  `videos_select_public/registered/project_members` y
+  `posts_select_public/registered/project_members` (y las de storage) invocan
+  esos predicados con los privilegios del llamador, por lo que deben ser
+  ejecutables por quien lee.
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,
@@ -318,5 +400,8 @@ y `article` están preparados en `posts.post_type` pero aún no se crean.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
 - El esquema tipado se regenera desde el remoto (`supabase:types`); todas las
-  migraciones FASE 3, FASE 4.1 y FASE 4.2 están aplicadas en remoto, por lo que
-  `src/types/database.types.ts` refleja el esquema real.
+  migraciones hasta FASE 4.4 (`20260814000000`) están aplicadas en remoto, por
+  lo que `src/types/database.types.ts` refleja el esquema real. Nota: el
+  generador marca `returns table` como non-null; las columnas de LEFT JOIN
+  devuelven `null` en runtime, y `src/feed/data.ts` hace el cast honesto en la
+  frontera de las RPC del feed.

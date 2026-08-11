@@ -1,9 +1,10 @@
-# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts, seguimiento)
+# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts, seguimiento, analytics, feed)
 
 RLS está activado en `public.videos`, `public.video_languages`,
-`public.posts`, `public.profile_follows`, `public.project_follows` y
-`public.organization_follows`. El proyecto tiene `auto_expose_new_tables`
-desactivado, por lo que además de las políticas se conceden `GRANT` explícitos.
+`public.posts`, `public.profile_follows`, `public.project_follows`,
+`public.organization_follows` y `public.video_view_sessions`. El proyecto tiene
+`auto_expose_new_tables` desactivado, por lo que además de las políticas se
+conceden `GRANT` explícitos.
 
 ## `posts`
 
@@ -179,3 +180,43 @@ Notas:
 - **Grants**: `select/insert/delete` sobre las tres tablas solo para el rol
   `authenticated`; nada para `anon`. Las RPCs de conteo y follow se conceden
   solo a `authenticated`.
+
+## FASE 4.3 — Analytics (`video_view_sessions` y RPCs)
+
+- **Tabla `video_view_sessions` SIN políticas y SIN GRANT**: nadie (ni siquiera
+  el propietario del vídeo) puede leer la tabla directamente. Las métricas
+  salen únicamente por las RPCs `get_video_metrics` / `get_post_metrics`
+  (`SECURITY DEFINER`, solo owner/admin, agregadas, sin identidades) y
+  `get_public_video_views_count` (contador público fail-closed).
+- **Única escritura**: `report_video_view` (`SECURITY DEFINER`, fail-closed).
+  Valida identidad disjunta (`viewer_id XOR anonymous_session_id`), matriz de
+  moderación (`unreviewed`/`approved` aceptan watch time; `rejected`/`flagged`
+  fallan sin crear filas) y anti-inflado por tiempo de pared real. El
+  propietario no se auto-contabiliza.
+- **Grants**: `EXECUTE` de `report_video_view`, `get_video_metrics`,
+  `get_post_metrics` y `get_public_video_views_count` a anon/authenticated
+  según rol; el helper interno `_video_metrics_aggregate` NO tiene EXECUTE
+  público (solo se invoca desde dentro de las RPCs `SECURITY DEFINER`).
+
+## FASE 4.4 — Feed (RPCs y ACL)
+
+- **`get_for_you_feed`**: `EXECUTE` para `anon` y `authenticated`. Devuelve
+  contenido públicamente distribuible + (si hay sesión) afinidad por follows y
+  exclusión de autores que bloquean al lector (y al revés). Para anónimos la
+  afinidad es 0 (nada personalizado se filtra).
+- **`get_following_feed`**: `EXECUTE` SOLO para `authenticated` (fail-closed:
+  anon recibe `permission denied`). Exige `auth.uid()` no nulo; nunca expone el
+  feed personal de otro usuario (la identidad sale de `auth.uid()`, no de un
+  parámetro).
+- **Predicados de distribución**: se concedió `EXECUTE` de
+  `post_is_publicly_distributable` y `video_is_publicly_distributable` a
+  `anon` y `authenticated` (son funciones **invoker**): las políticas RLS
+  `videos_select_public/registered/project_members`,
+  `posts_select_public/registered/project_members` y las de storage invocan
+  estos predicados con los privilegios del llamador y deben poder ejecutarlos.
+  No suponen elevación de privilegios: son funciones normales `STABLE` que solo
+  evalúan estados del contenido.
+- **Sin nuevas políticas SELECT**: las RPC del feed hacen SELECT con
+  `SECURITY DEFINER` y aplican ellas mismas los filtros de distribución,
+  moderación, visibilidad y bloqueos; el resultado que llega al cliente ya está
+  filtrado y paginado (nunca filas de `posts`/`videos` crudas).
