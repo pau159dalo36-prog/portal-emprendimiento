@@ -1,4 +1,4 @@
-# Row Level Security — FASE 4 (vídeos, moderación post-publicación, posts, seguimiento, analytics, feed)
+# Row Level Security — FASE 4/5 (vídeos, moderación post-publicación, posts, seguimiento, analytics, feed, búsqueda)
 
 RLS está activado en `public.videos`, `public.video_languages`,
 `public.posts`, `public.profile_follows`, `public.project_follows`,
@@ -220,3 +220,21 @@ Notas:
   `SECURITY DEFINER` y aplican ellas mismas los filtros de distribución,
   moderación, visibilidad y bloqueos; el resultado que llega al cliente ya está
   filtrado y paginado (nunca filas de `posts`/`videos` crudas).
+
+## FASE 5 — Búsqueda (RPCs y ACL)
+
+- **Cuatro RPCs `SECURITY DEFINER`** (`search_profiles`, `search_projects`,
+  `search_organizations`, `search_videos`) con `EXECUTE` para `anon` y
+  `authenticated` (REVOKE previo de `public`). Aplican ellas mismas los filtros:
+  privacidad de perfiles, distributividad de contenido, moderación
+  `rejected`/`flagged` y exclusión de autores que bloquean al lector (y al
+  revés). `is_following` se calcula por fila con `auth.uid()` del llamante (nunca
+  de un parámetro).
+- **Helpers `search_normalize` / `search_recency`**: funciones normales invoker
+  con `search_path=''`; se concede `EXECUTE` a `anon`/`authenticated` porque las
+  columnas generadas y el plan de las RPC los invocan con los privilegios del
+  llamador. No elevan privilegios: solo normalizan y calculan recencia
+  (fail-closed ante NULL).
+- **Identidad y alcance**: la búsqueda nunca recibe `p_user_id`; el alcance de
+  cada lector se deriva de `auth.uid()`. El cursor es opaco para la UI y se
+  deriva del último item del orden SQL del lote (paginación estable sin OFFSET).

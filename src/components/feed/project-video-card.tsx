@@ -6,6 +6,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
+import {
+  hashCode,
+  isOptimizableCover,
+  PROJECT_FALLBACK_GRADIENTS,
+  PROJECT_STAGE_DOTS,
+} from "@/lib/project-visuals";
 import type { ProjectWithDetails } from "@/projects/data";
 
 type ProjectVideoCardProps = {
@@ -14,45 +20,6 @@ type ProjectVideoCardProps = {
   needsCount?: number;
   className?: string;
 };
-
-const STAGE_DOTS: Record<string, string> = {
-  idea: "bg-sky-400",
-  validacion: "bg-amber-400",
-  prototipo: "bg-violet-400",
-  lanzamiento: "bg-emerald-400",
-  crecimiento: "bg-rose-400",
-};
-
-const FALLBACK_GRADIENTS = [
-  "from-slate-900 via-slate-800 to-slate-600",
-  "from-indigo-950 via-indigo-900 to-slate-800",
-  "from-teal-950 via-teal-900 to-slate-800",
-  "from-rose-950 via-rose-900 to-slate-800",
-  "from-amber-950 via-amber-900 to-slate-800",
-  "from-violet-950 via-violet-900 to-slate-800",
-] as const;
-
-function hashCode(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function isOptimizableCover(url: string): boolean {
-  try {
-    const hostname = new URL(url).hostname;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      return true;
-    }
-    return new URL(supabaseUrl).hostname === hostname;
-  } catch {
-    return false;
-  }
-}
 
 function ProjectThumbnail({ project }: { project: ProjectWithDetails }) {
   const cover = project.cover_image_url;
@@ -70,7 +37,7 @@ function ProjectThumbnail({ project }: { project: ProjectWithDetails }) {
     );
   }
 
-  const gradient = FALLBACK_GRADIENTS[hashCode(project.id) % FALLBACK_GRADIENTS.length];
+  const gradient = PROJECT_FALLBACK_GRADIENTS[hashCode(project.id) % PROJECT_FALLBACK_GRADIENTS.length];
   const initial = project.name.trim().charAt(0).toUpperCase() || "I";
 
   return (
@@ -115,7 +82,10 @@ export async function ProjectVideoCard({
         <div className="absolute left-2 top-2">
           <Badge className="border-0 bg-black/50 text-white backdrop-blur-md">
             <span
-              className={cn("size-1.5 rounded-full", STAGE_DOTS[project.stage] ?? STAGE_DOTS.idea)}
+              className={cn(
+                "size-1.5 rounded-full",
+                PROJECT_STAGE_DOTS[project.stage] ?? PROJECT_STAGE_DOTS.idea,
+              )}
               aria-hidden="true"
             />
             {stages(project.stage as Parameters<typeof stages>[0])}

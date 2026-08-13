@@ -388,6 +388,42 @@ existentes.
   esos predicados con los privilegios del llamador, por lo que deben ser
   ejecutables por quien lee.
 
+## FASE 5 — Búsqueda y exploración
+
+Migraciones: `supabase/migrations/20260815000000_fase5_search.sql` y la
+corrección de mínimo privilegio `20260816000000_fase5_min_priv_search.sql`. No
+crea tablas nuevas: añade helpers, columnas generadas, índices y cuatro RPCs
+`SECURITY DEFINER`.
+
+- Helpers: `search_normalize(text)` (normalización no estricta, `search_path=''`),
+  `search_array_to_text(text[])` (envuelve `array_to_string` — `STABLE` en
+  Postgres ≥ 16, prohibido en columnas generadas — dentro de una función
+  declarada `IMMUTABLE`, igual que `search_normalize` con `unaccent`) y
+  `search_recency(timestamptz, timestamptz default now())` (fail-closed: NULL →
+  0). `search_normalize` y `search_array_to_text` se conceden a
+  `anon`+`authenticated` porque las columnas generadas las invocan con los
+  privilegios del escritor. `search_recency` NO se expone: solo corre dentro de
+  las RPCs SECURITY DEFINER (como postgres); la corrección
+  `20260816000000` revoca los grants de `anon`/`authenticated` que dejaron los
+  default privileges de Supabase.
+- Columnas generadas `search_text` en `profiles`, `projects`, `organizations`
+  y `videos` (expresión inmutable sobre `search_normalize`; `user_types` /
+  `industries` entran vía `search_array_to_text`). Índices GIN de trigramas
+  sobre cada `search_text` y GIN sobre los arrays de filtro.
+- RPCs: `search_profiles(p_query, p_role, p_language, p_sort, p_limit,
+  p_cursor_score, p_cursor_created_at, p_cursor_id)`, `search_projects`
+  (`p_stage`, `p_industry`), `search_organizations` (`p_industry`) y
+  `search_videos` (`p_language`). Devuelven el item completo (sin N+1),
+  `is_following` y `search_score`.
+- Ranking de query: `0.60*similarity + 0.25*ts_rank + 0.15*recency` (recency con
+  half-life 30 días). Browse sin query: recencia para perfiles/proyectos/orgs y
+  `0.85*recencia + 0.15*engagement` (`ln(1+plays)/ln(101)`) para vídeos. Fórmula
+  espejada en `src/search/config.ts` y `ranking.ts`.
+- Cursor `(score, created_at, id)` con orden SQL estable (sin OFFSET); `sort`
+  `relevance`/`recent`.
+- Privacidad en la BD: excluye perfiles privados, contenido no distribuible,
+  moderación `rejected`/`flagged` y autores que bloquean al lector (y al revés).
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,
@@ -400,8 +436,12 @@ y `article` están preparados en `posts.post_type` pero aún no se crean.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
 - El esquema tipado se regenera desde el remoto (`supabase:types`); todas las
-  migraciones hasta FASE 4.4 (`20260814000000`) están aplicadas en remoto, por
+  migraciones hasta FASE 5 (`20260816000000`) están aplicadas en remoto, por
   lo que `src/types/database.types.ts` refleja el esquema real. Nota: el
   generador marca `returns table` como non-null; las columnas de LEFT JOIN
   devuelven `null` en runtime, y `src/feed/data.ts` hace el cast honesto en la
   frontera de las RPC del feed.
+- **FASE 5 (búsqueda) NO está aplicada en remoto**: las 4 RPCs de búsqueda están
+  sincronizadas a mano en `src/types/database.types.ts` para mantener el
+  typecheck; se regenerarán con `supabase:types` tras aplicar
+  `20260815000000_fase5_search.sql`.

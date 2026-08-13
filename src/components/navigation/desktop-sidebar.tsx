@@ -42,7 +42,7 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
 
   const mainItems: SidebarItem[] = [
     { href: "/", label: t("home"), icon: Home, exact: true },
-    { href: "/proyectos", label: t("explore"), icon: Compass },
+    { href: "/explorar", label: t("explore"), icon: Compass },
     { href: "/organizaciones", label: t("organizations"), icon: Building2 },
     { href: "/videos", label: t("videos"), icon: Video },
   ];

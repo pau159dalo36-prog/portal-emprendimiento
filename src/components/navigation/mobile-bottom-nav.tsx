@@ -20,7 +20,7 @@ export function MobileBottomNav({ user }: { user: ShellUser | null }) {
 
   const items: BottomNavItem[] = [
     { href: "/", label: t("home"), icon: Home, exact: true },
-    { href: "/proyectos", label: t("explore"), icon: Compass },
+    { href: "/explorar", label: t("explore"), icon: Compass },
     user
       ? { href: "/proyectos/nuevo", label: t("publish"), icon: Plus }
       : { href: "/registrarse", label: t("publish"), icon: Plus },

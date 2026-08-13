@@ -198,7 +198,7 @@ export function FeedTabs({
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link href="/proyectos" className={buttonVariants({ variant: "outline" })}>
+              <Link href="/explorar" className={buttonVariants({ variant: "outline" })}>
                 <Compass className="size-4" aria-hidden="true" />
                 {t("explore")}
               </Link>

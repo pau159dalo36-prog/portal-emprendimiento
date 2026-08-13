@@ -50,6 +50,7 @@ const base = {
   published_at: "2026-08-01T00:00:00Z",
   created_at: "2026-08-01T00:00:00Z",
   updated_at: "2026-08-01T00:00:00Z",
+  search_text: "video de prueba",
   owner: null,
   project: null,
   organization: null,

@@ -21,6 +21,7 @@ src/
 ├── auth/           # Lógica de autenticación (session, getClaims)
 ├── components/
 │   ├── feed/       # FeedTabs, FeedPostCard, ProjectGrid, ProjectVideoCard
+│   ├── explore/    # ExploreApp (hub /explorar), tarjetas de resultados
 │   ├── follows/    # FollowButton
 │   ├── video/      # VideoPlayer, VideoCard, upload/preview/delete/empty-state
 │   ├── portal/     # Componentes específicos del portal
@@ -37,6 +38,7 @@ src/
 ├── posts/          # Entidad genérica distribuible (data, types, schemas, constants)
 ├── profiles/       # Lógica de perfiles (constantes, datos, completitud, avatar, map)
 ├── proxy.ts        # Proxy de Next.js 16 (renovación de sesión)
+├── search/         # Búsqueda/exploración (config, ranking, schemas, data, home, types, tests)
 ├── supabase/       # Cliente y configuración de Supabase
 ├── types/          # Tipos TypeScript compartidos
 │   └── database.types.ts  # Tipos generados desde Supabase
@@ -58,6 +60,7 @@ src/
 | `/perfil`                     | Autenticado      | Redirige al perfil público del propio usuario          |
 | `/videos`                     | Público          | Exploración de vídeos (grid de `VideoCard`)            |
 | `/videos/[id]`                | Público          | Página pública del vídeo (player + contador público)   |
+| `/explorar`                   | Público          | Hub de búsqueda/exploración (pestañas Todo/Vídeos/Proyectos/Organizaciones/Perfiles, filtros, cursor) |
 | `/publicar/video`             | Autenticado      | Subida y publicación de vídeo                          |
 | `/proyectos`, `/organizaciones` | Público       | Directorios de proyectos/organizaciones                |
 | `/proyectos/[slug]`, `/organizaciones/[slug]` | Público | Detalle con vídeos y FollowButton |

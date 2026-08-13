@@ -1,7 +1,17 @@
-# Estado del proyecto — FASE 4 COMPLETA
+# Estado del proyecto — FASE 5 (Explorar y búsqueda)
 
 ## Estado general
 
+- ✅ **FASE 5 COMPLETA Y APLICADA EN REMOTO** (búsqueda/exploración): migraciones
+  `20260815000000_fase5_search.sql` (helpers, columnas generadas `search_text`,
+  índices trigram y 4 RPCs SECURITY DEFINER) + corrección
+  `20260816000000_fase5_min_priv_search.sql` **aplicadas en remoto**,
+  `supabase:types` regenerado, `lint`/`typecheck`/`test`/`build` en verde y
+  verificación read-only contra el remoto correcta (normalización, RPCs anon,
+  cursor, índices y ACL) y **Explore/search operativo** (`/explorar` ↔ `/explore`).
+  Pendiente solo la ejecución del test SQL
+  `supabase/tests/fase5_search.sql` contra el stack local (Docker no disponible;
+  NO ejecutarlo contra producción).
 - ✅ **FASE 4 COMPLETA** (4.1 posts, 4.2 follows, 4.3 analytics, 4.4 feed y cierre
   4.5): todo verificado (`lint`/`typecheck`/`test`/`build` en verde), remoto
   sincronizado y documentado. Pendiente solo la ejecución de los tests SQL
@@ -20,6 +30,92 @@
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 5 — Explorar y búsqueda
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260815000000_fase5_search.sql`: helpers
+  `search_normalize(text)` (normalización no estricta con `search_path=''`),
+  `search_array_to_text(text[])` (envuelve `array_to_string`, `STABLE` en
+  Postgres ≥ 16, dentro de una función `IMMUTABLE` para poder usarla en las
+  columnas generadas) y `search_recency(timestamptz, timestamptz default now())`
+  (fail-closed, devuelve 0 ante NULL) + cuatro RPCs
+  `SECURITY DEFINER` (`search_profiles`, `search_projects`,
+  `search_organizations`, `search_videos`) que devuelven en UNA llamada el
+  payload completo del item (sin N+1), `is_following` por fila y el `search_score`.
+  Fórmula de query: `0.60*similarity(trigram) + 0.25*ts_rank(to_tsquery) +
+  0.15*recency`; en browse sin query, perfiles/proyectos/organizaciones ordenan
+  por recencia y los vídeos por `0.85*recencia + 0.15*engagement`
+  (`ln(1+plays)/ln(101)`, referencia 100 plays). Cursor `(score, created_at,
+  id)` con orden SQL estable; `sort` `relevance`/`recent`; filtros
+  `role`/`language`/`stage`/`industry`. Excluyen perfiles privados, contenido no
+  distribuible, moderación `rejected`/`flagged` y los autores que bloquean al
+  lector (y al revés). ACL mínima: REVOKE de EXECUTE a `public` y re-GRANT a
+  `anon`+`authenticated` de los 4 RPCs y de `search_normalize`/
+  `search_array_to_text` (las columnas generadas los invocan al ESCRIBIR con los
+  privilegios del escritor). `search_recency` NO se concede. Índices GIN de
+  trigramas sobre `search_text` y GIN sobre los arrays de filtro.
+- `supabase/migrations/20260816000000_fase5_min_priv_search.sql`: corrección de
+  mínimo privilegio. Los default privileges de Supabase habían concedido
+  EXECUTE de `search_recency` a `anon`/`authenticated` al crearla (la migración
+  principal solo revocaba de `public`); se revoca de `anon`/`authenticated` para
+  que no quede expuesta por PostgREST (solo corre dentro de las RPCs SECURITY
+  DEFINER).
+- `src/search/`: `config.ts` y `ranking.ts` **espejan la fórmula exacta del SQL**
+  (pesos 0.60/0.25/0.15, half-life 30 días, `videoBrowseScore`), `schemas.ts`
+  con `exploreParamsSchema` (Zod con fallback seguro: un query string inválido
+  NUNCA devuelve 500), `buildExploreQuery` (URL canónica, omite valores por
+  defecto) y `EXPLORE_TABS`; `data.ts` (4 RPCs, cursor opaco versionado y
+  frontera honesta con la nullabilidad real de LEFT JOIN); `home.ts` (primera
+  página de cada pestaña server-side con los params completos, sin scores en el
+  payload).
+- UI `/explorar`: `page.tsx` con validación Zod server-side, SEO `noindex,
+  follow` cuando hay `?q=` y `key` = serialización de params (remontaje limpio);
+  `explore-app.tsx` con pestañas **Todo** (vista agrupada con previews de 4 +
+  CTA "Ver más"), Vídeos, Proyectos, Organizaciones y Perfiles; la URL es la
+  fuente de verdad (cambiar pestaña/orden/filtro navega con `router.replace`);
+  chips de filtros activos con "Limpiar filtros"; orden relevancia/recientes y
+  filtros por rol, idioma, etapa e industria según pestaña; "Cargar más"
+  client-side con cursor (merge sin duplicados, el error NUNCA descarta items
+  ya cargados); estados vacíos y de error con reintento; responsive por
+  `flex-wrap` (sin Sheet/Drawer).
+- `ProfileCard` con `FollowButton` (solo para sesión autenticada y perfil ajeno;
+  `currentUserId` llega del server). El header ya busca en `/explorar?q=`.
+- i18n: claves nuevas `tabAll`, `seeMore`, `seeMoreSr`, `activeFilters`,
+  `removeFilter`, `clearFilters` en `messages/es.json` y `en.json`.
+- Tests: `ranking.test.ts` (17) verifica la fórmula espejo (incluida la
+  coincidencia con la migración), `schemas.test.ts` (7) los params de
+  `/explorar` y `explore-app.test.tsx` (19) la UI (pestañas, navegación, chips,
+  load-more, búsqueda y visibilidad del botón seguir). Total `src/search` +
+  `src/components/explore`: 50 tests.
+- `src/types/database.types.ts`: regenerado con `supabase:types` desde el remoto
+  tras aplicar las migraciones (incluye `search_text` en las 4 tablas y las 4
+  RPCs de búsqueda; el generador marca `returns table` non-null, la frontera
+  `src/search/data.ts` aplica el cast honesto).
+
+### Verificación actual
+
+- `npm run typecheck` ✅ / `npm run lint` ✅ / `npm run build` ✅
+- `npm run test` ✅ (288 tests en 24 archivos, incluidos 50 de `src/search` +
+  `src/components/explore`).
+- Migraciones `20260815000000` y `20260816000000` **aplicadas en remoto**;
+  `migration list` local=remoto (16/16).
+- Verificación read-only contra el remoto (transacción con rollback) ✅:
+  `search_text` poblada en todos los registros existentes; normalización
+  correcta (`José` → `jose`, arrays `{emprendedor}` → texto); RPCs devuelven
+  resultados reales en browse y con query; cursor página 1+2 sin overlap;
+  los 8 índices presentes; anon puede ejecutar las 4 RPCs y NO puede ejecutar
+  `search_recency` (permission denied → fail-closed).
+- Test SQL `supabase/tests/fase5_search.sql` **sin ejecutar** (requiere stack
+  local/Docker; NO debe ejecutarse contra producción).
+
+### Pendiente / decisiones
+
+- Ejecutar `fase5_search.sql` (y el resto de tests SQL de FASE 4) contra el
+  stack local cuando Docker esté disponible.
+- FASE 6 NO ha empezado (este cierre deja FASE 5 implementada, aplicada y
+  verificada en remoto).
 
 ## FASE 4.4 — Feed ("Para ti" y "Siguiendo")
 
@@ -93,7 +189,8 @@ Deliverables creados y revisados:
 
 - Ejecutar `fase4_feed.sql` (y `fase4_posts/follows/analytics`) contra el stack
   local cuando Docker esté disponible.
-- FASE 5 NO ha empezado (este cierre deja FASE 4 COMPLETA).
+- FASE 5 implementada (ver sección FASE 5; pendiente aplicar la migración en
+  remoto y ejecutar `fase5_search.sql` en el stack local).
 
 ## FASE 4.3 — Analytics de vídeo (vistas, watch time y métricas)
 
@@ -286,8 +383,8 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: 13/13 (hasta `20260814000000_fase4_4_feed.sql`);
-  `db push --dry-run` → up to date.
-- Los tests SQL de FASE 4 (posts/follows/analytics/feed) NO deben ejecutarse
-  contra producción; quedan para el stack local.
+- Migraciones local=remoto: **16/16 (hasta `20260816000000_fase5_min_priv_search.sql`)**.
+  FASE 5 aplicada y verificada en remoto.
+- Los tests SQL de FASE 4 y FASE 5 (posts/follows/analytics/feed/search) NO
+  deben ejecutarse contra producción; quedan para el stack local.
 - Sin commit/push pendiente de autorización.

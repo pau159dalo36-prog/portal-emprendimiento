@@ -165,6 +165,27 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   eliminar candidatos y sin alterar la paginación (cursor del orden SQL), por lo
   que no puede usarse para censurar u ocultar posts.
 
+## FASE 5 — Búsqueda y exploración
+
+- **Las RPC de búsqueda son `SECURITY DEFINER` y aplican ellas mismas los
+  filtros**: privacidad de perfiles, distributividad de contenido, moderación
+  (`rejected`/`flagged` fuera) y exclusión de autores que bloquean al lector (y
+  al revés). El cliente nunca recibe filas crudas: recibe el item paginado ya
+  filtrado con su `is_following`.
+- **Identidad por `auth.uid()`**: las RPC NO aceptan `p_user_id`; nadie puede
+  buscar con la identidad de otro ni ver `is_following` ajeno. El `search_score`
+  nunca viaja a la UI (la capa `src/search/data.ts` lo elimina del payload).
+- **ACL mínima verificada**: `EXECUTE` de las 4 RPC y de los helpers
+  `search_normalize`/`search_recency` solo para `anon`/`authenticated`
+  (REVOKE de `public`). Los helpers son funciones invoker normales sin elevación
+  de privilegios.
+- **Paginación estable**: cursor `(score, created_at, id)` con orden SQL; la UI
+  no puede saltarse filtros con un cursor manipulado (el cursor no transporta
+  filtros; cada petición re-aplica los del query string validado en el server).
+- **Parámetros validados con Zod**: un query string inválido de `/explorar`
+  nunca provoca 500 (fallback a valores por defecto) y las queries `?q=` se
+  sirven con `robots: noindex, follow` (contenido no curiable).
+
 ## Estado y limitaciones conocidas
 
 - La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:

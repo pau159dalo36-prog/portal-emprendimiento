@@ -15,14 +15,14 @@ import { Link, useRouter } from "@/i18n/navigation";
 
 export function TopHeader({ user }: { user: ShellUser | null }) {
   const t = useTranslations("nav");
-  const projects = useTranslations("projects");
+  const explore = useTranslations("explore");
   const router = useRouter();
   const [query, setQuery] = useState("");
 
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const value = query.trim();
-    router.push(value ? { pathname: "/proyectos", query: { q: value } } : "/proyectos");
+    router.push(value ? { pathname: "/explorar", query: { q: value } } : "/explorar");
   }
 
   const searchInput = (
@@ -30,8 +30,8 @@ export function TopHeader({ user }: { user: ShellUser | null }) {
       type="search"
       value={query}
       onChange={(event) => setQuery(event.target.value)}
-      placeholder={projects("searchPlaceholder")}
-      aria-label={projects("search")}
+      placeholder={explore("searchPlaceholder")}
+      aria-label={explore("search")}
       className="h-9 pl-9"
     />
   );

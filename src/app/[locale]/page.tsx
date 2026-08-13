@@ -47,7 +47,7 @@ export default async function HomePage() {
               {user ? t("intro.publishCta") : t("intro.createAccount")}
             </Link>
             <Link
-              href="/proyectos"
+              href="/explorar"
               className={buttonVariants({ variant: "outline" })}
             >
               {t("intro.exploreCta")}

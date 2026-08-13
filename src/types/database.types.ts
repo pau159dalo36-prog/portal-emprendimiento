@@ -140,6 +140,7 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string
+          search_text: string | null
           slug: string
           updated_at: string
           website_url: string | null
@@ -156,6 +157,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id: string
+          search_text?: string | null
           slug: string
           updated_at?: string
           website_url?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string
+          search_text?: string | null
           slug?: string
           updated_at?: string
           website_url?: string | null
@@ -699,6 +702,7 @@ export type Database = {
           linkedin_url: string | null
           location: string | null
           onboarding_completed: boolean
+          search_text: string | null
           timezone: string | null
           updated_at: string
           user_types: string[]
@@ -719,6 +723,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          search_text?: string | null
           timezone?: string | null
           updated_at?: string
           user_types?: string[]
@@ -739,6 +744,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          search_text?: string | null
           timezone?: string | null
           updated_at?: string
           user_types?: string[]
@@ -924,6 +930,7 @@ export type Database = {
           organization_id: string | null
           owner_id: string
           problem: string | null
+          search_text: string | null
           slug: string
           solution: string | null
           stage: string
@@ -945,6 +952,7 @@ export type Database = {
           organization_id?: string | null
           owner_id: string
           problem?: string | null
+          search_text?: string | null
           slug: string
           solution?: string | null
           stage?: string
@@ -966,6 +974,7 @@ export type Database = {
           organization_id?: string | null
           owner_id?: string
           problem?: string | null
+          search_text?: string | null
           slug?: string
           solution?: string | null
           stage?: string
@@ -1134,6 +1143,7 @@ export type Database = {
           processing_status: string
           project_id: string | null
           published_at: string | null
+          search_text: string | null
           size_bytes: number
           status: string
           storage_bucket: string
@@ -1168,6 +1178,7 @@ export type Database = {
           processing_status?: string
           project_id?: string | null
           published_at?: string | null
+          search_text?: string | null
           size_bytes: number
           status?: string
           storage_bucket: string
@@ -1202,6 +1213,7 @@ export type Database = {
           processing_status?: string
           project_id?: string | null
           published_at?: string | null
+          search_text?: string | null
           size_bytes?: number
           status?: string
           storage_bucket?: string
@@ -1440,6 +1452,130 @@ export type Database = {
           max_progress: number
           qualified: boolean
           watch_seconds: number
+        }[]
+      }
+      search_array_to_text: { Args: { p_values: string[] }; Returns: string }
+      search_normalize: { Args: { p_value: string }; Returns: string }
+      search_organizations: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_industry?: string
+          p_limit?: number
+          p_query?: string
+          p_sort?: string
+        }
+        Returns: {
+          created_at: string
+          description: string
+          headline: string
+          industries: string[]
+          location: string
+          logo_url: string
+          name: string
+          organization_id: string
+          owner_avatar_url: string
+          owner_full_name: string
+          owner_id: string
+          owner_username: string
+          search_score: number
+          slug: string
+        }[]
+      }
+      search_profiles: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_language?: string
+          p_limit?: number
+          p_query?: string
+          p_role?: string
+          p_sort?: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          full_name: string
+          headline: string
+          is_following: boolean
+          location: string
+          profile_id: string
+          search_score: number
+          user_types: string[]
+          username: string
+        }[]
+      }
+      search_projects: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_industry?: string
+          p_limit?: number
+          p_query?: string
+          p_sort?: string
+          p_stage?: string
+        }
+        Returns: {
+          cover_image_url: string
+          created_at: string
+          description: string
+          industries: string[]
+          name: string
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          owner_avatar_url: string
+          owner_full_name: string
+          owner_id: string
+          owner_username: string
+          project_id: string
+          search_score: number
+          slug: string
+          stage: string
+          tagline: string
+        }[]
+      }
+      search_recency: {
+        Args: { p_created_at: string; p_ref?: string }
+        Returns: number
+      }
+      search_videos: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_language?: string
+          p_limit?: number
+          p_query?: string
+          p_sort?: string
+        }
+        Returns: {
+          caption: string
+          created_at: string
+          duration_seconds: number
+          height: number
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          owner_avatar_url: string
+          owner_full_name: string
+          owner_id: string
+          owner_username: string
+          poster_bucket: string
+          poster_path: string
+          project_id: string
+          project_name: string
+          project_slug: string
+          search_score: number
+          thumbnail_bucket: string
+          thumbnail_path: string
+          title: string
+          video_id: string
+          width: number
         }[]
       }
       video_analytics_access: { Args: { p_video_id: string }; Returns: string }
