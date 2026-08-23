@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { LogOut, Plus, Search, ShieldCheck, Video } from "lucide-react";
+import { Briefcase, LogOut, Plus, Search, ShieldCheck, Video } from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
 import type { ShellUser } from "@/components/navigation/app-shell";
@@ -61,6 +61,13 @@ export function TopHeader({ user }: { user: ShellUser | null }) {
               <Link href="/proyectos/nuevo" className={buttonVariants({ size: "sm" })}>
                 <Plus className="size-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("newProject")}</span>
+              </Link>
+              <Link
+                href="/publicar/oportunidad"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Briefcase className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{t("publishOpportunity")}</span>
               </Link>
               <Link
                 href="/publicar/video"

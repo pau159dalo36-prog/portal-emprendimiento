@@ -424,11 +424,50 @@ crea tablas nuevas: añade helpers, columnas generadas, índices y cuatro RPCs
 - Privacidad en la BD: excluye perfiles privados, contenido no distribuible,
   moderación `rejected`/`flagged` y autores que bloquean al lector (y al revés).
 
+## FASE 6 — Mercado de oportunidades
+
+Migración: `supabase/migrations/20260817000000_fase6_oportunidades.sql`
+(no destructiva; `project_needs` queda intacta).
+
+### `opportunities`
+
+- `opportunity_type` `job|internship|cofounder|collaboration|one_day_shift`
+  (el primer empleo se modela con `is_first_job_friendly`, no como tipo).
+- Compensación: `compensation_type` `monetary|equity|negotiable|unpaid`;
+  `compensation_period` `hour|shift|day|week|month|year|one_time`. `monetary`
+  exige `currency` + periodo + al menos una cota y `min <= max`; los turnos de
+  1 día solo admiten `shift`/`day`.
+- Ciclo: `draft → published → closed|filled|cancelled` (terminal). Turnos de 1
+  día con `starts_at`/`ends_at`/`slots_total`; un turno con `ends_at` pasado NO
+  es distribuible.
+- Moderación post-publicación: `moderation_status`
+  `unreviewed|approved|rejected|flagged` (validada por trigger; solo admin puede
+  moderar; `published_at` auto).
+- Triggers: `opportunities_validate_state_change` (invoker) y
+  `posts_sync_from_opportunity` (`SECURITY DEFINER`, idempotente: 1 post por
+  oportunidad con `post_type='opportunity'` y `opportunity_id` único; las RPC
+  de feed filtran `post_type='video'`, por lo que las oportunidades no entran
+  en el feed).
+- Sin política DELETE: el ciclo de vida se gestiona por estados.
+- Índices: `opportunities_starts_at_idx` (starts_at) y parciales para filtros
+  de búsqueda/moderación.
+- RPCs: `search_opportunities(text×6, boolean×2, text×2, integer, numeric,
+  timestamptz, uuid)` (SECURITY DEFINER, cursor `(score, created_at, id)` sin
+  OFFSET, `p_date` today/tomorrow/weekend/YYYY-MM-DD, `p_first_job_friendly`
+  como ampliación de alcance), `admin_approve_opportunity(uuid)`,
+  `admin_reject_opportunity(uuid, text)`, `admin_flag_opportunity(uuid, text)`
+  y el predicado `opportunity_is_publicly_distributable(text, text, text,
+  text, timestamptz)` usado por las políticas RLS.
+- RLS: select público solo distribuible, `registered_users`, `project_members`,
+  `select_own`, `select_admin`; insert/update `creator_id`/miembro/admin; ACL
+  mínima con REVOKE de `public` y GRANT explícito (patrón de vídeos).
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,
-`community_members`. Los tipos de post `text`, `project_update`, `opportunity`
-y `article` están preparados en `posts.post_type` pero aún no se crean.
+`community_members`. Los tipos de post `text`, `project_update` y `article`
+están preparados en `posts.post_type` pero aún no se crean; `opportunity` ya
+se usa (FASE 6).
 
 ## Seguridad
 
@@ -436,12 +475,11 @@ y `article` están preparados en `posts.post_type` pero aún no se crean.
 - Políticas por rol y propiedad del recurso (mínimo privilegio).
 - Las claves de servicio solo se usan en Server Actions; nunca se exponen al cliente.
 - El esquema tipado se regenera desde el remoto (`supabase:types`); todas las
-  migraciones hasta FASE 5 (`20260816000000`) están aplicadas en remoto, por
+  migraciones hasta FASE 6 (`20260817000000`) están aplicadas en remoto, por
   lo que `src/types/database.types.ts` refleja el esquema real. Nota: el
   generador marca `returns table` como non-null; las columnas de LEFT JOIN
   devuelven `null` en runtime, y `src/feed/data.ts` hace el cast honesto en la
   frontera de las RPC del feed.
-- **FASE 5 (búsqueda) NO está aplicada en remoto**: las 4 RPCs de búsqueda están
-  sincronizadas a mano en `src/types/database.types.ts` para mantener el
-  typecheck; se regenerarán con `supabase:types` tras aplicar
-  `20260815000000_fase5_search.sql`.
+- **FASE 6 (oportunidades) aplicada en remoto**: tabla, triggers, RLS, RPCs y
+  ACL verificadas read-only contra `efgmjuzcqolpibraymol`; el test SQL
+  `supabase/tests/fase6_oportunidades.sql` queda para el stack local.

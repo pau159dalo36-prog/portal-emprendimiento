@@ -14,6 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
+      opportunities: {
+        Row: {
+          city: string | null
+          closes_at: string | null
+          compensation_max: number | null
+          compensation_min: number | null
+          compensation_period: string | null
+          compensation_type: string
+          country: string | null
+          created_at: string
+          creator_id: string
+          currency: string | null
+          description: string
+          employment_type: string | null
+          ends_at: string | null
+          experience_level: string | null
+          id: string
+          industry: string | null
+          is_first_job_friendly: boolean
+          is_student_friendly: boolean
+          location_text: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          moderation_status: string
+          opportunity_type: string
+          organization_id: string | null
+          project_id: string | null
+          published_at: string | null
+          region: string | null
+          slots_total: number | null
+          starts_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+          work_mode: string | null
+        }
+        Insert: {
+          city?: string | null
+          closes_at?: string | null
+          compensation_max?: number | null
+          compensation_min?: number | null
+          compensation_period?: string | null
+          compensation_type?: string
+          country?: string | null
+          created_at?: string
+          creator_id: string
+          currency?: string | null
+          description: string
+          employment_type?: string | null
+          ends_at?: string | null
+          experience_level?: string | null
+          id?: string
+          industry?: string | null
+          is_first_job_friendly?: boolean
+          is_student_friendly?: boolean
+          location_text?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          opportunity_type?: string
+          organization_id?: string | null
+          project_id?: string | null
+          published_at?: string | null
+          region?: string | null
+          slots_total?: number | null
+          starts_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+          work_mode?: string | null
+        }
+        Update: {
+          city?: string | null
+          closes_at?: string | null
+          compensation_max?: number | null
+          compensation_min?: number | null
+          compensation_period?: string | null
+          compensation_type?: string
+          country?: string | null
+          created_at?: string
+          creator_id?: string
+          currency?: string | null
+          description?: string
+          employment_type?: string | null
+          ends_at?: string | null
+          experience_level?: string | null
+          id?: string
+          industry?: string | null
+          is_first_job_friendly?: boolean
+          is_student_friendly?: boolean
+          location_text?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          opportunity_type?: string
+          organization_id?: string | null
+          project_id?: string | null
+          published_at?: string | null
+          region?: string | null
+          slots_total?: number | null
+          starts_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+          work_mode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_follows: {
         Row: {
           created_at: string
@@ -195,6 +338,7 @@ export type Database = {
           body: string | null
           created_at: string
           id: string
+          opportunity_id: string | null
           organization_id: string | null
           post_type: string
           project_id: string | null
@@ -209,6 +353,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          opportunity_id?: string | null
           organization_id?: string | null
           post_type?: string
           project_id?: string | null
@@ -223,6 +368,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          opportunity_id?: string | null
           organization_id?: string | null
           post_type?: string
           project_id?: string | null
@@ -238,6 +384,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
           {
@@ -1275,9 +1428,21 @@ export type Database = {
           unique_viewers: number
         }[]
       }
+      admin_approve_opportunity: {
+        Args: { p_opportunity_id: string }
+        Returns: boolean
+      }
       admin_approve_video: { Args: { p_video_id: string }; Returns: boolean }
+      admin_flag_opportunity: {
+        Args: { p_opportunity_id: string; p_reason?: string }
+        Returns: boolean
+      }
       admin_flag_video: {
         Args: { p_reason?: string; p_video_id: string }
+        Returns: boolean
+      }
+      admin_reject_opportunity: {
+        Args: { p_opportunity_id: string; p_reason?: string }
         Returns: boolean
       }
       admin_reject_video: {
@@ -1432,6 +1597,16 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { p_project_id: string }; Returns: boolean }
+      opportunity_is_publicly_distributable: {
+        Args: {
+          p_ends_at: string
+          p_moderation_status: string
+          p_opportunity_type: string
+          p_status: string
+          p_visibility: string
+        }
+        Returns: boolean
+      }
       post_is_publicly_distributable: {
         Args: {
           p_publication_status: string
@@ -1456,6 +1631,62 @@ export type Database = {
       }
       search_array_to_text: { Args: { p_values: string[] }; Returns: string }
       search_normalize: { Args: { p_value: string }; Returns: string }
+      search_opportunities: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_date?: string
+          p_experience_level?: string
+          p_first_job_friendly?: boolean
+          p_industry?: string
+          p_limit?: number
+          p_location?: string
+          p_opportunity_type?: string
+          p_query?: string
+          p_sort?: string
+          p_student_friendly?: boolean
+          p_work_mode?: string
+        }
+        Returns: {
+          city: string
+          compensation_max: number
+          compensation_min: number
+          compensation_period: string
+          compensation_type: string
+          country: string
+          created_at: string
+          creator_avatar_url: string
+          creator_full_name: string
+          creator_id: string
+          creator_username: string
+          currency: string
+          description: string
+          employment_type: string
+          ends_at: string
+          experience_level: string
+          industry: string
+          is_first_job_friendly: boolean
+          is_student_friendly: boolean
+          location_text: string
+          opportunity_id: string
+          opportunity_type: string
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          project_id: string
+          project_industries: string[]
+          project_name: string
+          project_slug: string
+          project_stage: string
+          region: string
+          search_score: number
+          slots_total: number
+          starts_at: string
+          title: string
+          work_mode: string
+        }[]
+      }
       search_organizations: {
         Args: {
           p_cursor_created_at?: string

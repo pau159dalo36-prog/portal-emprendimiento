@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Compass, Loader2, RefreshCw, Search, X } from "lucide-react";
 
+import { OpportunityCard } from "@/components/opportunities/opportunity-card";
+import { OneDayShiftCard } from "@/components/opportunities/one-day-shift-card";
 import { OrganizationCard } from "@/components/explore/organization-card";
 import { ProfileCard } from "@/components/explore/profile-card";
 import { ProjectCard } from "@/components/explore/project-card";
@@ -15,6 +17,7 @@ import { useRouter } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
+  searchOpportunities,
   searchOrganizations,
   searchProfiles,
   searchProjects,
@@ -23,14 +26,19 @@ import {
 import type { ExploreInitialData } from "@/search/home";
 import {
   buildExploreQuery,
+  EXPERIENCE_LEVELS,
   INDUSTRIES,
   LANGUAGES,
+  OPPORTUNITY_DATES,
+  OPPORTUNITY_TYPES,
   PROJECT_STAGES,
   USER_TYPES,
+  WORK_MODES,
   type ExploreParams,
   type ExploreTab,
 } from "@/search/schemas";
 import type {
+  SearchOpportunity,
   SearchOrganization,
   SearchPageResult,
   SearchProfile,
@@ -40,7 +48,14 @@ import type {
 
 // Orden de pestañas: Todo + las cuatro entidades (el usuario primero descubre
 // y luego profundiza). "all" muestra una vista agrupada con CTA "Ver más".
-const TAB_KEYS: ExploreTab[] = ["all", "videos", "projects", "organizations", "profiles"];
+const TAB_KEYS: ExploreTab[] = [
+  "all",
+  "videos",
+  "projects",
+  "organizations",
+  "profiles",
+  "opportunities",
+];
 
 const GROUP_PREVIEW_LIMIT = 4;
 
@@ -167,9 +182,13 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
   const typesT = useTranslations("types");
   const stagesT = useTranslations("projectStages");
   const industriesT = useTranslations("industries");
+  const opportunityTypesT = useTranslations("opportunityTypes");
+  const workModesT = useTranslations("workModes");
+  const experienceLevelsT = useTranslations("experienceLevels");
+  const opportunityDatesT = useTranslations("opportunityDates");
   const router = useRouter();
 
-  const { q, tab, sort, role, language, stage, industry } = initialParams;
+  const { q, tab, sort, role, language, stage, industry, opportunityType, workMode, experience, firstJob, date } = initialParams;
   const [input, setInput] = useState(q);
 
   const navigate = useCallback(
@@ -218,7 +237,30 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     }),
   );
 
-  const active = tab === "profiles" ? profiles : tab === "projects" ? projects : tab === "organizations" ? organizations : videos;
+  const opportunities = useTabData<SearchOpportunity>(initial.opportunities, (cursor) =>
+    searchOpportunities(createClient(), {
+      query: q,
+      cursor,
+      sort,
+      opportunityType: opportunityType || null,
+      industry: industry || null,
+      workMode: workMode || null,
+      experience: experience || null,
+      firstJob: firstJob === "true" ? true : null,
+      date: date || null,
+    }),
+  );
+
+  const active =
+    tab === "profiles"
+      ? profiles
+      : tab === "projects"
+        ? projects
+        : tab === "organizations"
+          ? organizations
+          : tab === "opportunities"
+            ? opportunities
+            : videos;
 
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -244,12 +286,20 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
   if (tab === "videos" && language) {
     activeChips.push({ key: "language", label: t(`languages.${language}` as never), clear: { language: "" } });
   }
+  if (tab === "opportunities") {
+    if (opportunityType) activeChips.push({ key: "opportunityType", label: opportunityTypesT(opportunityType as never), clear: { opportunityType: "" } });
+    if (workMode) activeChips.push({ key: "workMode", label: workModesT(workMode as never), clear: { workMode: "" } });
+    if (experience) activeChips.push({ key: "experience", label: experienceLevelsT(experience as never), clear: { experience: "" } });
+    if (date) activeChips.push({ key: "date", label: opportunityDatesT(date as never), clear: { date: "" } });
+    if (industry) activeChips.push({ key: "industry", label: industriesT(industry), clear: { industry: "" } });
+  }
 
   function clearAllFilters() {
     if (tab === "profiles") navigate({ role: "", language: "" });
     else if (tab === "projects") navigate({ stage: "", industry: "" });
     else if (tab === "organizations") navigate({ industry: "" });
     else if (tab === "videos") navigate({ language: "" });
+    else if (tab === "opportunities") navigate({ opportunityType: "", workMode: "", experience: "", date: "", industry: "" });
   }
 
   const emptyState = (hasQuery: boolean) => (
@@ -304,9 +354,10 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     { key: "projects" as const, items: projects.state.items as SearchProject[], render: (p: SearchProject) => <ProjectCard key={p.id} project={p} /> },
     { key: "organizations" as const, items: organizations.state.items as SearchOrganization[], render: (o: SearchOrganization) => <OrganizationCard key={o.id} organization={o} /> },
     { key: "profiles" as const, items: profiles.state.items as SearchProfile[], render: (p: SearchProfile) => <ProfileCard key={p.id} profile={p} currentUserId={currentUserId} /> },
+    { key: "opportunities" as const, items: opportunities.state.items as SearchOpportunity[], render: (o: SearchOpportunity) => o.opportunityType === "one_day_shift" ? <OneDayShiftCard key={o.id} opportunity={o} /> : <OpportunityCard key={o.id} opportunity={o} /> },
   ];
   const allHasItems = allGroups.some((group) => group.items.length > 0);
-  const anyAllError = [videos, projects, organizations, profiles].some((s) => s.state.error && s.state.items.length === 0);
+  const anyAllError = [videos, projects, organizations, profiles, opportunities].some((s) => s.state.error && s.state.items.length === 0);
 
   return (
     <div className="grid gap-6">
@@ -481,6 +532,95 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
                   </select>
                 </>
               )}
+
+              {tab === "opportunities" && (
+                <>
+                  <label className="sr-only">{t("filterType")}</label>
+                  <select
+                    value={opportunityType}
+                    onChange={(event) => navigate({ opportunityType: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterType")}
+                  >
+                    <option value="">{t("allTypes")}</option>
+                    {OPPORTUNITY_TYPES.map((value) => (
+                      <option key={value} value={value}>
+                        {opportunityTypesT(value)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterWorkMode")}</label>
+                  <select
+                    value={workMode}
+                    onChange={(event) => navigate({ workMode: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterWorkMode")}
+                  >
+                    <option value="">{t("allWorkModes")}</option>
+                    {WORK_MODES.map((value) => (
+                      <option key={value} value={value}>
+                        {workModesT(value)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterExperience")}</label>
+                  <select
+                    value={experience}
+                    onChange={(event) => navigate({ experience: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterExperience")}
+                  >
+                    <option value="">{t("allExperience")}</option>
+                    {EXPERIENCE_LEVELS.map((value) => (
+                      <option key={value} value={value}>
+                        {experienceLevelsT(value)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterIndustry")}</label>
+                  <select
+                    value={industry}
+                    onChange={(event) => navigate({ industry: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterIndustry")}
+                  >
+                    <option value="">{t("allIndustries")}</option>
+                    {INDUSTRIES.map((value) => (
+                      <option key={value} value={value}>
+                        {industriesT(value)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterDate")}</label>
+                  <select
+                    value={date}
+                    onChange={(event) => navigate({ date: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterDate")}
+                  >
+                    <option value="">{t("allDates")}</option>
+                    {OPPORTUNITY_DATES.map((value) => (
+                      <option key={value} value={value}>
+                        {opportunityDatesT(value)}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={firstJob === "true"}
+                    onClick={() => navigate({ firstJob: firstJob === "true" ? "false" : "true" })}
+                    className={cn(
+                      "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors",
+                      firstJob === "true"
+                        ? "border-primary bg-primary/10 font-medium text-primary"
+                        : "border-input bg-background text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t("firstJobOnly")}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -521,12 +661,12 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
       <div role="tabpanel" className="grid gap-6">
         {tab === "all" ? (
           anyAllError ? (
-            errorState({ error: (videos.state.error ?? projects.state.error ?? organizations.state.error ?? profiles.state.error) ?? "", retry: () => [videos, projects, organizations, profiles].forEach((s) => s.retry()), state: { items: [], nextCursor: null, loading: false, loadingMore: false, error: null } })
+            errorState({ error: (videos.state.error ?? projects.state.error ?? organizations.state.error ?? profiles.state.error ?? opportunities.state.error) ?? "", retry: () => [videos, projects, organizations, profiles, opportunities].forEach((s) => s.retry()), state: { items: [], nextCursor: null, loading: false, loadingMore: false, error: null } })
           ) : !allHasItems ? (
             emptyState(Boolean(q))
           ) : (
             allGroups.map((group) => {
-              const groupState = group.key === "videos" ? videos : group.key === "projects" ? projects : group.key === "organizations" ? organizations : profiles;
+              const groupState = group.key === "videos" ? videos : group.key === "projects" ? projects : group.key === "organizations" ? organizations : group.key === "profiles" ? profiles : opportunities;
               if (group.items.length === 0) {
                 return null;
               }
@@ -592,6 +732,17 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
                       {(active.state.items as SearchVideo[]).map((video) => (
                         <VideoCard key={video.id} video={video} />
                       ))}
+                    </div>
+                  )}
+                  {tab === "opportunities" && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {(active.state.items as SearchOpportunity[]).map((opportunity) =>
+                        opportunity.opportunityType === "one_day_shift" ? (
+                          <OneDayShiftCard key={opportunity.id} opportunity={opportunity} />
+                        ) : (
+                          <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+                        ),
+                      )}
                     </div>
                   )}
 

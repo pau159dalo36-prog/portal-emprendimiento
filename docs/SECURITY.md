@@ -186,6 +186,38 @@ Principios aplicados en todo el proyecto, con foco en la FASE 3 (Storage y víde
   nunca provoca 500 (fallback a valores por defecto) y las queries `?q=` se
   sirven con `robots: noindex, follow` (contenido no curiable).
 
+## FASE 6 — Mercado de oportunidades
+
+- **RLS completo en `opportunities`**: lectura pública solo de oportunidades
+  distribuibles (`draft`/estados terminales/`rejected`/`flagged`/turnos pasados
+  nunca visibles), `registered_users` para autenticados, `project_members` para
+  miembros del proyecto y `select_admin` para moderación. Insert y update
+  exigen `auth.uid() = creator_id` o un contexto real (miembro del proyecto/
+  organización anclados) o `is_platform_admin()`. No existe política DELETE: el
+  ciclo de vida se gestiona por estados.
+- **Identidad por `auth.uid()`**: las RPC admin y de búsqueda NO aceptan
+  `p_user_id`; la moderación comprueba `is_platform_admin()` DENTRO de la
+  función (SECURITY DEFINER + `search_path=''`), fail-closed incluso si el rol
+  ya está restringido por ACL (patrón exacto de vídeos).
+- **`search_opportunities` (SECURITY DEFINER)** aplica ella misma los filtros:
+  solo oportunidades públicamente distribuibles (`visibility='public'`), excluye
+  las que cuelgan de proyectos/orgs no públicos, y re-aplica cada filtro en
+  cada petición (el cursor no transporta filtros). `p_first_job_friendly` es
+  una ampliación de alcance (flag, `is_student_friendly`, `no_experience`/
+  `junior`, `internship`), nunca una restricción de privilegio.
+- **Sync a `posts` seguro**: `posts_sync_from_opportunity` es SECURITY DEFINER
+  porque un miembro del proyecto/org (no el creador) puede publicar; solo se
+  dispara desde la tabla `opportunities` (gobernada por su RLS), no es invocable
+  con datos por el cliente y es no-op fuera del contexto de trigger.
+- **El feed no filtra oportunidades**: las RPC de feed se recrearon con
+  `post_type = 'video'`, por lo que el post de una oportunidad (`post_type =
+  'opportunity'`, `video_id` nulo) nunca aparece en "Para ti"/"Siguiendo"; el
+  mercado vive en `/oportunidades`.
+- **ACL mínima verificada contra el remoto**: `search_opportunities` y el
+  predicado `opportunity_is_publicly_distributable` → anon+authenticated;
+  RPC admin → solo authenticated (con check interno). Sin DELETE en la tabla y
+  sin escrituras de tabla para anon.
+
 ## Estado y limitaciones conocidas
 
 - La moderación **no bloquea la publicación**, pero **sí filtra las lecturas**:

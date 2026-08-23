@@ -35,6 +35,7 @@ src/
 │   ├── env.ts      # Acceso seguro a variables de entorno
 │   ├── supabase/   # Clientes Supabase (client, server, proxy)
 │   └── video/      # Utilidades de vídeo (utils, preview, file-names, validation)
+├── opportunities/  # Mercado de oportunidades (constants, types, data, panel, format, map, tests)
 ├── posts/          # Entidad genérica distribuible (data, types, schemas, constants)
 ├── profiles/       # Lógica de perfiles (constantes, datos, completitud, avatar, map)
 ├── proxy.ts        # Proxy de Next.js 16 (renovación de sesión)
@@ -61,6 +62,12 @@ src/
 | `/videos`                     | Público          | Exploración de vídeos (grid de `VideoCard`)            |
 | `/videos/[id]`                | Público          | Página pública del vídeo (player + contador público)   |
 | `/explorar`                   | Público          | Hub de búsqueda/exploración (pestañas Todo/Vídeos/Proyectos/Organizaciones/Perfiles, filtros, cursor) |
+| `/oportunidades`              | Público          | Mercado de oportunidades (market con filtros y búsqueda)      |
+| `/oportunidades/[id]`         | Público          | Detalle de oportunidad                                        |
+| `/publicar/oportunidad`       | Autenticado      | Publicar una oportunidad                                      |
+| `/panel/oportunidades`        | Autenticado      | Panel de oportunidades del usuario (publicar/editar/cerrar)   |
+| `/admin/oportunidades`        | Admin            | Moderación de oportunidades (aprobar/rechazar/marcar)         |
+| `/oportunidades/[id]/editar`  | Autenticado      | Edición de una oportunidad propia                             |
 | `/publicar/video`             | Autenticado      | Subida y publicación de vídeo                          |
 | `/proyectos`, `/organizaciones` | Público       | Directorios de proyectos/organizaciones                |
 | `/proyectos/[slug]`, `/organizaciones/[slug]` | Público | Detalle con vídeos y FollowButton |

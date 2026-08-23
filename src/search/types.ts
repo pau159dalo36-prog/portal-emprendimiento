@@ -130,6 +130,72 @@ export type SearchOrganizationResult = {
   createdAt: string;
 };
 
+export type SearchOpportunity = {
+  id: string;
+  title: string;
+  description: string | null;
+  opportunityType: string;
+  employmentType: string | null;
+  experienceLevel: string | null;
+  workMode: string | null;
+  industry: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  locationText: string | null;
+  compensationType: string | null;
+  compensationMin: number | null;
+  compensationMax: number | null;
+  currency: string | null;
+  compensationPeriod: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  slotsTotal: number | null;
+  isFirstJobFriendly: boolean;
+  isStudentFriendly: boolean;
+  owner: SearchAuthorRef | null;
+  project: SearchProjectRef | null;
+  organization: SearchOrganizationRef | null;
+  createdAt: string;
+};
+
+export type SearchOpportunityResult = {
+  id: string;
+  title: string;
+  description: string | null;
+  opportunityType: string;
+  employmentType: string | null;
+  experienceLevel: string | null;
+  workMode: string | null;
+  industry: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  locationText: string | null;
+  compensationType: string | null;
+  compensationMin: number | null;
+  compensationMax: number | null;
+  currency: string | null;
+  compensationPeriod: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  slotsTotal: number | null;
+  isFirstJobFriendly: boolean;
+  isStudentFriendly: boolean;
+  projectId: string | null;
+  projectName: string | null;
+  projectSlug: string | null;
+  organizationId: string | null;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  ownerId: string;
+  ownerFullName: string | null;
+  ownerUsername: string | null;
+  ownerAvatarUrl: string | null;
+  score: number;
+  createdAt: string;
+};
+
 export type SearchVideoResult = {
   id: string;
   title: string;

@@ -18,7 +18,7 @@ export const features = {
     feed: true,
     explorar: true,
     busqueda: false,
-    oportunidades: false,
+    oportunidades: true,
     empleos: false,
     cofundadores: false,
     freelancers: false,

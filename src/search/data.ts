@@ -17,6 +17,8 @@ import { normalizeQuery,
   serializeCursor,
 } from "@/search/schemas";
 import type {
+  SearchOpportunity,
+  SearchOpportunityResult,
   SearchOrganization,
   SearchOrganizationResult,
   SearchPageResult,
@@ -33,6 +35,7 @@ type ProfileRow = Database["public"]["Functions"]["search_profiles"]["Returns"][
 type ProjectRow = Database["public"]["Functions"]["search_projects"]["Returns"][number];
 type OrganizationRow = Database["public"]["Functions"]["search_organizations"]["Returns"][number];
 type VideoRow = Database["public"]["Functions"]["search_videos"]["Returns"][number];
+type OpportunityRow = Database["public"]["Functions"]["search_opportunities"]["Returns"][number];
 
 // PostgREST genera `returns table` con TODAS las columnas non-null, pero en
 // runtime las columnas que provienen de LEFT JOIN (owner, project,
@@ -71,6 +74,21 @@ type NullableVideoKeys =
   | "organization_name"
   | "organization_slug";
 type NullableVideoNumberKeys = "duration_seconds" | "width" | "height";
+// La RPC devuelve project_stage/project_industries/creator_* como non-null en
+// el tipo generado, pero en runtime pueden ser NULL (LEFT JOIN).
+type NullableOpportunityKeys =
+  | "description"
+  | "project_id"
+  | "project_name"
+  | "project_slug"
+  | "project_stage"
+  | "organization_id"
+  | "organization_name"
+  | "organization_slug"
+  | "creator_full_name"
+  | "creator_username"
+  | "creator_avatar_url";
+type NullableOpportunityArrayKeys = "project_industries";
 
 export type SearchProfileRow = Omit<ProfileRow, NullableProfileKeys> &
   { [K in NullableProfileKeys]: string | null };
@@ -81,6 +99,12 @@ export type SearchOrganizationRow = Omit<OrganizationRow, NullableOrganizationKe
 export type SearchVideoRow = Omit<VideoRow, NullableVideoKeys | NullableVideoNumberKeys> &
   { [K in NullableVideoKeys]: string | null } &
   { [K in NullableVideoNumberKeys]: number | null };
+export type SearchOpportunityRow = Omit<
+  OpportunityRow,
+  NullableOpportunityKeys | NullableOpportunityArrayKeys
+> &
+  { [K in NullableOpportunityKeys]: string | null } &
+  { [K in NullableOpportunityArrayKeys]: string[] | null };
 
 export type CommonSearchParams = {
   query?: string;
@@ -93,6 +117,16 @@ export type ProfileSearchParams = CommonSearchParams & { role?: string | null; l
 export type ProjectSearchParams = CommonSearchParams & { stage?: string | null; industry?: string | null };
 export type OrganizationSearchParams = CommonSearchParams & { industry?: string | null };
 export type VideoSearchParams = CommonSearchParams & { language?: string | null };
+export type OpportunitySearchParams = CommonSearchParams & {
+  opportunityType?: string | null;
+  industry?: string | null;
+  workMode?: string | null;
+  experience?: string | null;
+  firstJob?: boolean | null;
+  studentFriendly?: boolean | null;
+  location?: string | null;
+  date?: string | null;
+};
 
 function toProfile(row: SearchProfileRow): SearchProfileResult {
   return {
@@ -279,6 +313,95 @@ export function toVideoView(result: SearchVideoResult): SearchVideo {
   };
 }
 
+function toOpportunity(row: SearchOpportunityRow): SearchOpportunityResult {
+  return {
+    id: row.opportunity_id,
+    title: row.title,
+    description: row.description,
+    opportunityType: row.opportunity_type,
+    employmentType: row.employment_type,
+    experienceLevel: row.experience_level,
+    workMode: row.work_mode,
+    industry: row.industry,
+    country: row.country,
+    region: row.region,
+    city: row.city,
+    locationText: row.location_text,
+    compensationType: row.compensation_type,
+    compensationMin: row.compensation_min,
+    compensationMax: row.compensation_max,
+    currency: row.currency,
+    compensationPeriod: row.compensation_period,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    slotsTotal: row.slots_total,
+    isFirstJobFriendly: row.is_first_job_friendly,
+    isStudentFriendly: row.is_student_friendly,
+    projectId: row.project_id,
+    projectName: row.project_name,
+    projectSlug: row.project_slug,
+    organizationId: row.organization_id,
+    organizationName: row.organization_name,
+    organizationSlug: row.organization_slug,
+    ownerId: row.creator_id,
+    ownerFullName: row.creator_full_name,
+    ownerUsername: row.creator_username,
+    ownerAvatarUrl: row.creator_avatar_url,
+    score: row.search_score,
+    createdAt: row.created_at,
+  };
+}
+
+export function toOpportunityView(result: SearchOpportunityResult): SearchOpportunity {
+  return {
+    id: result.id,
+    title: result.title,
+    description: result.description,
+    opportunityType: result.opportunityType,
+    employmentType: result.employmentType,
+    experienceLevel: result.experienceLevel,
+    workMode: result.workMode,
+    industry: result.industry,
+    country: result.country,
+    region: result.region,
+    city: result.city,
+    locationText: result.locationText,
+    compensationType: result.compensationType,
+    compensationMin: result.compensationMin,
+    compensationMax: result.compensationMax,
+    currency: result.currency,
+    compensationPeriod: result.compensationPeriod,
+    startsAt: result.startsAt,
+    endsAt: result.endsAt,
+    slotsTotal: result.slotsTotal,
+    isFirstJobFriendly: result.isFirstJobFriendly,
+    isStudentFriendly: result.isStudentFriendly,
+    owner: {
+      id: result.ownerId,
+      fullName: result.ownerFullName,
+      username: result.ownerUsername,
+      avatarUrl: result.ownerAvatarUrl,
+    },
+    project:
+      result.projectId && result.projectName
+        ? {
+            id: result.projectId,
+            name: result.projectName,
+            slug: result.projectSlug ?? "",
+          }
+        : null,
+    organization:
+      result.organizationId && result.organizationName
+        ? {
+            id: result.organizationId,
+            name: result.organizationName,
+            slug: result.organizationSlug ?? "",
+          }
+        : null,
+    createdAt: result.createdAt,
+  };
+}
+
 function serializeNext(score: number, createdAt: string, id: string): string {
   return serializeCursor({ score, createdAt, id });
 }
@@ -438,6 +561,51 @@ export async function searchVideos(
     page: {
       items,
       nextCursor: serializeNext(last.search_score, last.created_at, last.video_id),
+    },
+  };
+}
+
+export async function searchOpportunities(
+  supabase: SupabaseClient<Database>,
+  params: OpportunitySearchParams = {},
+): Promise<SearchPageResult<SearchOpportunity>> {
+  const query = normalizeQuery(params.query);
+  const limit = resolveLimit(params.limit);
+  const cursor = parseCursor(params.cursor);
+
+  const { data, error } = await supabase.rpc("search_opportunities", {
+    p_query: query,
+    p_limit: limit,
+    p_cursor_score: cursor?.score,
+    p_cursor_created_at: cursor?.createdAt,
+    p_cursor_id: cursor?.id,
+    p_opportunity_type: params.opportunityType ?? undefined,
+    p_industry: params.industry ?? undefined,
+    p_work_mode: params.workMode ?? undefined,
+    p_experience_level: params.experience ?? undefined,
+    p_first_job_friendly: params.firstJob ?? undefined,
+    p_student_friendly: params.studentFriendly ?? undefined,
+    p_location: params.location ?? undefined,
+    p_date: params.date ?? undefined,
+    p_sort: resolveSort(params.sort),
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const rows = (data ?? []) as SearchOpportunityRow[];
+  if (rows.length === 0) {
+    return { ok: true, page: { items: [], nextCursor: null } };
+  }
+
+  const last = rows[rows.length - 1];
+  const items = rows.map((row) => toOpportunityView(toOpportunity(row)));
+  return {
+    ok: true,
+    page: {
+      items,
+      nextCursor: serializeNext(last.search_score, last.created_at, last.opportunity_id),
     },
   };
 }

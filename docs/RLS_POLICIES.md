@@ -238,3 +238,38 @@ Notas:
 - **Identidad y alcance**: la búsqueda nunca recibe `p_user_id`; el alcance de
   cada lector se deriva de `auth.uid()`. El cursor es opaco para la UI y se
   deriva del último item del orden SQL del lote (paginación estable sin OFFSET).
+
+## FASE 6 — Oportunidades (tabla `opportunities`)
+
+- **7 políticas en `opportunities`** (RLS activado, sin política DELETE: el
+  ciclo de vida `draft/published/closed/filled/cancelled` sustituye al borrado):
+  - `opportunities_select_public` (TO PUBLIC): solo oportunidades
+    distribuibles con `visibility = 'public'` (predicado
+    `opportunity_is_publicly_distributable`).
+  - `opportunities_select_own` (TO PUBLIC): el creador siempre ve las suyas
+    (borradores, privadas, rechazadas...).
+  - `opportunities_select_registered` (authenticated): distribuibles con
+    `visibility = 'registered_users'`.
+  - `opportunities_select_project_members` (authenticated): distribuibles con
+    `visibility = 'project_members'` y `is_project_member(project_id)`.
+  - `opportunities_select_admin` (authenticated): `is_platform_admin()`
+    (moderación).
+  - `opportunities_insert_own` (authenticated): WITH CHECK `auth.uid() =
+    creator_id` y contexto real (`is_project_member`/`is_organization_member`
+    cuando hay ancla).
+  - `opportunities_update_manage` (authenticated): USING + WITH CHECK
+    `auth.uid() = creator_id OR is_project_member(project_id) OR
+    is_organization_member(organization_id) OR is_platform_admin()`.
+- **ACL de funciones**: REVOKE de `public` + GRANT explícito.
+  `search_opportunities` → anon+authenticated; predicado
+  `opportunity_is_publicly_distributable` → anon+authenticated (lo invocan las
+  políticas RLS de SELECT con los privilegios del llamador); RPC admin
+  (`admin_approve/reject/flag_opportunity`) → solo authenticated con
+  `is_platform_admin()` interno (fail-closed); funciones de trigger
+  (`opportunities_validate_state_change`, `posts_sync_from_opportunity`) sin
+  concesión útil. Nota: los grants residuales de anon/authenticated que muestran
+  los default privileges de Supabase sobre funciones de trigger existen también
+  en fases 3-4 y son no-op (las funciones no aceptan argumentos).
+- **Granularidad del predicado**: `opportunity_is_publicly_distributable`
+  excluye `draft`, estados terminales `closed/filled/cancelled`, moderación
+  `rejected/flagged` y turnos de 1 día con `ends_at` pasado.

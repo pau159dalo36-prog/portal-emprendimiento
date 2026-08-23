@@ -44,25 +44,28 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/", label: t("home"), icon: Home, exact: true },
     { href: "/explorar", label: t("explore"), icon: Compass },
     { href: "/organizaciones", label: t("organizations"), icon: Building2 },
+    { href: "/oportunidades", label: t("opportunities"), icon: Briefcase },
     { href: "/videos", label: t("videos"), icon: Video },
   ];
 
   const activityItems: SidebarItem[] = [
     { href: "/panel", label: nav("panel"), icon: LayoutDashboard },
     { href: "/perfil", label: t("profile"), icon: User },
+    { href: "/panel/oportunidades", label: nav("myOpportunities"), icon: Briefcase },
     { href: "/panel/videos", label: nav("myVideos"), icon: Video },
+    { href: "/publicar/oportunidad", label: nav("publishOpportunity"), icon: Plus },
     { href: "/proyectos/nuevo", label: nav("newProject"), icon: Plus },
     { href: "/organizaciones/nueva", label: nav("newOrganization"), icon: Plus },
     { href: "/publicar/video", label: nav("publishVideo"), icon: Video },
   ];
 
   const adminItems: SidebarItem[] = [
+    { href: "/admin/oportunidades", label: nav("adminOpportunities"), icon: Briefcase },
     { href: "/admin/videos", label: nav("adminVideos"), icon: ShieldCheck },
   ];
 
   const comingSoonItems = [
     { label: t("posts"), icon: Newspaper },
-    { label: t("jobs"), icon: Briefcase },
     { label: t("communities"), icon: MessageSquare },
   ];
 

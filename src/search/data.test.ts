@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { SEARCH_PAGE_SIZE } from "@/search/config";
 import {
+  searchOpportunities,
   searchOrganizations,
   searchProfiles,
   searchProjects,
   searchVideos,
 } from "@/search/data";
 import type {
+  SearchOpportunityRow,
   SearchOrganizationRow,
   SearchProfileRow,
   SearchProjectRow,
@@ -98,6 +100,48 @@ function videoRow(overrides: Partial<SearchVideoRow> = {}): SearchVideoRow {
     organization_name: null,
     organization_slug: null,
     search_score: 0.85,
+    created_at: "2026-08-01T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function opportunityRow(overrides: Partial<SearchOpportunityRow> = {}): SearchOpportunityRow {
+  return {
+    opportunity_id: "opp-1",
+    title: "Prácticas de ingeniería",
+    description: null,
+    opportunity_type: "internship",
+    employment_type: "full_time",
+    experience_level: "",
+    work_mode: "hybrid",
+    industry: "tecnologia",
+    country: "ES",
+    region: "",
+    city: "Madrid",
+    location_text: "",
+    compensation_type: "monetary",
+    compensation_min: 900,
+    compensation_max: 1200,
+    currency: "EUR",
+    compensation_period: "month",
+    starts_at: "",
+    ends_at: "",
+    slots_total: 0,
+    is_first_job_friendly: true,
+    is_student_friendly: true,
+    project_id: null,
+    project_name: null,
+    project_slug: null,
+    project_stage: null,
+    project_industries: null,
+    organization_id: null,
+    organization_name: null,
+    organization_slug: null,
+    creator_id: "owner-1",
+    creator_full_name: "Carlos Mecánica",
+    creator_username: "carlos_mec",
+    creator_avatar_url: null,
+    search_score: 0.9,
     created_at: "2026-08-01T10:00:00.000Z",
     ...overrides,
   };
@@ -275,6 +319,86 @@ describe("searchVideos", () => {
   it("proyecto/organización ausentes → null", async () => {
     const { client } = createSupabaseSpy({ rpcResult: { data: [videoRow()] } });
     const result = await searchVideos(client, { query: "motor" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.page.items[0].project).toBeNull();
+    expect(result.page.items[0].organization).toBeNull();
+  });
+});
+
+describe("searchOpportunities", () => {
+  it("llama a su RPC con los filtros de oportunidades", async () => {
+    const { client, calls } = createSupabaseSpy({
+      rpcResult: { data: [opportunityRow()] },
+    });
+    const result = await searchOpportunities(client, {
+      query: "prácticas",
+      opportunityType: "internship",
+      industry: "tecnologia",
+      workMode: "hybrid",
+      experience: "junior",
+      firstJob: true,
+      date: "tomorrow",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(calls[0].rpc).toBe("search_opportunities");
+    expect(calls[0].args.p_opportunity_type).toBe("internship");
+    expect(calls[0].args.p_industry).toBe("tecnologia");
+    expect(calls[0].args.p_work_mode).toBe("hybrid");
+    expect(calls[0].args.p_experience_level).toBe("junior");
+    expect(calls[0].args.p_first_job_friendly).toBe(true);
+    expect(calls[0].args.p_date).toBe("tomorrow");
+  });
+
+  it("mapea la fila y el cursor del último item", async () => {
+    const { client } = createSupabaseSpy({
+      rpcResult: { data: [opportunityRow(), opportunityRow({ opportunity_id: "opp-2" })] },
+    });
+    const result = await searchOpportunities(client, { query: "prácticas" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.page.items).toHaveLength(2);
+    expect(result.page.items[0].id).toBe("opp-1");
+    expect(result.page.items[0].owner?.fullName).toBe("Carlos Mecánica");
+    expect(result.page.items[0].compensationType).toBe("monetary");
+    expect(result.page.items[0].isFirstJobFriendly).toBe(true);
+    expect(parseCursor(result.page.nextCursor)).toEqual({
+      score: 0.9,
+      createdAt: "2026-08-01T10:00:00.000Z",
+      id: "opp-2",
+    });
+  });
+
+  it("proyecto y organización de LEFT JOIN se mapean cuando existen", async () => {
+    const { client } = createSupabaseSpy({
+      rpcResult: {
+        data: [
+          opportunityRow({
+            project_id: "project-1",
+            project_name: "Proyecto Motor",
+            project_slug: "proyecto-motor",
+            project_stage: "prototipo",
+            project_industries: ["tecnologia", "energia"],
+            organization_id: "org-1",
+            organization_name: "Org Mecánica",
+            organization_slug: "org-mecanica",
+          }),
+        ],
+      },
+    });
+    const result = await searchOpportunities(client, { query: "motor" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.page.items[0].project?.slug).toBe("proyecto-motor");
+    expect(result.page.items[0].organization?.slug).toBe("org-mecanica");
+  });
+
+  it("proyecto/organización ausentes (LEFT JOIN) → null", async () => {
+    const { client } = createSupabaseSpy({ rpcResult: { data: [opportunityRow()] } });
+    const result = await searchOpportunities(client, { query: "motor" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.page.items[0].project).toBeNull();

@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowUpRight, ExternalLink, Settings2, Video } from "lucide-react";
+import { ArrowUpRight, Briefcase, ExternalLink, Settings2, Video } from "lucide-react";
 
 import { requireUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
@@ -108,6 +108,24 @@ export default async function PanelPage() {
           </Link>
         )}
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-4">
+          <div className="grid gap-1">
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="size-5 text-primary" aria-hidden="true" />
+              {t("opportunitiesTitle")}
+            </CardTitle>
+            <CardDescription>{t("opportunitiesDescription")}</CardDescription>
+          </div>
+          <Link
+            href="/panel/oportunidades"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            {t("manageOpportunities")}
+          </Link>
+        </CardHeader>
+      </Card>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-4">

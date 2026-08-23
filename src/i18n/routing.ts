@@ -12,6 +12,11 @@ export const routing = defineRouting({
       es: "/explorar",
       en: "/explore",
     },
+    // Mercado de oportunidades: /oportunidades (es) y /opportunities (en).
+    "/oportunidades": {
+      es: "/oportunidades",
+      en: "/opportunities",
+    },
   },
 });
 

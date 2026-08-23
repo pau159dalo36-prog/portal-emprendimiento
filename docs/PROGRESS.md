@@ -1,7 +1,24 @@
-# Estado del proyecto — FASE 5 (Explorar y búsqueda)
+# Estado del proyecto — FASE 6 (Mercado de oportunidades)
 
 ## Estado general
 
+- ✅ **FASE 6 COMPLETA Y APLICADA EN REMOTO** (mercado de oportunidades):
+  migración `20260817000000_fase6_oportunidades.sql` + corrección de mínimo
+  privilegio `20260818000000_fase6_min_priv_oportunidades.sql` **aplicadas en
+  remoto** (`efgmjuzcqolpibraymol`), `supabase:types` regenerado,
+  `lint`/`typecheck`/`test`/`build` en verde y auditoría estructural +
+  conductual read-only contra el remoto correcta (esquema, RLS, ACL con grants
+  directos verificados por rol, triggers, predicado y RPC de búsqueda).
+  Cierre técnico adicional: fix de regresión en el formulario (los turnos
+  `one_day_shift` no enviaban `visibility` al no renderizarse el selector;
+  ahora viaja como input hidden, con test), y revocados los grants residuales
+  de plataforma sobre `opportunities` (anon sin INSERT/UPDATE/DELETE/TRUNCATE;
+  authenticated sin DELETE/TRUNCATE; funciones de trigger sin EXECUTE externo),
+  patrón ya usado en FASES 4.2/4.3. Operativo:
+  `/oportunidades` ↔ `/opportunities`, publicar, editar, panel, moderación admin
+  y pestaña Oportunidades en Explore. Pendiente solo la ejecución del test SQL
+  `supabase/tests/fase6_oportunidades.sql` contra el stack local (Docker no
+  disponible; NO ejecutarlo contra producción).
 - ✅ **FASE 5 COMPLETA Y APLICADA EN REMOTO** (búsqueda/exploración): migraciones
   `20260815000000_fase5_search.sql` (helpers, columnas generadas `search_text`,
   índices trigram y 4 RPCs SECURITY DEFINER) + corrección
@@ -30,6 +47,94 @@
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 6 — Mercado de oportunidades
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260817000000_fase6_oportunidades.sql`: tabla
+  `opportunities` (mercado independiente de `project_needs`, que queda intacta).
+  `opportunity_type` `job|internship|cofounder|collaboration|one_day_shift`
+  (el primer empleo se modela con el flag `is_first_job_friendly`, no como tipo);
+  compensación tipada (`compensation_type` `monetary|equity|negotiable|unpaid`,
+  `compensation_period` `hour|shift|day|week|month|year|one_time`; `monetary`
+  exige `currency` + periodo + al menos una cota y `min <= max`; los turnos de 1
+  día solo admiten `shift`/`day`); ciclo `draft → published → closed|filled|cancelled`
+  (terminal); turnos de 1 día con `starts_at`/`ends_at`/`slots_total` (un turno
+  pasado NO es distribuible) y moderación post-publicación
+  `unreviewed|approved|rejected|flagged`. Triggers: invoker
+  `opportunities_validate_state_change` (estados válidos, prohibido publicar
+  turnos pasados, moderación solo por admin, `creator_id` inmutable) y el sync
+  `SECURITY DEFINER` `posts_sync_from_opportunity` (idempotente, 1 post por
+  oportunidad con `post_type='opportunity'` y `opportunity_id` único; las RPC
+  de feed se recrean con `post_type='video'` para que las oportunidades NO entren
+  en "Para ti"/"Siguiendo"). Sin política DELETE: el ciclo de vida se gestiona
+  por estados. RLS completa (select público solo distribuible, registrados,
+  miembros de proyecto, admin; insert/update creador/miembro/admin) y ACL mínima
+  (REVOKE de `public` + GRANT explícito; RPCs admin solo `authenticated` con
+  `is_platform_admin()` interno fail-closed, patrón exacto de vídeos).
+- `supabase/tests/fase6_oportunidades.sql`: script de verificación SQL
+  (transacción que se revierte) con 10 bloques: esquema, RLS de lectura, RLS de
+  inserción, permisos de edición, one-day shift, ciclo de vida, búsqueda y
+  paginación con cursor.
+- `src/opportunities/`: `constants.ts`, `types.ts`, `data.ts` (RPC
+  `search_opportunities` + CRUD fail-closed), `panel.ts` (secciones del panel y
+  canPublish/canClose/canFill/canCancel), `format.ts` (compensación
+  "75 EUR/turno" o "30.000–35.000 EUR/año"), `map.ts` (perfil de la tarjeta +
+  flags). Tests: `format.test.ts` (18) y `panel.test.ts` (11).
+- `src/validations/opportunity.ts` (+ test, 11): Zod espejo de las invariantes
+  SQL (one-day shift, compensación, fechas, slots). `src/actions/opportunity.ts`
+  (publicar/editar/cambiar estado) y `opportunity-moderation.ts`
+  (aprobar/rechazar/marcar, fail-closed admin).
+- Rutas: `/oportunidades` (market), `/oportunidades/[id]` (detalle),
+  `/publicar/oportunidad`, `/panel/oportunidades`, `/admin/oportunidades` y
+  `/oportunidades/[id]/editar`. Explore gana la pestaña Oportunidades
+  (`explore-app.tsx`, grupo con previews + CTA); nav (sidebar, bottom-nav,
+  header) y panel integrados. `features.oportunidades = true`;
+  `routing.ts` mapea `/oportunidades` ↔ `/opportunities`.
+- i18n: claves nuevas en `messages/es.json` y `en.json` (namespaces
+  `opportunity` 75, `opportunityTypes` 5, `employmentTypes` 5, `workModes` 3,
+  `experienceLevels` 5, `compensationTypes` 4, `compensationPeriods` 7,
+  `opportunityStatuses` 5, `opportunityForm` 52, `opportunityDates` 3,
+  `moderationStatuses` 4, `industries` 11). Paridad verificada: 1127 claves
+  ES = 1127 EN, 0 solo-ES, 0 solo-EN.
+- `src/types/database.types.ts`: regenerado con `supabase:types` desde el
+  remoto tras aplicar la migración (tabla `opportunities`, `search_opportunities`
+  y las RPC admin).
+
+### Verificación actual
+
+- `npm run lint` ✅ / `npm run typecheck` ✅ / `npm run build` ✅
+- `npm run test` ✅ (343 tests en 30 archivos, incluidos los de
+  `src/opportunities`, `src/validations/opportunity` y el nuevo
+  `opportunity-form.test.tsx`).
+- Migraciones `20260817000000` + `20260818000000` **aplicadas en remoto**;
+  `migration list` local=remoto (18/18); `supabase db push --dry-run` →
+  "Remote database is up to date."
+- Auditoría read-only contra el remoto ✅: tabla con RLS activo y sus 7
+  políticas; ACL de funciones con REVOKE/GRANT correctos (admin RPCs solo
+  `authenticated`, `search_opportunities` anon+authenticated; funciones de
+  trigger sin EXECUTE externo tras la corrección de mínimo privilegio);
+  atributos de seguridad (SECURITY DEFINER + `search_path=''`)
+  coincidentes; triggers presentes; predicado
+  `opportunity_is_publicly_distributable` verificado (draft/closed/filled/
+  cancelled/flagged/rejected/turno pasado → no; publicado y turno futuro → sí);
+  `search_opportunities` con todos los filtros responde sin errores (tabla
+  vacía en producción); grants directos por rol verificados con
+  `has_table_privilege`/`has_function_privilege` (anon: solo SELECT;
+  authenticated: SELECT/INSERT/UPDATE sin DELETE/TRUNCATE).
+- Test SQL `supabase/tests/fase6_oportunidades.sql` **sin ejecutar** (requiere
+  stack local/Docker; NO debe ejecutarse contra producción).
+
+### Pendiente / decisiones
+
+- Ejecutar `fase6_oportunidades.sql` (y el resto de tests SQL de FASE 4/5)
+  contra el stack local cuando Docker esté disponible.
+- Candidaturas/ATS: fuera de alcance de FASE 6 (`slots_total` es informativo;
+  quedan para una fase futura).
+- Las oportunidades NO entran en el feed "Para ti"/"Siguiendo" (decisión:
+  viven en su market `/oportunidades`).
+- FASE 6 queda lista para commit, pendiente de autorización del usuario.
 
 ## FASE 5 — Explorar y búsqueda
 
@@ -383,8 +488,9 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: **16/16 (hasta `20260816000000_fase5_min_priv_search.sql`)**.
-  FASE 5 aplicada y verificada en remoto.
-- Los tests SQL de FASE 4 y FASE 5 (posts/follows/analytics/feed/search) NO
-  deben ejecutarse contra producción; quedan para el stack local.
+- Migraciones local=remoto: **17/17 (hasta `20260817000000_fase6_oportunidades.sql`)**.
+  FASE 6 aplicada y verificada en remoto.
+- Los tests SQL de FASE 4, FASE 5 y FASE 6 (posts/follows/analytics/feed/search/
+  oportunidades) NO deben ejecutarse contra producción; quedan para el stack
+  local.
 - Sin commit/push pendiente de autorización.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Building2, Compass, Home, Plus, User } from "lucide-react";
+import { Briefcase, Compass, Home, Plus, User } from "lucide-react";
 
 import type { ShellUser } from "@/components/navigation/app-shell";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ export function MobileBottomNav({ user }: { user: ShellUser | null }) {
     user
       ? { href: "/proyectos/nuevo", label: t("publish"), icon: Plus }
       : { href: "/registrarse", label: t("publish"), icon: Plus },
-    { href: "/organizaciones", label: t("organizations"), icon: Building2 },
+    { href: "/oportunidades", label: t("opportunities"), icon: Briefcase },
     user
       ? { href: "/perfil", label: t("profile"), icon: User }
       : { href: "/iniciar-sesion", label: t("signIn"), icon: User },

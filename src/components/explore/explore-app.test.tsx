@@ -10,6 +10,7 @@ import { ExploreApp } from "@/components/explore/explore-app";
 import type { ExploreInitialData } from "@/search/home";
 import type { ExploreParams } from "@/search/schemas";
 import type {
+  SearchOpportunity,
   SearchOrganization,
   SearchProfile,
   SearchProject,
@@ -18,6 +19,7 @@ import type {
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace: string) => (key: string) => `${namespace}.${key}`,
+  useLocale: () => "es",
 }));
 
 const { routerReplace } = vi.hoisted(() => ({
@@ -45,6 +47,7 @@ vi.mock("@/search/data", () => ({
   searchProfiles: vi.fn(),
   searchProjects: vi.fn(),
   searchOrganizations: vi.fn(),
+  searchOpportunities: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -57,6 +60,7 @@ vi.mock("@/lib/env", () => ({
 }));
 
 import {
+  searchOpportunities,
   searchOrganizations,
   searchProfiles,
   searchProjects,
@@ -67,6 +71,7 @@ const mockedSearchVideos = vi.mocked(searchVideos);
 const mockedSearchProfiles = vi.mocked(searchProfiles);
 const mockedSearchProjects = vi.mocked(searchProjects);
 const mockedSearchOrganizations = vi.mocked(searchOrganizations);
+const mockedSearchOpportunities = vi.mocked(searchOpportunities);
 
 function video(id: string): SearchVideo {
   return {
@@ -133,12 +138,44 @@ function organization(id: string): SearchOrganization {
   };
 }
 
+function opportunity(id: string): SearchOpportunity {
+  return {
+    id,
+    title: `Oportunidad ${id}`,
+    description: null,
+    opportunityType: "job",
+    employmentType: null,
+    experienceLevel: null,
+    workMode: null,
+    industry: null,
+    country: null,
+    region: null,
+    city: null,
+    locationText: null,
+    compensationType: null,
+    compensationMin: null,
+    compensationMax: null,
+    currency: null,
+    compensationPeriod: null,
+    startsAt: null,
+    endsAt: null,
+    slotsTotal: null,
+    isFirstJobFriendly: false,
+    isStudentFriendly: false,
+    owner: null,
+    project: null,
+    organization: null,
+    createdAt: "2026-08-01T10:00:00.000Z",
+  };
+}
+
 function initialData(overrides: Partial<ExploreInitialData> = {}): ExploreInitialData {
   return {
     profiles: { ok: true, items: [], nextCursor: null },
     projects: { ok: true, items: [], nextCursor: null },
     organizations: { ok: true, items: [], nextCursor: null },
     videos: { ok: true, items: [], nextCursor: null },
+    opportunities: { ok: true, items: [], nextCursor: null },
     ...overrides,
   };
 }
@@ -151,6 +188,11 @@ const defaultParams: ExploreParams = {
   language: "",
   stage: "",
   industry: "",
+  opportunityType: "",
+  workMode: "",
+  experience: "",
+  firstJob: "false",
+  date: "",
 };
 
 function renderApp(props: {
@@ -173,6 +215,7 @@ beforeEach(() => {
   mockedSearchProfiles.mockReset();
   mockedSearchProjects.mockReset();
   mockedSearchOrganizations.mockReset();
+  mockedSearchOpportunities.mockReset();
 });
 
 afterEach(() => {
@@ -232,6 +275,36 @@ describe("ExploreApp — pestañas", () => {
     expect(screen.getByText("Vídeo v1")).toBeInTheDocument();
     expect(screen.getByText("Vídeo v2")).toBeInTheDocument();
     expect(mockedSearchVideos).not.toHaveBeenCalled();
+  });
+
+  it("la pestaña de oportunidades renderiza los items iniciales del servidor", () => {
+    renderApp({
+      params: { tab: "opportunities" },
+      initial: initialData({
+        opportunities: { ok: true, items: [opportunity("o1"), opportunity("o2")], nextCursor: null },
+      }),
+    });
+
+    expect(screen.getByRole("tab", { name: "explore.tabOpportunities" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Oportunidad o1")).toBeInTheDocument();
+    expect(screen.getByText("Oportunidad o2")).toBeInTheDocument();
+    expect(mockedSearchOpportunities).not.toHaveBeenCalled();
+  });
+
+  it("el filtro de tipo en oportunidades navega con opportunityType", async () => {
+    const user = userEvent.setup();
+    renderApp({ params: { tab: "opportunities" } });
+
+    await user.selectOptions(screen.getByLabelText("explore.filterType"), "internship");
+
+    expect(routerReplace).toHaveBeenCalledWith({
+      pathname: "/explorar",
+      query: { tab: "opportunities", opportunityType: "internship" },
+    });
+    expect(mockedSearchOpportunities).not.toHaveBeenCalled();
   });
 });
 

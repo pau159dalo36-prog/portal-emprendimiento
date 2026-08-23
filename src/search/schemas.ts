@@ -8,8 +8,13 @@ import { INDUSTRIES } from "@/organizations/constants";
 import { USER_TYPES } from "@/profiles/constants";
 import { PROJECT_STAGES } from "@/projects/constants";
 import { SEARCH_MAX_PAGE_SIZE, SEARCH_PAGE_SIZE, SEARCH_SORTS } from "@/search/config";
+import {
+  EXPERIENCE_LEVELS,
+  OPPORTUNITY_TYPES,
+  WORK_MODES,
+} from "@/opportunities/constants";
 
-export { INDUSTRIES, PROJECT_STAGES, USER_TYPES };
+export { INDUSTRIES, PROJECT_STAGES, USER_TYPES, EXPERIENCE_LEVELS, OPPORTUNITY_TYPES, WORK_MODES };
 
 export const searchCursorSchema = z.object({
   score: z.number(),
@@ -29,6 +34,8 @@ export const searchSortSchema = z.enum(SEARCH_SORTS).default("relevance");
 // más relevantes para su audiencia).
 export const LANGUAGES = ["es", "en", "fr", "pt", "de", "it"] as const;
 
+// Filtro de fecha para turnos (search_opportunities p_date).
+export const OPPORTUNITY_DATES = ["today", "tomorrow", "weekend"] as const;
 const CURSOR_VERSION = 1;
 
 type SerializedCursor = {
@@ -81,7 +88,14 @@ export function normalizeQuery(raw: string | null | undefined): string {
 // ausente NUNCA lanza — siempre se cae a un valor por defecto (la página nunca
 // devuelve 500 por un query string raro).
 // ---------------------------------------------------------------------------
-export const EXPLORE_TABS = ["all", "videos", "projects", "organizations", "profiles"] as const;
+export const EXPLORE_TABS = [
+  "all",
+  "videos",
+  "projects",
+  "organizations",
+  "profiles",
+  "opportunities",
+] as const;
 export type ExploreTab = (typeof EXPLORE_TABS)[number];
 
 // searchParams de Next viene como string | string[] | undefined.
@@ -100,9 +114,26 @@ export const exploreParamsSchema = z.object({
   language: z.preprocess((v) => firstString(v), z.string()).catch(""),
   stage: z.preprocess((v) => firstString(v), z.string()).catch(""),
   industry: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  opportunityType: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  workMode: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  experience: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  firstJob: z.preprocess((v) => firstString(v), z.enum(["true", "false"])).catch("false"),
+  date: z.preprocess((v) => firstString(v), z.string()).catch(""),
 });
 
 export type ExploreParams = z.infer<typeof exploreParamsSchema>;
+
+// Parámetros del mercado de oportunidades (/oportunidades). Comparte los
+// filtros de la pestaña "opportunities" de /explorar sin la pestaña ni los
+// filtros de perfiles/proyectos.
+export const marketParamsSchema = exploreParamsSchema.omit({
+  tab: true,
+  role: true,
+  language: true,
+  stage: true,
+});
+
+export type MarketParams = z.infer<typeof marketParamsSchema>;
 
 // Serializa params → query string, omitiendo valores vacíos o por defecto
 // (URL canónica y compartible). null cuando no hay ningún parámetro.
@@ -115,10 +146,30 @@ export function buildExploreQuery(params: ExploreParams): Record<string, string>
   if (params.language) query.language = params.language;
   if (params.stage) query.stage = params.stage;
   if (params.industry) query.industry = params.industry;
+  if (params.opportunityType) query.opportunityType = params.opportunityType;
+  if (params.workMode) query.workMode = params.workMode;
+  if (params.experience) query.experience = params.experience;
+  if (params.firstJob === "true") query.firstJob = "true";
+  if (params.date) query.date = params.date;
   return Object.keys(query).length > 0 ? query : null;
 }
 
 export function resolveLimit(limit: number | undefined): number {
   const parsed = searchLimitSchema.safeParse(limit ?? SEARCH_PAGE_SIZE);
   return parsed.success ? (parsed.data ?? SEARCH_PAGE_SIZE) : SEARCH_PAGE_SIZE;
+}
+
+// Serializa params del mercado (/oportunidades) → query string, omitiendo
+// valores vacíos o por defecto. null cuando no hay ningún parámetro.
+export function buildMarketQuery(params: MarketParams): Record<string, string> | null {
+  const query: Record<string, string> = {};
+  if (params.q) query.q = params.q;
+  if (params.sort !== "relevance") query.sort = params.sort;
+  if (params.opportunityType) query.opportunityType = params.opportunityType;
+  if (params.workMode) query.workMode = params.workMode;
+  if (params.experience) query.experience = params.experience;
+  if (params.industry) query.industry = params.industry;
+  if (params.firstJob === "true") query.firstJob = "true";
+  if (params.date) query.date = params.date;
+  return Object.keys(query).length > 0 ? query : null;
 }
