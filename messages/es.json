@@ -1,5 +1,6 @@
 {
   "metadata": {
+    "panelSaved": "Guardados",
     "title": "Comparte, descubre y construye.",
     "description": "Comparte tus ideas, descubre oportunidades y construye proyectos con una comunidad que valida, no solo opina.",
     "home": "Inicio",
@@ -41,6 +42,7 @@
     "allRightsReserved": "Todos los derechos reservados."
   },
   "nav": {
+    "savedItems": "Guardados",
     "panel": "Panel",
     "editProfile": "Editar perfil",
     "signOut": "Cerrar sesión",
@@ -1317,5 +1319,79 @@
     "fieldTooLong": "El valor es demasiado largo.",
     "uuidInvalid": "Identificador no válido.",
     "invalidIntent": "Acción no válida."
+  },
+  "interactions": {
+    "comments": {
+      "sectionLabel": "Comentarios",
+      "title": "Comentarios ({count})",
+      "placeholder": "Escribe un comentario constructivo…",
+      "replyPlaceholder": "Escribe una respuesta…",
+      "bodyLabel": "Comentario",
+      "submit": "Comentar",
+      "submitReply": "Responder",
+      "reply": "Responder",
+      "created": "Comentario publicado.",
+      "updated": "Comentario actualizado.",
+      "hidden": "Comentario oculto.",
+      "deleted": "Comentario eliminado.",
+      "edit": "Editar",
+      "saveEdit": "Guardar cambios",
+      "cancelEdit": "Cancelar",
+      "hide": "Ocultar",
+      "delete": "Eliminar",
+      "invalidBody": "El comentario está vacío o supera los 2000 caracteres.",
+      "notAllowed": "No puedes interactuar con este contenido.",
+      "failed": "No se pudo completar la acción. Inténtalo de nuevo.",
+      "empty": "Sé el primero en comentar.",
+      "signInToComment": "Inicia sesión para comentar."
+    },
+    "feedback": {
+      "title": "Feedback recibido ({count})",
+      "createHint": "Ayuda al equipo con feedback estructurado: qué entiendes, qué no, y qué cambiarías.",
+      "updateHint": "Ya diste tu feedback de este proyecto; puedes actualizarlo cuando quieras.",
+      "understanding": "¿Qué entiendes del proyecto?",
+      "understandingPlaceholder": "Explica con tus palabras qué hace este proyecto (mínimo 10 caracteres).",
+      "problem": "¿Qué problema crees que resuelve?",
+      "useful": "¿Qué parece útil?",
+      "unclear": "¿Qué no entiendes?",
+      "suggestions": "¿Qué cambiarías?",
+      "wouldUse": "¿Lo usarías?",
+      "wouldUse_yes": "Sí",
+      "wouldUse_maybe": "Quizás",
+      "wouldUse_no": "No",
+      "interestScore": "Interés (0–10)",
+      "interestScorePlaceholder": "Opcional",
+      "interestScoreHint": "Opcional: puntúa tu interés del 0 al 10.",
+      "submit": "Enviar feedback",
+      "update": "Actualizar feedback",
+      "saving": "Guardando…",
+      "saved": "Feedback guardado. ¡Gracias!",
+      "invalidInput": "Revisa los campos del feedback e inténtalo de nuevo.",
+      "failed": "No se pudo guardar el feedback. Inténtalo de nuevo.",
+      "ownerHint": "El feedback de tu proyecto es visible para ti y tu equipo desde su autoría.",
+      "signInToGive": "Inicia sesión para dar feedback."
+    },
+    "reactions": {
+      "support": "Apoyar",
+      "notAllowed": "No puedes interactuar con este contenido.",
+      "failed": "No se pudo completar la acción. Inténtalo de nuevo."
+    },
+    "saves": {
+      "save": "Guardar",
+      "saved": "Guardado",
+      "failed": "No se pudo completar la acción. Inténtalo de nuevo."
+    }
+  },
+  "savedPanel": {
+    "title": "Guardados",
+    "description": "Posts, proyectos y oportunidades que has guardado. Solo tú ves esta sección.",
+    "empty": "Todavía no has guardado nada. Explora y guarda lo que te interese.",
+    "explore": "Explorar",
+    "postsSection": "Posts guardados ({count})",
+    "projectsSection": "Proyectos guardados ({count})",
+    "opportunitiesSection": "Oportunidades guardadas ({count})",
+    "savedOn": "Guardado el {date}",
+    "postFallbackTitle": "Publicación guardada",
+    "postFallbackBody": "Ver publicación"
   }
 }

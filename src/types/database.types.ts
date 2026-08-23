@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      interaction_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interaction_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           city: string | null
@@ -326,6 +361,100 @@ export type Database = {
           {
             foreignKeyName: "organizations_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_hidden: boolean
+          parent_id: string | null
+          post_id: string
+          reply_depth: number
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          parent_id?: string | null
+          post_id: string
+          reply_depth?: number
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          parent_id?: string | null
+          post_id?: string
+          reply_depth?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          post_id: string
+          profile_id: string
+          reaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          profile_id: string
+          reaction_type?: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          profile_id?: string
+          reaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reactions_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -907,6 +1036,66 @@ export type Database = {
         }
         Relationships: []
       }
+      project_feedback: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          interest_score: number | null
+          problem: string | null
+          project_id: string
+          suggestions: string | null
+          unclear: string | null
+          understanding: string
+          updated_at: string
+          useful: string | null
+          would_use: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          interest_score?: number | null
+          problem?: string | null
+          project_id: string
+          suggestions?: string | null
+          unclear?: string | null
+          understanding: string
+          updated_at?: string
+          useful?: string | null
+          would_use?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          interest_score?: number | null
+          problem?: string | null
+          project_id?: string
+          suggestions?: string | null
+          unclear?: string | null
+          understanding?: string
+          updated_at?: string
+          useful?: string | null
+          would_use?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_feedback_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_follows: {
         Row: {
           created_at: string
@@ -1151,6 +1340,105 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_opportunities: {
+        Row: {
+          created_at: string
+          opportunity_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          opportunity_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          opportunity_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_opportunities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_opportunities_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_posts: {
+        Row: {
+          created_at: string
+          post_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_posts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_projects: {
+        Row: {
+          created_at: string
+          profile_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_projects_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1557,6 +1845,14 @@ export type Database = {
           watch_score: number
         }[]
       }
+      get_post_interaction_counts: {
+        Args: { p_post_ids: string[] }
+        Returns: {
+          comment_count: number
+          post_id: string
+          support_count: number
+        }[]
+      }
       get_post_metrics: {
         Args: { p_post_id: string }
         Returns: {
@@ -1569,6 +1865,10 @@ export type Database = {
           total_watch_seconds: number
           unique_viewers: number
         }[]
+      }
+      get_project_feedback_count: {
+        Args: { p_project_id: string }
+        Returns: number
       }
       get_public_video_views_count: {
         Args: { p_video_id: string }
@@ -1613,6 +1913,14 @@ export type Database = {
           p_video_id: string
           p_visibility: string
         }
+        Returns: boolean
+      }
+      profiles_can_interact: {
+        Args: { p_a: string; p_b: string }
+        Returns: boolean
+      }
+      project_is_publicly_visible: {
+        Args: { p_project_id: string }
         Returns: boolean
       }
       report_video_view: {
@@ -1809,6 +2117,7 @@ export type Database = {
           width: number
         }[]
       }
+      toggle_post_support: { Args: { p_post_id: string }; Returns: boolean }
       video_analytics_access: { Args: { p_video_id: string }; Returns: string }
       video_is_publicly_distributable: {
         Args: { p_moderation_status: string }

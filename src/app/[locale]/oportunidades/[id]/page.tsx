@@ -7,10 +7,12 @@ import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { SaveButton } from "@/components/interactions/save-button";
 import { brand } from "@/config/brand";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
 import { getOpportunityById } from "@/opportunities/data";
+import { isSaved } from "@/interactions/saves";
 import {
   formatCompensation,
   getShiftDayLabelKey,
@@ -86,11 +88,21 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
   const shiftDayKey = isOneDay ? getShiftDayLabelKey(opportunity.starts_at, new Date()) : null;
   const authorName = opportunity.owner?.full_name ?? opportunity.owner?.username ?? t("anonymous");
 
+  // Guardar oportunidad (FASE 9): solo para quien no la creó; la RLS valida
+  // que siga siendo públicamente distribuible al guardar.
+  const savedOpportunity =
+    !!user && !isOwner
+      ? await isSaved(supabase, user.id, "opportunity", opportunity.id)
+      : false;
+
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{opportunity.title}</h1>
+          {user && !isOwner && (
+            <SaveButton targetId={opportunity.id} targetType="opportunity" saved={savedOpportunity} />
+          )}
           <Badge className="border-primary/30 bg-primary/10 text-primary">
             {types(opportunity.opportunity_type as Parameters<typeof types>[0])}
           </Badge>

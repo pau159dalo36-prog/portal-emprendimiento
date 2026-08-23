@@ -462,6 +462,45 @@ Migración: `supabase/migrations/20260817000000_fase6_oportunidades.sql`
   `select_own`, `select_admin`; insert/update `creator_id`/miembro/admin; ACL
   mínima con REVOKE de `public` y GRANT explícito (patrón de vídeos).
 
+## FASE 9 — Comentarios, feedback, reacciones y guardados
+
+Migraciones: `supabase/migrations/20260819000000_fase9_interacciones.sql` y la
+corrección de mínimo privilegio `20260820000000_fase9_min_priv_interacciones.sql`
+(creadas; pendientes de aplicar en remoto).
+
+- `post_comments`: hilo a **máximo 1 nivel** (trigger
+  `post_comments_validate_thread_trigger`, error `COMMENT_PARENT_INVALID`, padre
+  del mismo post), `reply_depth` 0/1, `body` 1–2000 tras `btrim`,
+  soft-hide/soft-delete propio (`is_hidden`, `deleted_at`,
+  `body='[eliminado]'`), `edited_at`, claves inmutables. Índices por post,
+  autor, padre y visibilidad.
+- `project_feedback`: estructurado (`understanding/problem/useful/unclear/
+  suggestions` con longitudes acotadas, `would_use yes|maybe|no`,
+  `interest_score` 0–10 opcional). `UNIQUE(project_id, author_id)`: 1 feedback
+  por usuario y proyecto, actualizable (upsert).
+- `post_reactions`: MVP solo `support`; `UNIQUE(post_id, profile_id,
+  reaction_type)` → toggle idempotente.
+- Guardados con FKs reales (no polimórficos): `saved_posts`,
+  `saved_projects`, `saved_opportunities`; PK compuesta `(profile_id,
+  item_id)`; insert solo si el contenido es públicamente distribuible.
+- Outbox `interaction_events`: `event_type` `comment_created|reply_created|
+  feedback_received|reaction_received`, `payload` JSONB, escrito por triggers
+  SECURITY DEFINER. **Sin políticas RLS ni grants**: solo service_role y
+  triggers; preparado para FASE 10 (notificaciones).
+- Helpers: `profiles_can_interact(actor, owner)` (bloqueo en cualquier dirección
+  impide NUEVAS interacciones; reutiliza `profile_blocks`) y
+  `project_is_publicly_visible(uuid)`.
+- RPCs SECURITY DEFINER fail-closed: `toggle_post_support(uuid)` (boolean),
+  `get_post_interaction_counts(uuid[])` y `get_project_feedback_count(uuid)`
+  (agregación, filtran no públicos — sin columnas contador ni identidades;
+  ejecutables por anon+authenticated porque alimentan las páginas públicas),
+  helpers `profiles_can_interact(uuid, uuid)` / `project_is_publicly_visible(uuid)`
+  solo para authenticated (los invocan las políticas de escritura).
+- RLS: anon solo SELECT de comentarios públicos (sin ocultos/eliminados);
+  escritura solo authenticated como `auth.uid()` sobre contenido público y sin
+  bloqueos entre autor y dueño; feedback legible por autor + owner/miembros/
+  admin; guardados solo propios. ACL revoke-first + grants mínimos.
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,

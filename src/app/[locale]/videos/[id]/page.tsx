@@ -8,6 +8,9 @@ import { getPublicVideoViewsCount } from "@/analytics/data";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { CommentSection } from "@/components/interactions/comment-section";
+import { SaveButton } from "@/components/interactions/save-button";
+import { SupportButton } from "@/components/interactions/support-button";
 import { VideoPlayer } from "@/components/video/video-player";
 import { brand } from "@/config/brand";
 import {
@@ -20,6 +23,9 @@ import { createSupabaseVideoProvider } from "@/lib/video/supabase-video-provider
 import { resolveVideoImagePreviewUrl } from "@/lib/video/preview";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
+import { getPostByVideoId } from "@/posts/data";
+import { getPostInteractionCounts, isPostSupportedBy } from "@/interactions/reactions";
+import { isSaved } from "@/interactions/saves";
 import { getVideoById } from "@/videos/data";
 
 type VideoDetailPageProps = {
@@ -90,6 +96,29 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
   const viewsCount = isPubliclyCountable
     ? await getPublicVideoViewsCount(supabase, video.id)
     : null;
+
+  // Interacciones (FASE 9): solo sobre el post público y distribuible del
+  // vídeo. Draft/hidden/removed/rejected/flagged quedan fuera por diseño.
+  const post = await getPostByVideoId(supabase, video.id);
+  const isInteractable =
+    isPubliclyCountable &&
+    !!post &&
+    post.visibility === "public" &&
+    post.publication_status === "published";
+
+  const interactionCounts = isInteractable && post
+    ? (await getPostInteractionCounts(supabase, [post.id])).get(post.id) ?? {
+        postId: post.id,
+        commentCount: 0,
+        supportCount: 0,
+      }
+    : null;
+  const [supported, saved] = user && post && isInteractable
+    ? await Promise.all([
+        isPostSupportedBy(supabase, post.id, user.id),
+        isSaved(supabase, user.id, "post", post.id),
+      ])
+    : [false, false];
 
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
@@ -184,7 +213,22 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
             </Link>
           </p>
         )}
+
+        {isInteractable && post && interactionCounts && (
+          <div className="flex flex-wrap items-center gap-2">
+            <SupportButton
+              postId={post.id}
+              supported={supported}
+              count={interactionCounts.supportCount}
+            />
+            <SaveButton targetId={post.id} targetType="post" saved={saved} />
+          </div>
+        )}
       </div>
+
+      {isInteractable && post && (
+        <CommentSection postId={post.id} commentCount={interactionCounts?.commentCount ?? 0} />
+      )}
 
       {isOwner && (
         <div>

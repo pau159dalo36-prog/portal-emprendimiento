@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  Bookmark,
   Building2,
   Compass,
   Home,
@@ -53,6 +54,7 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/perfil", label: t("profile"), icon: User },
     { href: "/panel/oportunidades", label: nav("myOpportunities"), icon: Briefcase },
     { href: "/panel/videos", label: nav("myVideos"), icon: Video },
+    { href: "/panel/guardados", label: nav("savedItems"), icon: Bookmark },
     { href: "/publicar/oportunidad", label: nav("publishOpportunity"), icon: Plus },
     { href: "/proyectos/nuevo", label: nav("newProject"), icon: Plus },
     { href: "/organizaciones/nueva", label: nav("newOrganization"), icon: Plus },

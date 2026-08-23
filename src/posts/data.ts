@@ -23,6 +23,19 @@ export async function getPostById(
   return data ?? null;
 }
 
+export async function getPostByVideoId(
+  supabase: SupabaseClient<Database>,
+  videoId: string,
+): Promise<PostWithDetails | null> {
+  const { data } = await supabase
+    .from("posts")
+    .select(POST_WITH_DETAILS)
+    .eq("video_id", videoId)
+    .maybeSingle();
+
+  return data ?? null;
+}
+
 export async function listPostsForUser(
   supabase: SupabaseClient<Database>,
   userId: string,

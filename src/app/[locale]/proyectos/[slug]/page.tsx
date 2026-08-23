@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { FeedbackSection } from "@/components/interactions/feedback-section";
 import { FollowButton } from "@/components/follows/follow-button";
 import { VideoCard } from "@/components/video/video-card";
 import {
@@ -353,6 +354,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </CardContent>
         </Card>
       )}
+
+      <FeedbackSection projectId={project.id} isOwner={isOwner} />
 
       {links.length > 0 && (
         <Card>

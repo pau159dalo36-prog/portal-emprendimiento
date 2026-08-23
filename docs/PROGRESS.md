@@ -1,7 +1,28 @@
-# Estado del proyecto — FASE 6 (Mercado de oportunidades)
+# Estado del proyecto — FASE 9 (Comentarios, feedback, reacciones y guardados)
 
 ## Estado general
 
+- ✅ **FASE 9 COMPLETA Y APLICADA EN REMOTO** (comentarios + feedback
+  estructurado + reacciones + guardados): migraciones
+  `20260819000000_fase9_interacciones.sql` y corrección de mínimo privilegio
+  `20260820000000_fase9_min_priv_interacciones.sql` **aplicadas en remoto**
+  (`efgmjuzcqolpibraymol`, migration list local=remoto 20/20), `supabase:types`
+  regenerado desde el remoto (diff solo adiciones: los tipos manuales
+  coincidían con el generado), `lint`/`typecheck`/`test`/`build` en verde y
+  auditoría conductual de ACL contra el remoto correcta (anon lee comentarios
+  públicos y ejecuta SOLO las RPC de conteo; sin escritura/lectura en
+  feedback/reacciones/guardados/outbox; helpers sin EXECUTE para anon;
+  service_role accede al outbox y las RPC fallan cerradas con AUTH_REQUIRED).
+  Operativo: hilo de comentarios a 1 nivel con editar/ocultar/borrar lo propio,
+  feedback estructurado 1 por usuario/proyecto, botón de apoyo idempotente vía
+  RPC, guardados con FKs reales (`/panel/guardados`) e outbox
+  `interaction_events` preparado para la FASE 10 (notificaciones), sin
+  implementarlas. Cierre técnico: fix pre-push en la migración principal
+  (firmas `profiles_can_interact(uuid, uuid)` en revoke/grant y eliminada la
+  palabra clave inválida `invoker`; helpers concedidos SOLO a authenticated).
+  Pendiente solo la ejecución del test SQL
+  `supabase/tests/fase9_interacciones.sql` contra el stack local (Docker no
+  disponible; NO ejecutarlo contra producción).
 - ✅ **FASE 6 COMPLETA Y APLICADA EN REMOTO** (mercado de oportunidades):
   migración `20260817000000_fase6_oportunidades.sql` + corrección de mínimo
   privilegio `20260818000000_fase6_min_priv_oportunidades.sql` **aplicadas en
@@ -47,6 +68,106 @@
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 9 — Comentarios, feedback, reacciones y guardados
+
+Deliverables creados y revisados:
+
+- `supabase/migrations/20260819000000_fase9_interacciones.sql`: siete tablas
+  nuevas. `post_comments` (hilo a **máximo 1 nivel de respuesta** validado por
+  trigger `post_comments_validate_thread_trigger` con error
+  `COMMENT_PARENT_INVALID`; el padre debe pertenecer al mismo post; `reply_depth`
+  0/1; `body` 1–2000 tras `btrim`; soft-delete/soft-hide propio vía `is_hidden`,
+  `deleted_at` y `body = '[eliminado]'`; `edited_at`; inmutabilidad de
+  `post_id`/`author_id`/`parent_id`). `project_feedback` (feedback estructurado:
+  `understanding/problem/useful/unclear/suggestions` con longitudes acotadas,
+  `would_use yes|maybe|no`, `interest_score` 0–10 opcional, `UNIQUE(project_id,
+  author_id)` → **1 feedback por usuario y proyecto**, actualizable). 
+  `post_reactions` (MVP solo `support`, `UNIQUE(post_id, profile_id,
+  reaction_type)` → toggle idempotente). Guardados con **FKs reales, no
+  polimórficos**: `saved_posts`, `saved_projects`, `saved_opportunities`
+  (PK compuesta `(profile_id, item_id)`, insert solo si el contenido es
+  distribuible/público). Outbox `interaction_events` (`event_type`
+  `comment_created|reply_created|feedback_received|reaction_received`,
+  payload JSONB) alimentado por triggers SECURITY DEFINER — sin políticas RLS
+  (deniega todo) ni grants: solo service_role/triggers escriben y leen;
+  preparado para FASE 10. Helpers: `profiles_can_interact(actor, owner)`
+  (bloqueo en cualquier dirección impide NUEVAS interacciones, reutiliza
+  `profile_blocks`), `project_is_publicly_visible(uuid)` (reutiliza el predicado
+  canónico de FASE 2). RPCs SECURITY DEFINER fail-closed:
+  `toggle_post_support(uuid)` (returns boolean, `POST_NOT_INTERACTABLE` si no es
+  distribuible o hay bloqueo), `get_post_interaction_counts(uuid[])`
+  (agregación por post, filtra no públicos — sin columnas contador mutables),
+  `get_project_feedback_count(uuid)` (solo para miembros del proyecto/admin).
+  RLS completa: anon solo SELECT de comentarios públicos (los ocultos/eliminados
+  se excluyen del listado público); escritura solo authenticated como
+  `auth.uid()` sobre contenido público y sin bloqueos; feedback legible por el
+  autor y por owner/miembros/admin; guardados `select_own` exclusivo. ACL
+  revoke-first + grants mínimos (patrón de fases anteriores).
+- `supabase/migrations/20260820000000_fase9_min_priv_interacciones.sql`:
+  corrección idempotente de mínimo privilegio (revoca defaults de plataforma y
+  re-concede lo justo; funciones internas de trigger sin EXECUTE externo).
+- `supabase/tests/fase9_interacciones.sql`: script de verificación SQL
+  (transacción que se revierte) con 9 bloques: ACL mínima, hilo de comentarios,
+  edición/ocultación/borrado propios vs ajenos, privacidad (private/hidden),
+  feedback idempotente + score + self-feedback denegado + visibilidad, toggle +
+  conteos agregados sin fuga, guardados idempotentes y listado propio exclusivo,
+  bloqueos simétricos (nuevas interacciones denegadas, previas persisten,
+  desbloqueo restaura), outbox de eventos.
+- `src/types/database.types.ts`: extendido A MANO con el formato generado
+  (tablas Row/Insert/Update/Relationships y Args/Returns de las 3 RPCs, orden
+  alfabético). Al aplicar la migración en remoto conviene regenerar con
+  `npm run supabase:types`.
+- `src/config/interactions.ts` + `src/validations/interactions.ts`: constantes
+  espejo de los CHECKs SQL y esquemas zod (`commentBodySchema`,
+  `createCommentSchema`, `updateCommentSchema`, `projectFeedbackSchema` con
+  `interest_score` opcional vía preprocess).
+- `src/interactions/`: capa de datos tipada y fail-closed — `types.ts` (unión
+  `InteractionErrorCode`: `EMPTY_BODY|BODY_TOO_LONG|INVALID_PARENT|
+  NOT_OWN_COMMENT|NOT_ALLOWED|FAILED`), `comments.ts` (list/create/update/
+  setOwnCommentHidden/deleteOwn), `feedback.ts` (upsert onConflict
+  `project_id,author_id`, conteo vía RPC), `reactions.ts` (toggle/isSupported/
+  conteos), `saves.ts` (save/unsave/toggle/list* con joins a posts/projects/
+  opportunities).
+- `src/actions/interactions.ts`: Server Actions (`createCommentAction`,
+  `updateCommentAction`, `hideCommentAction`, `deleteCommentAction`,
+  `upsertFeedbackAction`, `toggleSupportAction`, `toggleSaveAction`) — patrón
+  FormState, `requireUser`, actor siempre `user.id`, `revalidatePath("/", "layout")`.
+- UI: `src/components/interactions/{support-button,save-button,comment-composer,
+  comment-actions,comment-section,feedback-form,feedback-section}.tsx`.
+- Integraciones: página pública del vídeo (apoyo + guardar + hilo de comentarios
+  con conteos, solo si el post es públicamente distribuible), proyecto público
+  (FeedbackSection con vista de propietario), oportunidad (SaveButton).
+- `src/app/[locale]/(app)/panel/guardados/page.tsx`: sección "Guardados" con las
+  tres pestañas de contenido (posts/proyectos/oportunidades) y entrada nueva en
+  `desktop-sidebar.tsx` (`nav.savedItems`, icono Bookmark).
+- i18n: claves `interactions.*` y `savedPanel.*` + `nav.savedItems` +
+  `metadata.panelSaved` en `messages/es.json` y `messages/en.json` (árboles
+  idénticos verificados).
+- Tests: 42 unitarios nuevos en verde — `src/interactions/comments.test.ts` (11),
+  `feedback.test.ts` (8), `reactions.test.ts` (5), `saves.test.ts` (8) y
+  `src/actions/interactions.test.ts` (10, incluye anon rechazado).
+
+### Verificación actual
+
+- `npm run lint` ✅.
+- `npm run typecheck` ✅.
+- `npm run test` ✅ (385 tests: 343 previos + 42 nuevos de interacciones).
+- `npm run build` ✅.
+- Migraciones FASE 9 **aplicadas en remoto**; `migration list` local=remoto
+  (20/20); `supabase db push --dry-run` → "Remote database is up to date".
+- Auditoría conductual de ACL contra el remoto ✅ (anon: lee comentarios
+  públicos, ejecuta solo las 2 RPC de conteo, denegado en el resto de tablas,
+  helpers sin EXECUTE y toggle no ejecutable; service_role: outbox legible y
+  RPCs fail-closed con AUTH_REQUIRED sin sesión). Auditoría por rol
+  authenticated pendiente de sesión real (la matriz de grants queda cubierta
+  por la migración min_priv revoke-first aplicada).
+- Test SQL `supabase/tests/fase9_interacciones.sql` **sin ejecutar** (requiere
+  stack local/Docker; NO debe ejecutarse contra producción).
+
+### Pendiente / decisiones
+
+- Ejecutar el test SQL contra el stack local cuando Docker esté disponible.
 
 ## FASE 6 — Mercado de oportunidades
 

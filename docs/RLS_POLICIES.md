@@ -1,8 +1,11 @@
-# Row Level Security — FASE 4/5 (vídeos, moderación post-publicación, posts, seguimiento, analytics, feed, búsqueda)
+# Row Level Security — FASE 4/5/9 (vídeos, moderación post-publicación, posts, seguimiento, analytics, feed, búsqueda, interacciones)
 
 RLS está activado en `public.videos`, `public.video_languages`,
 `public.posts`, `public.profile_follows`, `public.project_follows`,
-`public.organization_follows` y `public.video_view_sessions`. El proyecto tiene
+`public.organization_follows`, `public.video_view_sessions`,
+`public.post_comments`, `public.project_feedback`, `public.post_reactions`,
+`public.saved_posts`, `public.saved_projects`, `public.saved_opportunities` y
+`public.interaction_events`. El proyecto tiene
 `auto_expose_new_tables` desactivado, por lo que además de las políticas se
 conceden `GRANT` explícitos.
 
@@ -273,3 +276,40 @@ Notas:
 - **Granularidad del predicado**: `opportunity_is_publicly_distributable`
   excluye `draft`, estados terminales `closed/filled/cancelled`, moderación
   `rejected/flagged` y turnos de 1 día con `ends_at` pasado.
+
+## FASE 9 — Interacciones (comentarios, feedback, reacciones, guardados, outbox)
+
+- **`post_comments`** (anon solo lee): `comments_select_public` (TO PUBLIC:
+  post distribuible con `visibility='public'`; el listado público excluye
+  ocultos y eliminados), `comments_select_own/registered/project_members/admin`
+  (mismo patrón de tiers que `posts`). Escritura solo authenticated:
+  `comments_insert_own` (WITH CHECK: autor = `auth.uid()`, post público
+  distribuible y sin bloqueo mutuo vía `profiles_can_interact`),
+  `comments_update_own` (USING + WITH CHECK propio; trigger refuerza
+  inmutabilidad de `post_id`/`author_id`/`parent_id`) y `comments_delete_own`.
+  El ocultado es soft (`is_hidden`) y siempre limitado a lo propio.
+- **`project_feedback`**: SELECT para autor, propietario/miembros del proyecto y
+  admin; INSERT solo si el proyecto es públicamente visible y NO es suyo
+  (self-feedback denegado) sin bloqueo mutuo; UPDATE solo el autor (upsert de
+  feedback). Sin DELETE ni grants de borrado.
+- **`post_reactions`**: SELECT solo del propio registro (los conteos públicos
+  salen de la RPC agregada `get_post_interaction_counts`, que nunca expone
+  identidades); INSERT/DELETE propios sobre posts públicos distribuibles sin
+  bloqueo. El toggle idempotente vive en la RPC SECURITY DEFINER
+  `toggle_post_support` (fail-closed: `POST_NOT_INTERACTABLE`).
+- **Guardados** (`saved_posts` / `saved_projects` / `saved_opportunities`):
+  políticas estrictas `*_all_own` — USING + WITH CHECK
+  `auth.uid() = profile_id` en todas las operaciones; nadie enumera guardados
+  ajenos. INSERT exige además que el contenido sea públicamente distribuible.
+- **Outbox `interaction_events`**: RLS activado SIN políticas (deniega todo a
+  anon/authenticated) y ACL revocada: solo service_role lee/escribe y los
+  triggers SECURITY DEFINER insertan. Preparado para FASE 10.
+- **Helpers/RPCs**: `profiles_can_interact(uuid, uuid)` y
+  `project_is_publicly_visible(uuid)` son funciones invoker concedidas a
+  authenticated (las usan las políticas WITH CHECK con privilegios del
+  llamador); `toggle_post_support`, `get_post_interaction_counts`,
+  `get_project_feedback_count` son SECURITY DEFINER con REVOKE de `public` +
+  GRANT explícito (conteos también a anon porque alimentan la página pública;
+  fail-closed y sin fugas de contenido no público). Las funciones internas de
+  triggers no tienen EXECUTE útil. Corrección de mínimo privilegio idempotente
+  en `20260820000000_fase9_min_priv_interacciones.sql`.

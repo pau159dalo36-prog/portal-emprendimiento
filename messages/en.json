@@ -1,5 +1,6 @@
 {
   "metadata": {
+    "panelSaved": "Saved",
     "title": "Share, discover and build.",
     "description": "Share your ideas, discover opportunities and build projects with a community that validates, not just comments.",
     "home": "Home",
@@ -41,6 +42,7 @@
     "allRightsReserved": "All rights reserved."
   },
   "nav": {
+    "savedItems": "Saved",
     "panel": "Dashboard",
     "editProfile": "Edit profile",
     "signOut": "Sign out",
@@ -1317,5 +1319,79 @@
     "fieldTooLong": "The value is too long.",
     "uuidInvalid": "Invalid identifier.",
     "invalidIntent": "Invalid action."
+  },
+  "interactions": {
+    "comments": {
+      "sectionLabel": "Comments",
+      "title": "Comments ({count})",
+      "placeholder": "Write a constructive comment…",
+      "replyPlaceholder": "Write a reply…",
+      "bodyLabel": "Comment",
+      "submit": "Comment",
+      "submitReply": "Reply",
+      "reply": "Reply",
+      "created": "Comment posted.",
+      "updated": "Comment updated.",
+      "hidden": "Comment hidden.",
+      "deleted": "Comment deleted.",
+      "edit": "Edit",
+      "saveEdit": "Save changes",
+      "cancelEdit": "Cancel",
+      "hide": "Hide",
+      "delete": "Delete",
+      "invalidBody": "The comment is empty or exceeds 2000 characters.",
+      "notAllowed": "You cannot interact with this content.",
+      "failed": "The action could not be completed. Please try again.",
+      "empty": "Be the first to comment.",
+      "signInToComment": "Sign in to comment."
+    },
+    "feedback": {
+      "title": "Feedback received ({count})",
+      "createHint": "Help the team with structured feedback: what you understand, what you don't, and what you'd change.",
+      "updateHint": "You already gave feedback on this project; you can update it anytime.",
+      "understanding": "What do you understand about the project?",
+      "understandingPlaceholder": "Explain in your own words what this project does (at least 10 characters).",
+      "problem": "What problem do you think it solves?",
+      "useful": "What seems useful?",
+      "unclear": "What don't you understand?",
+      "suggestions": "What would you change?",
+      "wouldUse": "Would you use it?",
+      "wouldUse_yes": "Yes",
+      "wouldUse_maybe": "Maybe",
+      "wouldUse_no": "No",
+      "interestScore": "Interest (0–10)",
+      "interestScorePlaceholder": "Optional",
+      "interestScoreHint": "Optional: rate your interest from 0 to 10.",
+      "submit": "Send feedback",
+      "update": "Update feedback",
+      "saving": "Saving…",
+      "saved": "Feedback saved. Thank you!",
+      "invalidInput": "Please review the feedback fields and try again.",
+      "failed": "Feedback could not be saved. Please try again.",
+      "ownerHint": "Your project's structured feedback is visible to you and your team.",
+      "signInToGive": "Sign in to give feedback."
+    },
+    "reactions": {
+      "support": "Support",
+      "notAllowed": "You cannot interact with this content.",
+      "failed": "The action could not be completed. Please try again."
+    },
+    "saves": {
+      "save": "Save",
+      "saved": "Saved",
+      "failed": "The action could not be completed. Please try again."
+    }
+  },
+  "savedPanel": {
+    "title": "Saved",
+    "description": "Posts, projects and opportunities you have saved. Only you can see this section.",
+    "empty": "You haven't saved anything yet. Explore and save what interests you.",
+    "explore": "Explore",
+    "postsSection": "Saved posts ({count})",
+    "projectsSection": "Saved projects ({count})",
+    "opportunitiesSection": "Saved opportunities ({count})",
+    "savedOn": "Saved on {date}",
+    "postFallbackTitle": "Saved post",
+    "postFallbackBody": "View post"
   }
 }
