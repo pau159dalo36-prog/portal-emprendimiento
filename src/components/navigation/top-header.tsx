@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Briefcase, LogOut, Plus, Search, ShieldCheck, Video } from "lucide-react";
+import {
+  Bell,
+  Briefcase,
+  LogOut,
+  MessageSquare,
+  Plus,
+  Search,
+  ShieldCheck,
+  Video,
+} from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
-import type { ShellUser } from "@/components/navigation/app-shell";
+import type {
+  ShellUnreadCounts,
+  ShellUser,
+} from "@/components/navigation/app-shell";
 import { Logo } from "@/components/shared/logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,7 +25,24 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRouter } from "@/i18n/navigation";
 
-export function TopHeader({ user }: { user: ShellUser | null }) {
+type TopHeaderProps = {
+  user: ShellUser | null;
+  unreadCounts?: ShellUnreadCounts | null;
+};
+
+function HeaderBadge({ count, label }: { count: number; label: string }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      aria-label={label}
+      className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground"
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+export function TopHeader({ user, unreadCounts }: TopHeaderProps) {
   const t = useTranslations("nav");
   const explore = useTranslations("explore");
   const router = useRouter();
@@ -58,6 +87,34 @@ export function TopHeader({ user }: { user: ShellUser | null }) {
 
           {user ? (
             <>
+              <Link
+                href="/mensajes"
+                aria-label={t("messages")}
+                title={t("messages")}
+                className="relative inline-flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <MessageSquare className="size-5" aria-hidden="true" />
+                <HeaderBadge
+                  count={unreadCounts?.messages ?? 0}
+                  label={t("unreadMessages", {
+                    count: unreadCounts?.messages ?? 0,
+                  })}
+                />
+              </Link>
+              <Link
+                href="/notificaciones"
+                aria-label={t("notifications")}
+                title={t("notifications")}
+                className="relative inline-flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Bell className="size-5" aria-hidden="true" />
+                <HeaderBadge
+                  count={unreadCounts?.notifications ?? 0}
+                  label={t("unreadNotifications", {
+                    count: unreadCounts?.notifications ?? 0,
+                  })}
+                />
+              </Link>
               <Link href="/proyectos/nuevo" className={buttonVariants({ size: "sm" })}>
                 <Plus className="size-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("newProject")}</span>

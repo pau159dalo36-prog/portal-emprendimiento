@@ -68,8 +68,91 @@ export type Database = {
           },
         ]
       }
-
-
+      conversation_members: {
+        Row: {
+          conversation_id: string
+          joined_at: string
+          last_read_at: string
+          profile_id: string
+        }
+        Insert: {
+          conversation_id: string
+          joined_at?: string
+          last_read_at?: string
+          profile_id: string
+        }
+        Update: {
+          conversation_id?: string
+          joined_at?: string
+          last_read_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          created_by: string
+          dm_high: string | null
+          dm_low: string | null
+          id: string
+          last_message_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          dm_high?: string | null
+          dm_low?: string | null
+          id?: string
+          last_message_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          dm_high?: string | null
+          dm_low?: string | null
+          id?: string
+          last_message_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_dm_high_fkey"
+            columns: ["dm_high"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_dm_low_fkey"
+            columns: ["dm_low"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interaction_events: {
         Row: {
           actor_id: string | null
@@ -105,8 +188,93 @@ export type Database = {
           },
         ]
       }
-
-
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          entity_id: string
+          event_type: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id: string
+          event_type: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string
+          event_type?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           city: string | null
@@ -1915,7 +2083,10 @@ export type Database = {
           watch_score: number
         }[]
       }
-
+      get_or_create_dm: {
+        Args: { p_target_profile_id: string }
+        Returns: string
+      }
       get_post_interaction_counts: {
         Args: { p_post_ids: string[] }
         Returns: {
@@ -1945,6 +2116,8 @@ export type Database = {
         Args: { p_video_id: string }
         Returns: number
       }
+      get_unread_messages_total: { Args: never; Returns: number }
+      get_unread_notification_count: { Args: never; Returns: number }
       get_video_metrics: {
         Args: { p_video_id: string }
         Returns: {
@@ -1968,8 +2141,14 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { p_project_id: string }; Returns: boolean }
-
-
+      messaging_dm_blocked: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
+      messaging_is_member: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
       opportunity_is_publicly_distributable: {
         Args: {
           p_ends_at: string

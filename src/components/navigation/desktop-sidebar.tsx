@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  Bell,
   Bookmark,
   Building2,
   Compass,
@@ -53,6 +54,8 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
   const activityItems: SidebarItem[] = [
     { href: "/panel", label: nav("panel"), icon: LayoutDashboard },
     { href: "/perfil", label: t("profile"), icon: User },
+    { href: "/mensajes", label: nav("messages"), icon: MessageSquare },
+    { href: "/notificaciones", label: nav("notifications"), icon: Bell },
     { href: "/panel/oportunidades", label: nav("myOpportunities"), icon: Briefcase },
     { href: "/panel/candidaturas", label: nav("myApplications"), icon: FileText },
     { href: "/panel/videos", label: nav("myVideos"), icon: Video },

@@ -33,7 +33,9 @@
     "panelOpportunities": "Mis oportunidades",
     "panelApplications": "Mis candidaturas",
     "panelCandidates": "Candidatos de la oportunidad",
-    "adminOpportunities": "Moderación de oportunidades"
+    "adminOpportunities": "Moderación de oportunidades",
+    "notifications": "Notificaciones",
+    "messages": "Mensajes"
   },
   "common": {
     "loading": "Cargando…",
@@ -67,7 +69,11 @@
     "publishOpportunity": "Publicar oportunidad",
     "myOpportunities": "Mis oportunidades",
     "myApplications": "Mis candidaturas",
-    "adminOpportunities": "Moderación de oportunidades"
+    "adminOpportunities": "Moderación de oportunidades",
+    "messages": "Mensajes",
+    "notifications": "Notificaciones",
+    "unreadMessages": "{count, plural, one {# mensaje sin leer} other {# mensajes sin leer}}",
+    "unreadNotifications": "{count, plural, one {# notificación sin leer} other {# notificaciones sin leer}}"
   },
   "feed": {
     "forYou": "Para ti",
@@ -1454,5 +1460,56 @@
     "markViewed": "Marcar vista",
     "accept": "Aceptar",
     "reject": "Rechazar"
+  },
+  "notificationTypes": {
+    "new_follow": "{name} empezó a seguirte",
+    "comment_created": "{name} comentó tu publicación",
+    "reply_created": "{name} respondió en una publicación tuya",
+    "feedback_received": "{name} envió feedback sobre tu proyecto",
+    "application_submitted": "{name} envió una candidatura a tu oportunidad",
+    "application_viewed": "{name} vio tu candidatura",
+    "application_accepted": "{name} aceptó tu candidatura",
+    "application_rejected": "{name} no seleccionó tu candidatura",
+    "message_received": "{name} te envió un mensaje"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "description": "Actividad reciente sobre ti y tu contenido.",
+    "empty": "Todavía no tienes notificaciones.",
+    "markRead": "Marcar como leída",
+    "markAllRead": "Marcar todas como leídas",
+    "unreadLabel": "No leída",
+    "unknownActor": "Alguien"
+  },
+  "conversations": {
+    "title": "Mensajes",
+    "description": "Conversaciones privadas 1:1 con otros miembros.",
+    "empty": "Todavía no tienes conversaciones. Usa «Enviar mensaje» en un perfil o desde una candidatura aceptada.",
+    "listLabel": "Lista de conversaciones",
+    "backToList": "Todos los mensajes",
+    "anonymous": "Sin nombre",
+    "noMessagesYet": "Sin mensajes todavía",
+    "unreadCount": "{count, plural, one {# mensaje sin leer} other {# mensajes sin leer}}"
+  },
+  "messages": {
+    "startCta": "Enviar mensaje",
+    "sending": "Abriendo…",
+    "sent": "Mensaje enviado.",
+    "composerLabel": "Escribir mensaje",
+    "placeholder": "Escribe un mensaje…",
+    "send": "Enviar",
+    "threadLabel": "Hilo de mensajes",
+    "dmHint": "Conversación privada entre vosotros dos",
+    "edited": "editado",
+    "emptyThread": "Aún no hay mensajes. ¡Rompe el hielo!",
+    "errorAuthRequired": "Debes iniciar sesión.",
+    "errorSelfDm": "No puedes abrirte un mensaje a ti mismo.",
+    "errorTargetNotFound": "Ese perfil no existe.",
+    "errorBlocked": "No podéis mensajearos por un bloqueo existente.",
+    "errorEmpty": "El mensaje está vacío o supera los 2000 caracteres.",
+    "errorTooLong": "El mensaje no puede superar los 2000 caracteres.",
+    "errorFlood": "Vas muy rápido: espera un momento antes de enviar más mensajes.",
+    "errorNotMember": "No tienes acceso a esa conversación.",
+    "errorFailed": "No se pudo completar la acción. Inténtalo de nuevo."
   }
 }

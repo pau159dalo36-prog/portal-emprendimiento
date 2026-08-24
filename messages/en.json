@@ -33,7 +33,9 @@
     "panelOpportunities": "My opportunities",
     "panelApplications": "My applications",
     "panelCandidates": "Opportunity candidates",
-    "adminOpportunities": "Opportunity moderation"
+    "adminOpportunities": "Opportunity moderation",
+    "notifications": "Notifications",
+    "messages": "Messages"
   },
   "common": {
     "loading": "Loadingâ€¦",
@@ -67,7 +69,11 @@
     "publishOpportunity": "Post an opportunity",
     "myOpportunities": "My opportunities",
     "myApplications": "My applications",
-    "adminOpportunities": "Opportunity moderation"
+    "adminOpportunities": "Opportunity moderation",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "unreadMessages": "{count, plural, one {# unread message} other {# unread messages}}",
+    "unreadNotifications": "{count, plural, one {# unread notification} other {# unread notifications}}"
   },
   "feed": {
     "forYou": "For you",
@@ -1454,5 +1460,56 @@
     "markViewed": "Mark viewed",
     "accept": "Accept",
     "reject": "Reject"
+  },
+  "notificationTypes": {
+    "new_follow": "{name} started following you",
+    "comment_created": "{name} commented on your post",
+    "reply_created": "{name} replied on your post",
+    "feedback_received": "{name} sent feedback on your project",
+    "application_submitted": "{name} applied to your opportunity",
+    "application_viewed": "{name} viewed your application",
+    "application_accepted": "{name} accepted your application",
+    "application_rejected": "{name} did not select your application",
+    "message_received": "{name} sent you a message"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Recent activity about you and your content.",
+    "empty": "You have no notifications yet.",
+    "markRead": "Mark as read",
+    "markAllRead": "Mark all as read",
+    "unreadLabel": "Unread",
+    "unknownActor": "Someone"
+  },
+  "conversations": {
+    "title": "Messages",
+    "description": "Private 1:1 conversations with other members.",
+    "empty": "No conversations yet. Use “Send message” on a profile or from an accepted application.",
+    "listLabel": "Conversation list",
+    "backToList": "All messages",
+    "anonymous": "Unnamed",
+    "noMessagesYet": "No messages yet",
+    "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}"
+  },
+  "messages": {
+    "startCta": "Send message",
+    "sending": "Opening…",
+    "sent": "Message sent.",
+    "composerLabel": "Write a message",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "threadLabel": "Message thread",
+    "dmHint": "Private conversation between the two of you",
+    "edited": "edited",
+    "emptyThread": "No messages yet. Break the ice!",
+    "errorAuthRequired": "You must sign in.",
+    "errorSelfDm": "You cannot message yourself.",
+    "errorTargetNotFound": "That profile does not exist.",
+    "errorBlocked": "You cannot message each other due to an existing block.",
+    "errorEmpty": "The message is empty or exceeds 2000 characters.",
+    "errorTooLong": "The message cannot exceed 2000 characters.",
+    "errorFlood": "Going too fast: wait a moment before sending more messages.",
+    "errorNotMember": "You do not have access to that conversation.",
+    "errorFailed": "Could not complete the action. Try again."
   }
 }

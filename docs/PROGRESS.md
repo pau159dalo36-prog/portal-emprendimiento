@@ -1,7 +1,39 @@
-# Estado del proyecto — FASE 8 (Candidaturas a Oportunidades)
+# Estado del proyecto — FASE 10 (Mensajería + Notificaciones)
 
 ## Estado general
 
+- ✅ **FASE 10 COMPLETA Y APLICADA EN REMOTO** (mensajería DM 1:1 +
+  notificaciones): migración `20260822000000_fase10_messaging_notifications.sql`
+  **aplicada en remoto** (`efgmjuzcqolpibraymol`, migration list local=remoto
+  22/22), `supabase:types` regenerado desde el remoto,
+  `lint`/`typecheck`/`test`/`build` en verde y `db push --dry-run` →
+  "Remote database is up to date.". Arquitectura: UN solo pipeline de eventos
+  (`interaction_events` outbox → `notifications`) sin infraestructura paralela;
+  nuevos orígenes `new_follow` (trigger en `profile_follows`) y
+  `message_received` (trigger en `messages`) reutilizando el MISMO outbox.
+  Consumo por trigger row-level que resuelve destinatario, salta
+  self-notificaciones y pares bloqueados, inserta UNA notificación por evento y
+  marca `processed_at`; retención oportunista statement-level (>30 días, sin
+  cron). Mensajería: `conversations` (par ordenado `dm_low/dm_high` UNIQUE →
+  DM única por pareja), `conversation_members` (`last_read_at`),
+  `messages` (trim/CHECK 1–2000, `edited_at`, sender/conversación inmutables,
+  sin DELETE). RPCs: `get_or_create_dm` (SECURITY DEFINER idempotente,
+  self-DM/bloqueos denegados), `get_unread_notification_count`,
+  `get_unread_messages_total` (derivados, invoker+RLS, sin contadores mutables),
+  helpers `messaging_is_member`/`messaging_dm_blocked`. ACL revoke-first exacta
+  (anon CERO en las 4 tablas nuevas y en las RPCs; authenticated sin DELETE en
+  messages ni INSERT directo en notificaciones/conversaciones). Bloqueos MVP:
+  historial previo visible, nuevos mensajes cerrados en ambas direcciones.
+  Integración candidaturas: CTA "Enviar mensaje" SOLO para accepted en
+  `/panel/oportunidades/[id]/candidatos`; nunca conversaciones automáticas.
+  UI: `/notificaciones`, `/mensajes`, `/mensajes/[id]`, campana+sobre con badges
+  en header y entradas en sidebar (auth-only), i18n ES/EN paritaria
+  (`notifications`/`notificationTypes`/`conversations`/`messages`). Realtime NO
+  configurado (MVP: Server Components + revalidation). Auditorías conductuales
+  contra remoto con transacciones revertidas: PIPELINE_AUDIT_PASS,
+  MESSAGING_AUDIT_PASS, RETENTION_AUDIT_PASS. Test SQL
+  `supabase/tests/fase10_messaging_notifications.sql` **sin ejecutar** (Docker/
+  local stack pendiente; NO ejecutar contra producción).
 - ✅ **FASE 8 COMPLETA Y APLICADA EN REMOTO** (candidaturas a oportunidades): migración
   `20260821000000_fase8_applications.sql` **aplicada en remoto**
   (`efgmjuzcqolpibraymol`, migration list local=remoto 21/21), `supabase:types`
@@ -627,9 +659,10 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: **21/21 (hasta `20260821000000_fase8_applications.sql`)**.
-  FASE 8 aplicada y verificada en remoto.
-- Los tests SQL de FASE 4–FASE 8 (posts/follows/analytics/feed/search/
-  oportunidades/interacciones/applications) NO deben ejecutarse contra
-  producción; quedan para el stack local.
+- Migraciones local=remoto: **22/22 (hasta `20260822000000_fase10_messaging_notifications.sql`)**.
+  FASE 10 aplicada, auditada en remoto y verificada (`db push --dry-run` →
+  "Remote database is up to date.").
+- Los tests SQL de FASE 4–FASE 10 (posts/follows/analytics/feed/search/
+  oportunidades/interacciones/applications/messaging-notifications) NO deben
+  ejecutarse contra producción; quedan para el stack local.
 - Sin commit/push pendiente de autorización.

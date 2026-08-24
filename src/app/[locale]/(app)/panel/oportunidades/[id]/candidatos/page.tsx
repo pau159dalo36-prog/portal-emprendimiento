@@ -7,6 +7,7 @@ import type { ApplicationStatus } from "@/applications/config";
 import { getApplicationCounts, listOpportunityApplications } from "@/applications/data";
 import { CandidateActions } from "@/components/applications/candidate-actions";
 import { ApplicationStatusBadge } from "@/components/applications/application-status-badge";
+import { StartConversationButton } from "@/components/messaging/start-conversation-button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -141,6 +142,12 @@ export default async function OpportunityCandidatesPage({ params }: CandidatesPa
                     applicationId={application.id}
                     status={application.status as ApplicationStatus}
                   />
+
+                  {application.status === "accepted" && application.applicant?.id && (
+                    <StartConversationButton
+                      targetProfileId={application.applicant.id}
+                    />
+                  )}
                 </CardContent>
               </Card>
             );
