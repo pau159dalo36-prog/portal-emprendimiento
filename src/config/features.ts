@@ -25,7 +25,7 @@ export const features = {
     servicios: false,
     financiacion: false,
     clientesPiloto: false,
-    candidaturas: false,
+    candidaturas: true,
     equipos: false,
     comentarios: false,
     feedback: false,

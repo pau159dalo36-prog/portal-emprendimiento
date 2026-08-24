@@ -1,7 +1,9 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Archive, CheckCircle2, Eye, Pencil, Send, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, Eye, Pencil, Send, Users, XCircle } from "lucide-react";
 
 import { requireUser } from "@/auth/session";
+import type { ApplicationCounts } from "@/applications/types";
+import { getApplicationCounts } from "@/applications/data";
 import { changeOpportunityStatusAction } from "@/actions/opportunity";
 import { OpportunityEmptyState } from "@/components/opportunities/opportunity-empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -33,10 +35,13 @@ const VISIBILITY_LABELS: Record<string, string> = {
 
 async function OpportunityPanelCard({
   opportunity,
+  applicationCounts,
 }: {
   opportunity: OpportunityWithDetails;
+  applicationCounts?: ApplicationCounts;
 }) {
   const t = await getTranslations("opportunity");
+  const tc = await getTranslations("candidates");
   const statuses = await getTranslations("opportunityStatuses");
   const moderation = await getTranslations("moderationStatuses");
   const form = await getTranslations("opportunityForm");
@@ -130,7 +135,25 @@ async function OpportunityPanelCard({
           {location.length > 0 ? ` · ${location.join(", ")}` : null}
         </p>
 
+        {opportunity.opportunity_type === "one_day_shift" &&
+          opportunity.slots_total != null &&
+          applicationCounts && (
+            <p className="text-xs text-muted-foreground">
+              {tc("slotsLine", {
+                accepted: applicationCounts.acceptedCount,
+                total: opportunity.slots_total,
+              })}
+            </p>
+          )}
+
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/panel/oportunidades/${opportunity.id}/candidatos`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Users aria-hidden="true" />
+            {tc("candidatesLink", { count: applicationCounts?.total ?? 0 })}
+          </Link>
           {isPublished && (
             <Link
               href={`/oportunidades/${opportunity.id}`}
@@ -208,6 +231,10 @@ export default async function PanelOpportunitiesPage() {
   const t = await getTranslations("opportunity");
 
   const opportunities = await listOpportunitiesForUser(supabase, user.id);
+  const counts = await getApplicationCounts(
+    supabase,
+    opportunities.map((opportunity) => opportunity.id),
+  );
 
   const sections = new Map<PanelSectionKey, OpportunityWithDetails[]>();
   for (const opportunity of opportunities) {
@@ -248,7 +275,11 @@ export default async function PanelOpportunitiesPage() {
               </div>
               <div className="grid gap-3">
                 {sections.get(key)!.map((opportunity) => (
-                  <OpportunityPanelCard key={opportunity.id} opportunity={opportunity} />
+                  <OpportunityPanelCard
+                    key={opportunity.id}
+                    opportunity={opportunity}
+                    applicationCounts={counts.get(opportunity.id)}
+                  />
                 ))}
               </div>
             </section>

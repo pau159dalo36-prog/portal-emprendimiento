@@ -501,6 +501,42 @@ corrección de mínimo privilegio `20260820000000_fase9_min_priv_interacciones.s
   bloqueos entre autor y dueño; feedback legible por autor + owner/miembros/
   admin; guardados solo propios. ACL revoke-first + grants mínimos.
 
+## FASE 8 — Candidaturas a oportunidades
+
+Migración: `supabase/migrations/20260821000000_fase8_applications.sql`
+(creada; NO aplicada todavía en remoto).
+
+### `applications`
+
+- Ciclo: `submitted → viewed → accepted|rejected` y
+  `submitted|viewed → withdrawn` (retiro solo de quien aplica); estados
+  terminales inmutables. Sin política ni grant DELETE: el ciclo vive en estados.
+- `UNIQUE(opportunity_id, applicant_id)`: una candidatura por persona y
+  oportunidad; la re-postulación tras retiro NO está soportada en MVP
+  (riesgo documentado). `message` opcional ≤2000 tras `btrim` (normalizado a
+  `NULL` si queda vacío).
+- Elegibilidad (INSERT): oportunidad distribuible según el predicado canónico
+  `opportunity_is_publicly_distributable(...)` con `visibility <> 'private'`,
+  sin auto-postulación (creador ≠ solicitante) y sin bloqueo mutuo vía
+  `profiles_can_interact`.
+- Triggers: `handle_updated_at` y `prevent_id_change` (patrón general),
+  `applications_normalize_message`,
+  `applications_validate_transition` (invoker: reglas finas por actor —
+  decisiones solo manager, retiro solo candidata, mensaje editable solo por la
+  candidata mientras esté pendiente, campos/claves inmutables) y outbox
+  `interaction_event_application_insert/update` (SECURITY DEFINER; evento solo
+  cuando cambia `status`).
+- Helpers/RPCs: `can_manage_opportunity(uuid)` SECURITY DEFINER (perímetro
+  manager espejo exacto de la política `opportunities_update_manage`) y
+  `get_application_counts(uuid[])` (agregación total/accepted fail-closed:
+  filas solo para oportunidades gestionables por el llamador). Los contadores
+  son derivados; no hay columnas mutables ni auto-relleno de plazas.
+- RLS: SELECT propio o dentro del perímetro del manager; INSERT propio sobre
+  oportunidad elegible; UPDATE solo implicados con reglas por trigger. ACL
+  revoke-first: anon sin privilegios; authenticated SOLO select/insert/update.
+- Outbox compartido: CHECK `interaction_events_type_check` ampliado
+  aditivamente con `application_submitted|viewed|accepted|rejected|withdrawn`.
+
 ## Esquema futuro (no implementado)
 
 Tablas previstas para fases posteriores: `ideas`, `feedback`, `communities`,

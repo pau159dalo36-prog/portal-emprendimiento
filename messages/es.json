@@ -31,6 +31,8 @@
     "opportunityNew": "Publicar oportunidad",
     "editOpportunity": "Editar oportunidad",
     "panelOpportunities": "Mis oportunidades",
+    "panelApplications": "Mis candidaturas",
+    "panelCandidates": "Candidatos de la oportunidad",
     "adminOpportunities": "Moderación de oportunidades"
   },
   "common": {
@@ -64,6 +66,7 @@
     "opportunities": "Oportunidades",
     "publishOpportunity": "Publicar oportunidad",
     "myOpportunities": "Mis oportunidades",
+    "myApplications": "Mis candidaturas",
     "adminOpportunities": "Moderación de oportunidades"
   },
   "feed": {
@@ -826,6 +829,13 @@
       "reasonTooLong": "El motivo no puede superar los 500 caracteres.",
       "moderationFailed": "No se pudo completar la moderación. Inténtalo de nuevo.",
       "done": "Moderación aplicada."
+    },
+    "application": {
+      "invalidOpportunity": "Oportunidad no válida.",
+      "validationGeneral": "Revisa los datos de la candidatura.",
+      "alreadyApplied": "Ya has enviado tu candidatura a esta oportunidad.",
+      "applyFailed": "No se pudo enviar la candidatura. Inténtalo de nuevo.",
+      "applied": "Candidatura enviada."
     }
   },
   "videoStatuses": {
@@ -1393,5 +1403,56 @@
     "savedOn": "Guardado el {date}",
     "postFallbackTitle": "Publicación guardada",
     "postFallbackBody": "Ver publicación"
+  },
+  "applicationStatuses": {
+    "submitted": "Enviada",
+    "viewed": "Vista",
+    "accepted": "Aceptada",
+    "rejected": "No seleccionada",
+    "withdrawn": "Retirada"
+  },
+  "applicationValidation": {
+    "messageTooLong": "El mensaje no puede superar los 2000 caracteres."
+  },
+  "applications": {
+    "title": "Mis candidaturas",
+    "description": "Oportunidades a las que has enviado tu candidatura y su estado actual.",
+    "filtersLabel": "Filtrar por estado",
+    "filters": {
+      "all": "Todas",
+      "submitted": "Enviadas",
+      "viewed": "Vistas",
+      "accepted": "Aceptadas",
+      "rejected": "No seleccionadas",
+      "withdrawn": "Retiradas"
+    },
+    "empty": "Todavía no has enviado ninguna candidatura. Explora oportunidades y solicita la que te interese.",
+    "browseOpportunities": "Explorar oportunidades",
+    "opportunityUnavailable": "Oportunidad no disponible",
+    "appliedOn": "Enviada el {date}",
+    "withdraw": "Retirar candidatura",
+    "apply": "Solicitar / Me interesa",
+    "send": "Enviar candidatura",
+    "cancel": "Cancelar",
+    "messageLabel": "Mensaje (opcional)",
+    "messagePlaceholder": "Me interesa porque…",
+    "statusSubmitted": "Candidatura enviada",
+    "statusViewed": "Candidatura vista",
+    "statusAccepted": "Candidatura aceptada",
+    "statusRejected": "No seleccionada",
+    "statusWithdrawn": "Candidatura retirada"
+  },
+  "candidates": {
+    "title": "Candidatos",
+    "backToPanel": "Mis oportunidades",
+    "candidatesLink": "Candidatos ({count})",
+    "totalApplications": "{count, plural, one {# candidatura} other {# candidaturas}}",
+    "slotsLine": "{accepted} de {total} plazas cubiertas",
+    "empty": "Todavía no hay candidaturas para esta oportunidad.",
+    "anonymous": "Perfil sin nombre público",
+    "appliedOn": "Enviada el {date}",
+    "markViewed": "Marcar vista",
+    "accept": "Aceptar",
+    "reject": "Rechazar"
   }
 }

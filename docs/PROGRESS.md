@@ -1,7 +1,25 @@
-# Estado del proyecto — FASE 9 (Comentarios, feedback, reacciones y guardados)
+# Estado del proyecto — FASE 8 (Candidaturas a Oportunidades)
 
 ## Estado general
 
+- ✅ **FASE 8 COMPLETA Y APLICADA EN REMOTO** (candidaturas a oportunidades): migración
+  `20260821000000_fase8_applications.sql` **aplicada en remoto**
+  (`efgmjuzcqolpibraymol`, migration list local=remoto 21/21), `supabase:types`
+  regenerado desde el remoto, `lint`/`typecheck`/`test`/`build` en verde y
+  auditoría conductual de ACL contra el remoto correcta (anon: cero acceso a
+  `applications`, cero INSERT/UPDATE/DELETE, sin `get_application_counts`, sin
+  helpers internos; authenticated: SELECT/INSERT/UPDATE solo mediante RLS, sin
+  DELETE, solo candidatura propia, managers solo candidaturas de oportunidades
+  gestionadas). Verificados: `UNIQUE(opportunity_id, applicant_id)`, FKs, índices,
+  CHECK de estados (`submitted|viewed|accepted|rejected|withdrawn`), lifecycle
+  (submitted→viewed/accepted/rejected/withdrawn; inmutabilidad de
+  `opportunity_id`/`applicant_id`/`created_at`; bloqueos simétricos impiden NUEVAS
+  candidaturas; `withdrawn` no admite re-postulación MVP), elegibilidad de
+  oportunidades (`opportunity_is_publicly_distributable`), one_day_shift terminado
+  no admite candidatura, `accepted_count` derivado (RPC
+  `get_application_counts`), `interaction_events` acepta únicamente los nuevos
+  eventos `application_*`. Test SQL `supabase/tests/fase8_applications.sql`
+  **sin ejecutar** (requiere stack local/Docker; NO ejecutarlo contra producción).
 - ✅ **FASE 9 COMPLETA Y APLICADA EN REMOTO** (comentarios + feedback
   estructurado + reacciones + guardados): migraciones
   `20260819000000_fase9_interacciones.sql` y corrección de mínimo privilegio
@@ -609,9 +627,9 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: **17/17 (hasta `20260817000000_fase6_oportunidades.sql`)**.
-  FASE 6 aplicada y verificada en remoto.
-- Los tests SQL de FASE 4, FASE 5 y FASE 6 (posts/follows/analytics/feed/search/
-  oportunidades) NO deben ejecutarse contra producción; quedan para el stack
-  local.
+- Migraciones local=remoto: **21/21 (hasta `20260821000000_fase8_applications.sql`)**.
+  FASE 8 aplicada y verificada en remoto.
+- Los tests SQL de FASE 4–FASE 8 (posts/follows/analytics/feed/search/
+  oportunidades/interacciones/applications) NO deben ejecutarse contra
+  producción; quedan para el stack local.
 - Sin commit/push pendiente de autorización.

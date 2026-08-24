@@ -313,3 +313,42 @@ Notas:
   fail-closed y sin fugas de contenido no público). Las funciones internas de
   triggers no tienen EXECUTE útil. Corrección de mínimo privilegio idempotente
   en `20260820000000_fase9_min_priv_interacciones.sql`.
+
+## FASE 8 — Candidaturas (tabla `applications`)
+
+- **SELECT**: `applications_select_own` (solo las propias) y
+  `applications_select_manager` (perímetro del manager de la oportunidad:
+  creador OR miembro del proyecto anclado OR miembro de la organización
+  anclada OR admin — espejo exacto de `opportunities_update_manage`,
+  centralizado en el helper SECURITY DEFINER `can_manage_opportunity(uuid)`
+  con `search_path` fijo). Outsiders y anon no leen nada: las identidades de
+  quienes aplican no se exponen; los conteos públicos salen de la RPC
+  agregada.
+- **INSERT** (`applications_insert_own`): `applicant_id = auth.uid()`;
+  oportunidad distribuible según el predicado canónico
+  `opportunity_is_publicly_distributable(...)` con `visibility <> 'private'`;
+  sin auto-postulación (creador ≠ solicitante) y sin bloqueo mutuo vía
+  `profiles_can_interact`. `UNIQUE(opportunity_id, applicant_id)` limita a una
+  candidatura por persona y oportunidad.
+- **UPDATE** (`applications_update_involved`, USING + WITH CHECK: implicados =
+  solicitante o manager): reglas finas por actor en el trigger invoker
+  `applications_validate_transition` — `submitted→viewed|accepted|rejected` y
+  `viewed→accepted|rejected` solo manager; `withdrawn` solo la persona que
+  aplica y solo desde `submitted|viewed`
+  (`APPLICATION_APPLICANT_ONLY_WITHDRAW`,
+  `APPLICATION_MANAGER_ONLY_DECISIONS`, `APPLICATION_INVALID_TRANSITION`);
+  mensaje editable solo por quien aplica mientras esté pendiente
+  (`APPLICATION_MESSAGE_APPLICANT_ONLY`, `APPLICATION_MESSAGE_LOCKED`);
+  campos/claves inmutables (`APPLICATION_IMMUTABLE_FIELDS`); terminales sin
+  nuevas transiciones. Sin DELETE ni grants de borrado: el ciclo usa estados.
+- **ACL mínima**: REVOKE-first; anon sin privilegios sobre la tabla ni EXECUTE
+  en helpers; authenticated SOLO select/insert/update; funciones internas de
+  trigger sin EXECUTE externo.
+- **RPC SECURITY DEFINER fail-closed**: `get_application_counts(uuid[])`
+  devuelve agregados (total/aceptadas) SOLO para oportunidades gestionables
+  por el llamador (0 filas si no), concedida a authenticated; nunca expone
+  identidades.
+- **Outbox reutilizado**: CHECK `interaction_events_type_check` ampliado
+  aditivamente con `application_submitted|viewed|accepted|rejected|withdrawn`;
+  triggers SECURITY DEFINER escriben eventos solo al cambiar `status`. Sin
+  cambios en las políticas existentes de `interaction_events`.

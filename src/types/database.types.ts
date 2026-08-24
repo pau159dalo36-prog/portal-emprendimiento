@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          message: string | null
+          opportunity_id: string
+          status: string
+          updated_at: string
+          viewed_at: string | null
+          withdrawn_at: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          message?: string | null
+          opportunity_id: string
+          status?: string
+          updated_at?: string
+          viewed_at?: string | null
+          withdrawn_at?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          message?: string | null
+          opportunity_id?: string
+          status?: string
+          updated_at?: string
+          viewed_at?: string | null
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+
+
       interaction_events: {
         Row: {
           actor_id: string | null
@@ -49,6 +105,8 @@ export type Database = {
           },
         ]
       }
+
+
       opportunities: {
         Row: {
           city: string | null
@@ -1741,6 +1799,10 @@ export type Database = {
         Args: { p_bucket: string; p_path: string }
         Returns: boolean
       }
+      can_manage_opportunity: {
+        Args: { p_opportunity_id: string }
+        Returns: boolean
+      }
       count_organization_followers: {
         Args: { p_organization_id: string }
         Returns: number
@@ -1756,6 +1818,14 @@ export type Database = {
       count_project_followers: {
         Args: { p_project_id: string }
         Returns: number
+      }
+      get_application_counts: {
+        Args: { p_opportunity_ids: string[] }
+        Returns: {
+          accepted_count: number
+          opportunity_id: string
+          total: number
+        }[]
       }
       get_following_feed: {
         Args: {
@@ -1845,6 +1915,7 @@ export type Database = {
           watch_score: number
         }[]
       }
+
       get_post_interaction_counts: {
         Args: { p_post_ids: string[] }
         Returns: {
@@ -1897,6 +1968,8 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { p_project_id: string }; Returns: boolean }
+
+
       opportunity_is_publicly_distributable: {
         Args: {
           p_ends_at: string

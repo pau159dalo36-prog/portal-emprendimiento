@@ -4,6 +4,12 @@ import { getTranslations } from "next-intl/server";
 import { Pencil } from "lucide-react";
 
 import { getCurrentUser } from "@/auth/session";
+import {
+  canManageOpportunity,
+  getMyApplicationForOpportunity,
+} from "@/applications/data";
+import { ApplyButton } from "@/components/applications/apply-button";
+import { isApplicationStatus } from "@/applications/config";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -94,6 +100,22 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
     !!user && !isOwner
       ? await isSaved(supabase, user.id, "opportunity", opportunity.id)
       : false;
+
+  // Candidaturas (FASE 8): el CTA se muestra a autenticados que ni crean ni
+  // gestionan la oportunidad; el estado real de la candidatura manda en UI.
+  const [manages, myApplication] =
+    user && !isOwner
+      ? await Promise.all([
+          canManageOpportunity(supabase, opportunity.id),
+          getMyApplicationForOpportunity(supabase, user.id, opportunity.id),
+        ])
+      : [false, null];
+
+  const isManager = user != null && manages;
+  const shiftPast = isOneDay && opportunity.ends_at
+    ? isShiftPast(opportunity.ends_at, new Date())
+    : false;
+  const applyEligibleUi = !isManager && opportunity.status === "published" && !shiftPast;
 
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
@@ -265,6 +287,21 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
 
         {isOneDay && opportunity.ends_at && isShiftPast(opportunity.ends_at, new Date()) && (
           <p className="text-sm text-muted-foreground">{t("shiftEnded")}</p>
+        )}
+
+        {user && !isOwner && !isManager && (myApplication || applyEligibleUi) && (
+          <div className="grid gap-2">
+            <ApplyButton
+              opportunityId={opportunity.id}
+              applicationId={myApplication?.id ?? null}
+              initialStatus={
+                myApplication?.status && isApplicationStatus(myApplication.status)
+                  ? myApplication.status
+                  : null
+              }
+              eligible={applyEligibleUi}
+            />
+          </div>
         )}
       </div>
 
