@@ -7,6 +7,11 @@ import { z } from "zod";
 import { INDUSTRIES } from "@/organizations/constants";
 import { USER_TYPES } from "@/profiles/constants";
 import { PROJECT_STAGES } from "@/projects/constants";
+import {
+  SERVICE_CATEGORIES,
+  SERVICE_DELIVERY_MODES,
+  SERVICE_PRICING_TYPES,
+} from "@/services/constants";
 import { SEARCH_MAX_PAGE_SIZE, SEARCH_PAGE_SIZE, SEARCH_SORTS } from "@/search/config";
 import {
   EXPERIENCE_LEVELS,
@@ -14,7 +19,17 @@ import {
   WORK_MODES,
 } from "@/opportunities/constants";
 
-export { INDUSTRIES, PROJECT_STAGES, USER_TYPES, EXPERIENCE_LEVELS, OPPORTUNITY_TYPES, WORK_MODES };
+export {
+  INDUSTRIES,
+  PROJECT_STAGES,
+  USER_TYPES,
+  EXPERIENCE_LEVELS,
+  OPPORTUNITY_TYPES,
+  WORK_MODES,
+  SERVICE_CATEGORIES,
+  SERVICE_DELIVERY_MODES,
+  SERVICE_PRICING_TYPES,
+};
 
 export const searchCursorSchema = z.object({
   score: z.number(),
@@ -95,6 +110,7 @@ export const EXPLORE_TABS = [
   "organizations",
   "profiles",
   "opportunities",
+  "services",
 ] as const;
 export type ExploreTab = (typeof EXPLORE_TABS)[number];
 
@@ -119,6 +135,9 @@ export const exploreParamsSchema = z.object({
   experience: z.preprocess((v) => firstString(v), z.string()).catch(""),
   firstJob: z.preprocess((v) => firstString(v), z.enum(["true", "false"])).catch("false"),
   date: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  category: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  deliveryMode: z.preprocess((v) => firstString(v), z.string()).catch(""),
+  pricingType: z.preprocess((v) => firstString(v), z.string()).catch(""),
 });
 
 export type ExploreParams = z.infer<typeof exploreParamsSchema>;
@@ -151,6 +170,9 @@ export function buildExploreQuery(params: ExploreParams): Record<string, string>
   if (params.experience) query.experience = params.experience;
   if (params.firstJob === "true") query.firstJob = "true";
   if (params.date) query.date = params.date;
+  if (params.category) query.category = params.category;
+  if (params.deliveryMode) query.deliveryMode = params.deliveryMode;
+  if (params.pricingType) query.pricingType = params.pricingType;
   return Object.keys(query).length > 0 ? query : null;
 }
 
@@ -171,5 +193,8 @@ export function buildMarketQuery(params: MarketParams): Record<string, string> |
   if (params.industry) query.industry = params.industry;
   if (params.firstJob === "true") query.firstJob = "true";
   if (params.date) query.date = params.date;
+  if (params.category) query.category = params.category;
+  if (params.deliveryMode) query.deliveryMode = params.deliveryMode;
+  if (params.pricingType) query.pricingType = params.pricingType;
   return Object.keys(query).length > 0 ? query : null;
 }

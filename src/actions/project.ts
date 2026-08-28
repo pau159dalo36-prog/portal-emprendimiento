@@ -11,8 +11,11 @@ import { getPathname } from "@/i18n/navigation";
 import { createMemberUsernameSchema } from "@/validations/organization";
 import {
   createNeedStatusSchema,
+  createPilotPlanSchema,
+  createProjectFundingSchema,
   createProjectLinkSchema,
   createProjectMemberRoleSchema,
+  createProjectNeedKindSchema,
   createProjectNeedSchema,
   createProjectSchema,
   createProjectUpdateSchema,
@@ -218,8 +221,15 @@ export async function addProjectNeedAction(
     return validationState(parsed.error, ta("validationGeneral"));
   }
 
+  // Tipo de necesidad (FASE 7): member (histórico), mentor o tester.
+  const kind = createProjectNeedKindSchema(t).safeParse(formData.get("need_kind"));
+  if (!kind.success) {
+    return validationState(kind.error, ta("validationGeneral"));
+  }
+
   const { error } = await supabase.from("project_needs").insert({
     ...parsed.data,
+    need_kind: kind.data,
     project_id: projectId,
   });
 
@@ -304,4 +314,92 @@ export async function removeProjectLinkAction(formData: FormData): Promise<void>
 
   await supabase.from("project_links").delete().eq("id", linkId);
   revalidatePath("/", "layout");
+}
+
+// Señal de inversión del proyecto (FASE 7). SOLO señal informativa: sin
+// transacciones, sin equity exchange, sin pagos. RLS limita la edición a
+// propietario/miembros; el CHECK de la BD fuerza coherencia flag ↔ campos.
+export async function updateProjectFundingAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { supabase } = await requireUser();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.project");
+
+  const projectId = formData.get("project_id");
+  if (typeof projectId !== "string" || !z.string().uuid().safeParse(projectId).success) {
+    return { status: "error", message: ta("invalidProject") };
+  }
+
+  const parsed = createProjectFundingSchema(t).safeParse({
+    seeking_investment: formData.get("seeking_investment"),
+    funding_stage: formData.get("funding_stage"),
+    amount_sought: formData.get("amount_sought"),
+    investment_currency: formData.get("investment_currency"),
+    investment_note: formData.get("investment_note"),
+  });
+
+  if (!parsed.success) {
+    return validationState(parsed.error, ta("validationGeneral"));
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .update(parsed.data)
+    .eq("id", projectId);
+
+  if (error) {
+    return { status: "error", message: ta("fundingUpdateFailed") };
+  }
+
+  revalidatePath("/", "layout");
+  return { status: "success", message: ta("fundingUpdated") };
+}
+
+// Plan de primeros usuarios (FASE 7): declaración 1:1 con el proyecto
+// (upsert sobre project_id único). Sin sistema de testing complejo.
+export async function savePilotPlanAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { supabase } = await requireUser();
+  const t = await getTranslations("validation");
+  const ta = await getTranslations("actions.project");
+
+  const projectId = formData.get("project_id");
+  if (typeof projectId !== "string" || !z.string().uuid().safeParse(projectId).success) {
+    return { status: "error", message: ta("invalidProject") };
+  }
+
+  const parsed = createPilotPlanSchema(t).safeParse({
+    what_to_test: formData.get("what_to_test"),
+    target_user_profile: formData.get("target_user_profile"),
+    tester_expectations: formData.get("tester_expectations"),
+    incentive_note: formData.get("incentive_note"),
+    slots_total: formData.get("slots_total"),
+  });
+
+  if (!parsed.success) {
+    return validationState(parsed.error, ta("validationGeneral"));
+  }
+
+  const { error } = await supabase.from("project_pilot_plans").upsert(
+    {
+      project_id: projectId,
+      what_to_test: parsed.data.what_to_test,
+      target_user_profile: parsed.data.target_user_profile,
+      tester_expectations: parsed.data.tester_expectations,
+      incentive_note: parsed.data.incentive_note,
+      slots_total: parsed.data.slots_total,
+    },
+    { onConflict: "project_id" },
+  );
+
+  if (error) {
+    return { status: "error", message: ta("pilotPlanSaveFailed") };
+  }
+
+  revalidatePath("/", "layout");
+  return { status: "success", message: ta("pilotPlanSaved") };
 }

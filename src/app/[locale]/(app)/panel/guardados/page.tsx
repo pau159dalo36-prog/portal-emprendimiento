@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Bookmark, Briefcase, FolderKanban, Play } from "lucide-react";
+import { Bookmark, Briefcase, FolderKanban, Play, Store } from "lucide-react";
 
 import { requireUser } from "@/auth/session";
 import { SaveButton } from "@/components/interactions/save-button";
@@ -12,6 +12,7 @@ import {
   listSavedOpportunities,
   listSavedPosts,
   listSavedProjects,
+  listSavedServices,
 } from "@/interactions/saves";
 
 export async function generateMetadata() {
@@ -23,18 +24,21 @@ export default async function PanelSavedItemsPage() {
   const t = await getTranslations("savedPanel");
   const typesT = await getTranslations("opportunityTypes");
   const stages = await getTranslations("projectStages");
+  const servicesT = await getTranslations("services");
   const locale = await getLocale();
 
-  const [savedPosts, savedProjects, savedOpportunities] = await Promise.all([
+  const [savedPosts, savedProjects, savedOpportunities, savedServices] = await Promise.all([
     listSavedPosts(supabase, user.id),
     listSavedProjects(supabase, user.id),
     listSavedOpportunities(supabase, user.id),
+    listSavedServices(supabase, user.id),
   ]);
 
   // Los LEFT JOIN vacíos (elemento ya no visible) no se muestran.
   const posts = savedPosts.filter((row) => row.post !== null);
   const projects = savedProjects.filter((row) => row.project !== null);
   const opportunities = savedOpportunities.filter((row) => row.opportunity !== null);
+  const services = savedServices.filter((row) => row.service !== null);
 
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
     day: "numeric",
@@ -43,7 +47,10 @@ export default async function PanelSavedItemsPage() {
   });
 
   const isEmpty =
-    posts.length === 0 && projects.length === 0 && opportunities.length === 0;
+    posts.length === 0 &&
+    projects.length === 0 &&
+    opportunities.length === 0 &&
+    services.length === 0;
 
   return (
     <div className="grid gap-6">
@@ -186,6 +193,49 @@ export default async function PanelSavedItemsPage() {
                           targetType="opportunity"
                           saved
                         />
+                      </CardContent>
+                    </Card>
+                  ) : null,
+                )}
+              </div>
+            </section>
+          )}
+          {services.length > 0 && (
+            <section aria-labelledby="saved-services-title" className="grid gap-3">
+              <h2
+                id="saved-services-title"
+                className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                <Store className="size-4" aria-hidden="true" />
+                {t("servicesSection", { count: services.length })}
+              </h2>
+              <div className="grid gap-3">
+                {services.map(({ service, ...row }) =>
+                  service ? (
+                    <Card key={`${row.profile_id}-${row.service_id}`}>
+                      <CardContent className="flex flex-wrap items-center gap-4">
+                        <div className="min-w-0 flex-1 grid gap-1">
+                          <Link
+                            href={`/servicios/${service.id}`}
+                            className="truncate text-base font-semibold hover:underline"
+                          >
+                            {service.title}
+                          </Link>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <Badge className="border-primary/30 bg-primary/10 text-primary">
+                              {servicesT(`categories.${service.category}` as never)}
+                            </Badge>
+                            {servicesT(`pricingTypes.${service.pricing_type}` as never)}
+                            {service.provider_username
+                              ? ` · @${service.provider_username}`
+                              : ""}
+                            {" · "}
+                            {t("savedOn", {
+                              date: dateFormatter.format(new Date(row.created_at)),
+                            })}
+                          </div>
+                        </div>
+                        <SaveButton targetId={service.id} targetType="service" saved />
                       </CardContent>
                     </Card>
                   ) : null,

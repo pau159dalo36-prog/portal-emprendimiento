@@ -33,6 +33,15 @@ export async function isSaved(
       .maybeSingle();
     return data !== null;
   }
+  if (target === "service") {
+    const { data } = await supabase
+      .from("saved_services")
+      .select("service_id")
+      .eq("profile_id", userId)
+      .eq("service_id", itemId)
+      .maybeSingle();
+    return data !== null;
+  }
 
   const { data } = await supabase
     .from("saved_opportunities")
@@ -68,6 +77,15 @@ export async function save(
       );
     return { error: error ? "FAILED" : null, errorMessage: error?.message };
   }
+  if (target === "service") {
+    const { error } = await supabase
+      .from("saved_services")
+      .upsert(
+        { profile_id: userId, service_id: itemId },
+        { onConflict: "profile_id, service_id", ignoreDuplicates: true },
+      );
+    return { error: error ? "FAILED" : null, errorMessage: error?.message };
+  }
 
   const { error } = await supabase
     .from("saved_opportunities")
@@ -98,6 +116,14 @@ export async function unsave(
       .delete()
       .eq("profile_id", userId)
       .eq("project_id", itemId);
+    return { error: error ? "FAILED" : null, errorMessage: error?.message };
+  }
+  if (target === "service") {
+    const { error } = await supabase
+      .from("saved_services")
+      .delete()
+      .eq("profile_id", userId)
+      .eq("service_id", itemId);
     return { error: error ? "FAILED" : null, errorMessage: error?.message };
   }
 
@@ -214,4 +240,56 @@ export async function listSavedOpportunities(
     .order("created_at", { ascending: false });
 
   return data ?? [];
+}
+
+export type SavedServiceListItem = Database["public"]["Tables"]["saved_services"]["Row"] & {
+  service: {
+    id: string;
+    title: string;
+    status: string;
+    category: string;
+    pricing_type: string;
+    currency: string | null;
+    price_amount: number | null;
+    price_min: number | null;
+    price_max: number | null;
+    provider_id: string;
+    provider_username: string | null;
+  } | null;
+};
+
+export async function listSavedServices(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<SavedServiceListItem[]> {
+  const { data } = await supabase
+    .from("saved_services")
+    .select(
+      "*, service:services(id, title, status, category, pricing_type, currency, price_amount, price_min, price_max, provider_id, provider:profiles!services_provider_id_fkey(username))",
+    )
+    .eq("profile_id", userId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((row) => ({
+    ...row,
+    service: row.service
+      ? {
+          id: row.service.id,
+          title: row.service.title,
+          status: row.service.status,
+          category: row.service.category,
+          pricing_type: row.service.pricing_type,
+          currency: row.service.currency,
+          price_amount: row.service.price_amount,
+          price_min: row.service.price_min,
+          price_max: row.service.price_max,
+          provider_id: row.service.provider_id,
+          // PostgREST anida la relación 1:1 como objeto, no como array.
+          provider_username:
+            row.service.provider && !Array.isArray(row.service.provider)
+              ? row.service.provider.username
+              : null,
+        }
+      : null,
+  }));
 }

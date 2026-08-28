@@ -13,7 +13,7 @@ export type FeedbackWouldUse = (typeof FEEDBACK_WOULD_USE_OPTIONS)[number];
 export const REACTION_TYPES = ["support"] as const;
 export type ReactionType = (typeof REACTION_TYPES)[number];
 
-export const SAVE_TARGETS = ["post", "project", "opportunity"] as const;
+export const SAVE_TARGETS = ["post", "project", "opportunity", "service"] as const;
 export type SaveTarget = (typeof SAVE_TARGETS)[number];
 
 // Eventos del outbox (public.interaction_events) que consumirá FASE 10.

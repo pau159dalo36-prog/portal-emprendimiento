@@ -9,6 +9,7 @@ import { OneDayShiftCard } from "@/components/opportunities/one-day-shift-card";
 import { OrganizationCard } from "@/components/explore/organization-card";
 import { ProfileCard } from "@/components/explore/profile-card";
 import { ProjectCard } from "@/components/explore/project-card";
+import { ServiceCard } from "@/components/explore/service-card";
 import { VideoCard } from "@/components/explore/video-card";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
@@ -21,6 +22,7 @@ import {
   searchOrganizations,
   searchProfiles,
   searchProjects,
+  searchServices,
   searchVideos,
 } from "@/search/data";
 import type { ExploreInitialData } from "@/search/home";
@@ -32,6 +34,9 @@ import {
   OPPORTUNITY_DATES,
   OPPORTUNITY_TYPES,
   PROJECT_STAGES,
+  SERVICE_CATEGORIES,
+  SERVICE_DELIVERY_MODES,
+  SERVICE_PRICING_TYPES,
   USER_TYPES,
   WORK_MODES,
   type ExploreParams,
@@ -43,11 +48,12 @@ import type {
   SearchPageResult,
   SearchProfile,
   SearchProject,
+  SearchService,
   SearchVideo,
 } from "@/search/types";
 
-// Orden de pestañas: Todo + las cuatro entidades (el usuario primero descubre
-// y luego profundiza). "all" muestra una vista agrupada con CTA "Ver más".
+// Orden de pestañas: Todo + las entidades (el usuario primero descubre y luego
+// profundiza). "all" muestra una vista agrupada con CTA "Ver más".
 const TAB_KEYS: ExploreTab[] = [
   "all",
   "videos",
@@ -55,6 +61,7 @@ const TAB_KEYS: ExploreTab[] = [
   "organizations",
   "profiles",
   "opportunities",
+  "services",
 ];
 
 const GROUP_PREVIEW_LIMIT = 4;
@@ -186,9 +193,26 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
   const workModesT = useTranslations("workModes");
   const experienceLevelsT = useTranslations("experienceLevels");
   const opportunityDatesT = useTranslations("opportunityDates");
+  const servicesT = useTranslations("services");
   const router = useRouter();
 
-  const { q, tab, sort, role, language, stage, industry, opportunityType, workMode, experience, firstJob, date } = initialParams;
+  const {
+    q,
+    tab,
+    sort,
+    role,
+    language,
+    stage,
+    industry,
+    opportunityType,
+    workMode,
+    experience,
+    firstJob,
+    date,
+    category,
+    deliveryMode,
+    pricingType,
+  } = initialParams;
   const [input, setInput] = useState(q);
 
   const navigate = useCallback(
@@ -251,6 +275,17 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     }),
   );
 
+  const services = useTabData<SearchService>(initial.services, (cursor) =>
+    searchServices(createClient(), {
+      query: q,
+      cursor,
+      sort,
+      category: category || null,
+      deliveryMode: deliveryMode || null,
+      pricingType: pricingType || null,
+    }),
+  );
+
   const active =
     tab === "profiles"
       ? profiles
@@ -260,7 +295,9 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
           ? organizations
           : tab === "opportunities"
             ? opportunities
-            : videos;
+            : tab === "services"
+              ? services
+              : videos;
 
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -293,6 +330,11 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     if (date) activeChips.push({ key: "date", label: opportunityDatesT(date as never), clear: { date: "" } });
     if (industry) activeChips.push({ key: "industry", label: industriesT(industry), clear: { industry: "" } });
   }
+  if (tab === "services") {
+    if (category) activeChips.push({ key: "category", label: servicesT(`categories.${category}` as never), clear: { category: "" } });
+    if (deliveryMode) activeChips.push({ key: "deliveryMode", label: servicesT(`deliveryModes.${deliveryMode}` as never), clear: { deliveryMode: "" } });
+    if (pricingType) activeChips.push({ key: "pricingType", label: servicesT(`pricingTypes.${pricingType}` as never), clear: { pricingType: "" } });
+  }
 
   function clearAllFilters() {
     if (tab === "profiles") navigate({ role: "", language: "" });
@@ -300,6 +342,7 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     else if (tab === "organizations") navigate({ industry: "" });
     else if (tab === "videos") navigate({ language: "" });
     else if (tab === "opportunities") navigate({ opportunityType: "", workMode: "", experience: "", date: "", industry: "" });
+    else if (tab === "services") navigate({ category: "", deliveryMode: "", pricingType: "" });
   }
 
   const emptyState = (hasQuery: boolean) => (
@@ -355,9 +398,10 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
     { key: "organizations" as const, items: organizations.state.items as SearchOrganization[], render: (o: SearchOrganization) => <OrganizationCard key={o.id} organization={o} /> },
     { key: "profiles" as const, items: profiles.state.items as SearchProfile[], render: (p: SearchProfile) => <ProfileCard key={p.id} profile={p} currentUserId={currentUserId} /> },
     { key: "opportunities" as const, items: opportunities.state.items as SearchOpportunity[], render: (o: SearchOpportunity) => o.opportunityType === "one_day_shift" ? <OneDayShiftCard key={o.id} opportunity={o} /> : <OpportunityCard key={o.id} opportunity={o} /> },
+    { key: "services" as const, items: services.state.items as SearchService[], render: (s: SearchService) => <ServiceCard key={s.id} service={s} /> },
   ];
   const allHasItems = allGroups.some((group) => group.items.length > 0);
-  const anyAllError = [videos, projects, organizations, profiles, opportunities].some((s) => s.state.error && s.state.items.length === 0);
+  const anyAllError = [videos, projects, organizations, profiles, opportunities, services].some((s) => s.state.error && s.state.items.length === 0);
 
   return (
     <div className="grid gap-6">
@@ -621,6 +665,52 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
                   </button>
                 </>
               )}
+              {tab === "services" && (
+                <>
+                  <label className="sr-only">{t("filterCategory")}</label>
+                  <select
+                    value={category}
+                    onChange={(event) => navigate({ category: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterCategory")}
+                  >
+                    <option value="">{t("allCategories")}</option>
+                    {SERVICE_CATEGORIES.map((value) => (
+                      <option key={value} value={value}>
+                        {servicesT(`categories.${value}` as never)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterDeliveryMode")}</label>
+                  <select
+                    value={deliveryMode}
+                    onChange={(event) => navigate({ deliveryMode: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterDeliveryMode")}
+                  >
+                    <option value="">{t("allDeliveryModes")}</option>
+                    {SERVICE_DELIVERY_MODES.map((value) => (
+                      <option key={value} value={value}>
+                        {servicesT(`deliveryModes.${value}` as never)}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="sr-only">{t("filterPricingType")}</label>
+                  <select
+                    value={pricingType}
+                    onChange={(event) => navigate({ pricingType: event.target.value })}
+                    className={selectClass}
+                    aria-label={t("filterPricingType")}
+                  >
+                    <option value="">{t("allPricingTypes")}</option>
+                    {SERVICE_PRICING_TYPES.map((value) => (
+                      <option key={value} value={value}>
+                        {servicesT(`pricingTypes.${value}` as never)}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -661,12 +751,12 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
       <div role="tabpanel" className="grid gap-6">
         {tab === "all" ? (
           anyAllError ? (
-            errorState({ error: (videos.state.error ?? projects.state.error ?? organizations.state.error ?? profiles.state.error ?? opportunities.state.error) ?? "", retry: () => [videos, projects, organizations, profiles, opportunities].forEach((s) => s.retry()), state: { items: [], nextCursor: null, loading: false, loadingMore: false, error: null } })
+            errorState({ error: (videos.state.error ?? projects.state.error ?? organizations.state.error ?? profiles.state.error ?? opportunities.state.error ?? services.state.error) ?? "", retry: () => [videos, projects, organizations, profiles, opportunities, services].forEach((s) => s.retry()), state: { items: [], nextCursor: null, loading: false, loadingMore: false, error: null } })
           ) : !allHasItems ? (
-            emptyState(Boolean(q))
-          ) : (
+            emptyState(Boolean(q)))
+          : (
             allGroups.map((group) => {
-              const groupState = group.key === "videos" ? videos : group.key === "projects" ? projects : group.key === "organizations" ? organizations : group.key === "profiles" ? profiles : opportunities;
+              const groupState = group.key === "videos" ? videos : group.key === "projects" ? projects : group.key === "organizations" ? organizations : group.key === "profiles" ? profiles : group.key === "opportunities" ? opportunities : services;
               if (group.items.length === 0) {
                 return null;
               }
@@ -743,6 +833,13 @@ export function ExploreApp({ initialParams, initial, currentUserId = null }: Exp
                           <OpportunityCard key={opportunity.id} opportunity={opportunity} />
                         ),
                       )}
+                    </div>
+                  )}
+                  {tab === "services" && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {(active.state.items as SearchService[]).map((service) => (
+                        <ServiceCard key={service.id} service={service} />
+                      ))}
                     </div>
                   )}
 

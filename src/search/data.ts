@@ -26,6 +26,8 @@ import type {
   SearchProfileResult,
   SearchProject,
   SearchProjectResult,
+  SearchService,
+  SearchServiceResult,
   SearchVideo,
   SearchVideoResult,
 } from "@/search/types";
@@ -36,6 +38,7 @@ type ProjectRow = Database["public"]["Functions"]["search_projects"]["Returns"][
 type OrganizationRow = Database["public"]["Functions"]["search_organizations"]["Returns"][number];
 type VideoRow = Database["public"]["Functions"]["search_videos"]["Returns"][number];
 type OpportunityRow = Database["public"]["Functions"]["search_opportunities"]["Returns"][number];
+type ServiceRow = Database["public"]["Functions"]["search_services"]["Returns"][number];
 
 // PostgREST genera `returns table` con TODAS las columnas non-null, pero en
 // runtime las columnas que provienen de LEFT JOIN (owner, project,
@@ -89,6 +92,17 @@ type NullableOpportunityKeys =
   | "creator_username"
   | "creator_avatar_url";
 type NullableOpportunityArrayKeys = "project_industries";
+// search_services: descripción y campos de precio son nullable en la BD, y el
+// proveedor viaja siempre (JOIN directo con profiles), pero headline puede ser
+// NULL (columna opcional del perfil).
+type NullableServiceKeys =
+  | "description"
+  | "currency"
+  | "provider_full_name"
+  | "provider_username"
+  | "provider_avatar_url"
+  | "provider_headline";
+type NullableServiceNumberKeys = "price_amount" | "price_min" | "price_max";
 
 export type SearchProfileRow = Omit<ProfileRow, NullableProfileKeys> &
   { [K in NullableProfileKeys]: string | null };
@@ -105,6 +119,9 @@ export type SearchOpportunityRow = Omit<
 > &
   { [K in NullableOpportunityKeys]: string | null } &
   { [K in NullableOpportunityArrayKeys]: string[] | null };
+export type SearchServiceRow = Omit<ServiceRow, NullableServiceKeys | NullableServiceNumberKeys> &
+  { [K in NullableServiceKeys]: string | null } &
+  { [K in NullableServiceNumberKeys]: number | null };
 
 export type CommonSearchParams = {
   query?: string;
@@ -126,6 +143,11 @@ export type OpportunitySearchParams = CommonSearchParams & {
   studentFriendly?: boolean | null;
   location?: string | null;
   date?: string | null;
+};
+export type ServiceSearchParams = CommonSearchParams & {
+  category?: string | null;
+  deliveryMode?: string | null;
+  pricingType?: string | null;
 };
 
 function toProfile(row: SearchProfileRow): SearchProfileResult {
@@ -402,6 +424,54 @@ export function toOpportunityView(result: SearchOpportunityResult): SearchOpport
   };
 }
 
+function toService(row: SearchServiceRow): SearchServiceResult {
+  return {
+    id: row.service_id,
+    title: row.title,
+    description: row.description,
+    category: row.category,
+    deliveryMode: row.delivery_mode,
+    pricingType: row.pricing_type,
+    priceAmount: row.price_amount,
+    priceMin: row.price_min,
+    priceMax: row.price_max,
+    currency: row.currency,
+    providerId: row.provider_id,
+    providerFullName: row.provider_full_name,
+    providerUsername: row.provider_username,
+    providerAvatarUrl: row.provider_avatar_url,
+    providerHeadline: row.provider_headline,
+    score: row.search_score,
+    createdAt: row.created_at,
+  };
+}
+
+export function toServiceView(result: SearchServiceResult): SearchService {
+  return {
+    id: result.id,
+    title: result.title,
+    description: result.description,
+    category: result.category,
+    deliveryMode: result.deliveryMode,
+    pricingType: result.pricingType,
+    priceAmount: result.priceAmount,
+    priceMin: result.priceMin,
+    priceMax: result.priceMax,
+    currency: result.currency,
+    provider:
+      result.providerId
+        ? {
+            id: result.providerId,
+            fullName: result.providerFullName,
+            username: result.providerUsername,
+            avatarUrl: result.providerAvatarUrl,
+            headline: result.providerHeadline,
+          }
+        : null,
+    createdAt: result.createdAt,
+  };
+}
+
 function serializeNext(score: number, createdAt: string, id: string): string {
   return serializeCursor({ score, createdAt, id });
 }
@@ -606,6 +676,46 @@ export async function searchOpportunities(
     page: {
       items,
       nextCursor: serializeNext(last.search_score, last.created_at, last.opportunity_id),
+    },
+  };
+}
+
+export async function searchServices(
+  supabase: SupabaseClient<Database>,
+  params: ServiceSearchParams = {},
+): Promise<SearchPageResult<SearchService>> {
+  const query = normalizeQuery(params.query);
+  const limit = resolveLimit(params.limit);
+  const cursor = parseCursor(params.cursor);
+
+  const { data, error } = await supabase.rpc("search_services", {
+    p_query: query,
+    p_limit: limit,
+    p_cursor_score: cursor?.score,
+    p_cursor_created_at: cursor?.createdAt,
+    p_cursor_id: cursor?.id,
+    p_category: params.category ?? undefined,
+    p_delivery_mode: params.deliveryMode ?? undefined,
+    p_pricing_type: params.pricingType ?? undefined,
+    p_sort: resolveSort(params.sort),
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const rows = (data ?? []) as SearchServiceRow[];
+  if (rows.length === 0) {
+    return { ok: true, page: { items: [], nextCursor: null } };
+  }
+
+  const last = rows[rows.length - 1];
+  const items = rows.map((row) => toServiceView(toService(row)));
+  return {
+    ok: true,
+    page: {
+      items,
+      nextCursor: serializeNext(last.search_score, last.created_at, last.service_id),
     },
   };
 }

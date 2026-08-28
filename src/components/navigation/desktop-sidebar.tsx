@@ -14,6 +14,7 @@ import {
   Plus,
   ShieldCheck,
   Sparkles,
+  Store,
   User,
   Video,
   Briefcase,
@@ -48,6 +49,7 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/explorar", label: t("explore"), icon: Compass },
     { href: "/organizaciones", label: t("organizations"), icon: Building2 },
     { href: "/oportunidades", label: t("opportunities"), icon: Briefcase },
+    { href: "/servicios", label: t("services"), icon: Store },
     { href: "/videos", label: t("videos"), icon: Video },
   ];
 
@@ -58,6 +60,7 @@ export function DesktopSidebar({ user }: { user: ShellUser | null }) {
     { href: "/notificaciones", label: nav("notifications"), icon: Bell },
     { href: "/panel/oportunidades", label: nav("myOpportunities"), icon: Briefcase },
     { href: "/panel/candidaturas", label: nav("myApplications"), icon: FileText },
+    { href: "/panel/servicios", label: nav("myServices"), icon: Store },
     { href: "/panel/videos", label: nav("myVideos"), icon: Video },
     { href: "/panel/guardados", label: nav("savedItems"), icon: Bookmark },
     { href: "/publicar/oportunidad", label: nav("publishOpportunity"), icon: Plus },

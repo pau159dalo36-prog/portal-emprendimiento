@@ -8,10 +8,14 @@ import {
   removeProjectLinkAction,
   removeProjectMemberAction,
   removeProjectNeedAction,
+  savePilotPlanAction,
+  updateProjectFundingAction,
   updateProjectMemberRoleAction,
   updateProjectNeedStatusAction,
 } from "@/actions/project";
 import { requireUser } from "@/auth/session";
+import { FundingManager } from "@/components/projects/funding-manager";
+import { PilotPlanManager } from "@/components/projects/pilot-plan-manager";
 import { LinkManager } from "@/components/shared/link-manager";
 import { MemberManager } from "@/components/shared/member-manager";
 import { NeedManager } from "@/components/projects/need-manager";
@@ -21,6 +25,7 @@ import {
   PROJECT_MANAGEABLE_ROLES,
 } from "@/projects/constants";
 import {
+  getPilotPlanByProjectId,
   getProjectBySlug,
   getProjectLinks,
   getProjectMembers,
@@ -58,10 +63,11 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
 
   const isOwner = project.owner_id === user.id;
 
-  const [members, needs, links, organizations] = await Promise.all([
+  const [members, needs, links, pilotPlan, organizations] = await Promise.all([
     getProjectMembers(supabase, project.id),
     getProjectNeeds(supabase, project.id),
     getProjectLinks(supabase, project.id),
+    getPilotPlanByProjectId(supabase, project.id),
     isOwner ? listOrganizationsForUser(supabase, user.id) : Promise.resolve([]),
   ]);
 
@@ -107,6 +113,24 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
           removeAction={removeProjectNeedAction}
           projectId={project.id}
           canManage={isMember}
+        />
+      </section>
+
+      <section className="grid gap-6 rounded-2xl border border-border/60 bg-card p-6">
+        <PilotPlanManager
+          projectId={project.id}
+          canManage={isMember}
+          initial={pilotPlan}
+          action={savePilotPlanAction}
+        />
+      </section>
+
+      <section className="grid gap-6 rounded-2xl border border-border/60 bg-card p-6">
+        <FundingManager
+          projectId={project.id}
+          canManage={isOwner || isMember}
+          initial={project}
+          action={updateProjectFundingAction}
         />
       </section>
 

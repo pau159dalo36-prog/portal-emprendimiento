@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Globe, Pencil } from "lucide-react";
+import { FlaskConical, Globe, HandCoins, Pencil } from "lucide-react";
 
 import { getCurrentUser } from "@/auth/session";
 import { Avatar } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { FeedbackSection } from "@/components/interactions/feedback-section";
 import { FollowButton } from "@/components/follows/follow-button";
+import { StartConversationButton } from "@/components/messaging/start-conversation-button";
 import { VideoCard } from "@/components/video/video-card";
 import {
   Card,
@@ -19,6 +20,7 @@ import {
 import { brand } from "@/config/brand";
 import { getProjectFollowCount, isFollowingProject } from "@/follows/data";
 import {
+  getPilotPlanByProjectId,
   getProjectBySlug,
   getProjectLinks,
   getProjectMembers,
@@ -58,6 +60,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const stages = await getTranslations("projectStages");
   const statuses = await getTranslations("projectStatuses");
   const needStatuses = await getTranslations("needStatuses");
+  const mentoring = await getTranslations("mentoring");
+  const pilotT = await getTranslations("pilotUsers");
+  const fundingT = await getTranslations("funding");
   const followT = await getTranslations("publicProfile");
 
   const project = await getProjectBySlug(supabase, slug);
@@ -68,14 +73,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const isOwner = user?.id === project.owner_id;
   const canFollow = !!user && !isOwner;
 
-  const [members, needs, links, projectVideos, followCount, isFollowing] = await Promise.all([
-    getProjectMembers(supabase, project.id),
-    getProjectNeeds(supabase, project.id),
-    getProjectLinks(supabase, project.id),
-    listPublishedVideosForProject(supabase, project.id, { limit: 12 }),
-    getProjectFollowCount(supabase, project.id),
-    canFollow ? isFollowingProject(supabase, user.id, project.id) : Promise.resolve(false),
-  ]);
+  const [members, needs, links, pilotPlan, projectVideos, followCount, isFollowing] =
+    await Promise.all([
+      getProjectMembers(supabase, project.id),
+      getProjectNeeds(supabase, project.id),
+      getProjectLinks(supabase, project.id),
+      getPilotPlanByProjectId(supabase, project.id),
+      listPublishedVideosForProject(supabase, project.id, { limit: 12 }),
+      getProjectFollowCount(supabase, project.id),
+      canFollow ? isFollowingProject(supabase, user.id, project.id) : Promise.resolve(false),
+    ]);
   const thumbnails = await resolveVideoThumbnails(supabase, projectVideos);
   const dateFormatter = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-ES", {
     day: "numeric",
@@ -304,7 +311,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               {needs.map((need) => (
                 <li key={need.id} className="grid gap-1 rounded-lg border border-border px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{need.title}</p>
+                    <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                      {need.title}
+                      {need.need_kind !== "member" && (
+                        <Badge className="border-primary/30 bg-primary/10 text-primary">
+                          {mentoring(`needKinds.${need.need_kind}` as never)}
+                        </Badge>
+                      )}
+                    </p>
                     <Badge
                       className={
                         need.status === "open"
@@ -326,6 +340,83 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 </li>
               ))}
             </ul>
+            {!isOwner && user && project.owner_id && (
+              <div className="mt-4">
+                <StartConversationButton targetProfileId={project.owner_id} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {pilotPlan && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FlaskConical className="size-5" aria-hidden="true" />
+              {pilotT("title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <p className="whitespace-pre-line text-sm">{pilotPlan.what_to_test}</p>
+            {pilotPlan.target_user_profile && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{pilotT("targetProfileLabel")}: </span>
+                {pilotPlan.target_user_profile}
+              </p>
+            )}
+            {pilotPlan.tester_expectations && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{pilotT("expectationsLabel")}: </span>
+                {pilotPlan.tester_expectations}
+              </p>
+            )}
+            {pilotPlan.incentive_note && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{pilotT("incentiveLabel")}: </span>
+                {pilotPlan.incentive_note}
+              </p>
+            )}
+            {pilotPlan.slots_total != null && (
+              <p className="text-xs text-muted-foreground">
+                {pilotT("slotsLabel")}: {pilotPlan.slots_total}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {project.seeking_investment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HandCoins className="size-5" aria-hidden="true" />
+              {fundingT("seekingTitle")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {project.funding_stage && (
+                <span>
+                  <span className="text-muted-foreground">{fundingT("stageLabel")}: </span>
+                  {fundingT(`stages.${project.funding_stage}` as never)}
+                </span>
+              )}
+              {project.amount_sought != null && (
+                <span className="font-medium">
+                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "es-ES", {
+                    maximumFractionDigits: 0,
+                  }).format(Number(project.amount_sought))}
+                  {project.investment_currency ? ` ${project.investment_currency}` : ""}
+                </span>
+              )}
+            </div>
+            {project.investment_note && (
+              <p className="whitespace-pre-line text-sm text-muted-foreground">
+                {project.investment_note}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">{fundingT("disclaimer")}</p>
           </CardContent>
         </Card>
       )}

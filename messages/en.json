@@ -35,7 +35,11 @@
     "panelCandidates": "Opportunity candidates",
     "adminOpportunities": "Opportunity moderation",
     "notifications": "Notifications",
-    "messages": "Messages"
+    "messages": "Messages",
+    "services": "Services",
+    "publishService": "Publish service",
+    "editService": "Edit service",
+    "panelServices": "My services"
   },
   "common": {
     "loading": "Loadingâ€¦",
@@ -73,7 +77,9 @@
     "messages": "Messages",
     "notifications": "Notifications",
     "unreadMessages": "{count, plural, one {# unread message} other {# unread messages}}",
-    "unreadNotifications": "{count, plural, one {# unread notification} other {# unread notifications}}"
+    "unreadNotifications": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "myServices": "My services",
+    "publishService": "Publish service"
   },
   "feed": {
     "forYou": "For you",
@@ -111,7 +117,8 @@
     "posts": "Posts",
     "jobs": "Jobs",
     "communities": "Communities",
-    "opportunities": "Opportunities"
+    "opportunities": "Opportunities",
+    "services": "Services"
   },
   "home": {
     "intro": {
@@ -289,6 +296,8 @@
     "collaborationTitle": "Looking to collaborate like this",
     "videosTitle": "Videos",
     "viewAllVideos": "View all videos",
+    "servicesTitle": "Services offered",
+    "viewAllServices": "View all services",
     "follow": "Follow",
     "unfollow": "Following",
     "followers": "{count, plural, one {# follower} other {# followers}}",
@@ -651,6 +660,7 @@
     "needCommitment": "Commitment",
     "needCommitmentPlaceholder": "10 h/week",
     "addNeedSubmit": "Add need",
+    "needKind": "Need type",
     "status": "Status",
     "update": "Update",
     "team": "Team"
@@ -673,6 +683,7 @@
     "tabProfiles": "People",
     "tabAll": "All",
     "tabOpportunities": "Opportunities",
+    "tabServices": "Services",
     "sortRelevance": "Relevance",
     "sortRecent": "Recent",
     "sortLabel": "Sort by",
@@ -691,7 +702,13 @@
     "filterExperience": "Experience",
     "allExperience": "Any experience",
     "filterDate": "Date",
-    "allDates": "Any date",
+    "allDates": "All dates",
+    "filterCategory": "Category",
+    "allCategories": "All categories",
+    "filterDeliveryMode": "Delivery mode",
+    "allDeliveryModes": "All delivery modes",
+    "filterPricingType": "Pricing",
+    "allPricingTypes": "All pricing types",
     "firstJobOnly": "First job only",
     "activeFilters": "Active filters",
     "removeFilter": "Remove {name} filter",
@@ -784,7 +801,11 @@
       "needAddFailed": "The need could not be added.",
       "needAdded": "Need added.",
       "linkAddFailed": "The link could not be added.",
-      "linkAdded": "Link added."
+      "linkAdded": "Link added.",
+      "fundingUpdateFailed": "Could not save the investment signal.",
+      "fundingUpdated": "Investment signal updated.",
+      "pilotPlanSaveFailed": "Could not save the pilot users plan.",
+      "pilotPlanSaved": "Pilot users plan saved."
     },
     "video": {
       "validationGeneral": "Review the highlighted fields.",
@@ -842,6 +863,19 @@
       "alreadyApplied": "You have already applied to this opportunity.",
       "applyFailed": "Your application couldn't be sent. Try again.",
       "applied": "Application sent."
+    },
+    "service": {
+      "validationGeneral": "Review the marked fields.",
+      "invalidIntent": "Invalid action.",
+      "invalidService": "Invalid service.",
+      "createFailed": "Could not create the service. Try again.",
+      "updateFailed": "Could not save the changes. Try again.",
+      "publishFailed": "Could not publish the service. Try again.",
+      "draftSaved": "Draft saved.",
+      "published": "Service published.",
+      "saved": "Changes saved.",
+      "notFound": "Service not found.",
+      "archivedLocked": "An archived service can no longer be edited."
     }
   },
   "videoStatuses": {
@@ -1051,6 +1085,10 @@
     "statusInvalid": "Invalid status.",
     "languageInvalid": "Invalid language.",
     "visibilityInvalid": "Invalid visibility.",
+    "needKindInvalid": "Invalid need type.",
+    "fundingStageInvalid": "Invalid funding stage.",
+    "fundingAmountInvalid": "The amount sought is not valid.",
+    "currencyInvalid": "The currency must be a valid ISO-4217 code (e.g. EUR).",
     "labels": {
       "fullName": "The public name",
       "headline": "The professional headline",
@@ -1072,6 +1110,11 @@
       "needTitle": "The need",
       "needDescription": "The description",
       "needCommitment": "The commitment",
+      "pilotWhatToTest": "What you want to test",
+      "pilotTargetProfile": "The target user profile",
+      "pilotExpectations": "What you expect from the tester",
+      "pilotIncentive": "The incentive",
+      "investmentNote": "The investment note",
       "linkLabel": "The label",
       "linkUrl": "The URL",
       "memberUsername": "The username",
@@ -1400,12 +1443,13 @@
   },
   "savedPanel": {
     "title": "Saved",
-    "description": "Posts, projects and opportunities you have saved. Only you can see this section.",
+    "description": "Posts, projects, opportunities and services you have saved. Only you can see this section.",
     "empty": "You haven't saved anything yet. Explore and save what interests you.",
     "explore": "Explore",
     "postsSection": "Saved posts ({count})",
     "projectsSection": "Saved projects ({count})",
     "opportunitiesSection": "Saved opportunities ({count})",
+    "servicesSection": "Saved services ({count})",
     "savedOn": "Saved on {date}",
     "postFallbackTitle": "Saved post",
     "postFallbackBody": "View post"
@@ -1511,5 +1555,184 @@
     "errorFlood": "Going too fast: wait a moment before sending more messages.",
     "errorNotMember": "You do not have access to that conversation.",
     "errorFailed": "Could not complete the action. Try again."
+  },
+  "services": {
+    "marketTitle": "Professional services",
+    "marketDescription": "Find professionals from the community: development, design, marketing, photography, consulting and mentoring. No payments: reach out and agree on terms.",
+    "publishCta": "Publish service",
+    "newTitle": "Publish service",
+    "newDescription": "Offer your professional work to the community. The price is indicative only: no payments inside the portal.",
+    "editTitle": "Edit service",
+    "editDescription": "Update your service details.",
+    "archivedNotice": "This service is archived and can no longer be edited.",
+    "panelTitle": "My services",
+    "panelDescription": "Manage the services you offer and their lifecycle.",
+    "panelActiveSection": "Active",
+    "panelArchivedSection": "Archived",
+    "panelItem": "service",
+    "panelItems": "services",
+    "emptyPanelTitle": "You don't offer services yet",
+    "emptyPanelDescription": "Publish your first service so the community discovers your work.",
+    "anonymous": "Anonymous",
+    "view": "View",
+    "edit": "Edit",
+    "contactCta": "Sign in to get in touch",
+    "moderationReason": "Reason: {reason}",
+    "createdOn": "Created on {date}",
+    "publishedAtLabel": "Published on {date}",
+    "deliveryModeLabel": "Delivery mode",
+    "pricingTypeLabel": "Pricing",
+    "searchPlaceholder": "Search services…",
+    "search": "Search services",
+    "clearSearch": "Clear search",
+    "sortRelevance": "Relevance",
+    "sortRecent": "Most recent",
+    "sortLabel": "Sort",
+    "filterCategory": "Category",
+    "allCategories": "All categories",
+    "filterDeliveryMode": "Delivery mode",
+    "allDeliveryModes": "All delivery modes",
+    "filterPricingType": "Pricing",
+    "allPricingTypes": "All pricing types",
+    "resultsFor": "{count} results for “{query}”",
+    "noResultsFor": "No results for “{query}”",
+    "loadMore": "Load more",
+    "loadError": "Services could not be loaded.",
+    "loadMoreError": "More services could not be loaded.",
+    "retry": "Retry",
+    "clearFilters": "Clear filters",
+    "activeFilters": "Active filters",
+    "removeFilter": "Remove filter {name}",
+    "emptyResultsTitle": "No results",
+    "emptyResultsDescription": "Try changing the search or removing a filter.",
+    "emptyTitleShort": "No services yet",
+    "emptyDescription": "When someone publishes a service, it will appear here.",
+    "categories": {
+      "desarrollo_web": "Web & software development",
+      "diseno": "Design & UX",
+      "marketing": "Marketing & growth",
+      "fotografia_video": "Photography & video",
+      "consultoria": "Consulting",
+      "mentoria": "Mentoring",
+      "formacion": "Training",
+      "otros": "Other"
+    },
+    "deliveryModes": {
+      "remote": "Remote",
+      "on_site": "On-site",
+      "hybrid": "Hybrid"
+    },
+    "pricingTypes": {
+      "fixed": "Fixed price",
+      "hourly": "Hourly rate",
+      "range": "Price range",
+      "negotiable": "Negotiable",
+      "free": "Free"
+    }
+  },
+  "servicePricing": {
+    "free": "Free",
+    "negotiable": "Negotiable",
+    "perHourSuffix": " / h"
+  },
+  "serviceStatuses": {
+    "draft": "Draft",
+    "published": "Published",
+    "paused": "Paused",
+    "archived": "Archived"
+  },
+  "serviceValidation": {
+    "titleTooShort": "The title must be at least 3 characters long.",
+    "titleTooLong": "The title cannot exceed 120 characters.",
+    "descriptionTooShort": "The description must be at least 20 characters long.",
+    "descriptionTooLong": "The description cannot exceed 5000 characters.",
+    "categoryInvalid": "Invalid category.",
+    "deliveryModeInvalid": "Invalid delivery mode.",
+    "pricingTypeInvalid": "Invalid pricing type.",
+    "statusInvalid": "Invalid status.",
+    "visibilityInvalid": "Invalid visibility.",
+    "amountRequired": "Enter the amount.",
+    "amountInvalid": "The amount is not valid.",
+    "rangeRequired": "Enter both the minimum and maximum.",
+    "minInvalid": "The minimum amount is not valid.",
+    "maxInvalid": "The maximum amount is not valid.",
+    "maxBelowMin": "The maximum cannot be lower than the minimum.",
+    "currencyRequired": "Select a currency.",
+    "currencyInvalid": "The currency must be a valid ISO-4217 code (e.g. EUR).",
+    "noAmountsForType": "This pricing type does not accept amounts."
+  },
+  "serviceForm": {
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Landing page development with Next.js",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What the service includes, deliverables, rough timelines…",
+    "categoryLabel": "Category",
+    "deliveryModeLabel": "Delivery mode",
+    "pricingTypeLabel": "Pricing type",
+    "pricingAmountHint": "One-off amount (or per hour if you choose “Hourly”).",
+    "pricingRangeHint": "Indicative range between a minimum and a maximum.",
+    "pricingNegotiableHint": "No public price: you agree on it via messages.",
+    "pricingFreeHint": "Free service (for example, pro bono or a first session).",
+    "priceAmountLabel": "Amount",
+    "pricePerHourLabel": "Hourly amount",
+    "priceMinLabel": "Minimum",
+    "priceMaxLabel": "Maximum",
+    "currencyLabel": "Currency",
+    "currencyNone": "Select the currency",
+    "visibilityLabel": "Visibility",
+    "visibilityHint": "Decide who can see the service.",
+    "visibility": {
+      "public": "Public",
+      "registeredUsers": "Registered users"
+    },
+    "saveButton": "Save draft",
+    "publishButton": "Publish",
+    "pauseButton": "Pause",
+    "resumeButton": "Reactivate",
+    "archiveButton": "Archive"
+  },
+  "pilotUsers": {
+    "title": "Looking for pilot users",
+    "description": "Declare what you want to test and what you expect from testers. Contact happens via private message.",
+    "whatToTestLabel": "What do you want to test?",
+    "whatToTestPlaceholder": "e.g. Our app's sign-up flow and onboarding…",
+    "targetProfileLabel": "Target user profile",
+    "targetProfilePlaceholder": "e.g. Small food businesses…",
+    "expectationsLabel": "What you expect from the tester",
+    "expectationsPlaceholder": "e.g. 20 minutes of usage and honest feedback…",
+    "incentiveLabel": "Incentive (optional)",
+    "incentivePlaceholder": "e.g. Free early access for life",
+    "slotsLabel": "Slots",
+    "saveButton": "Save plan"
+  },
+  "funding": {
+    "title": "Investment signal",
+    "description": "Mark whether you are seeking investment and add optional context. It is informational only: there are no transactions in the portal.",
+    "seekingTitle": "Seeking investment",
+    "seekingLabel": "I'm seeking investment",
+    "seekingHint": "It will appear on the project's public page as a signal.",
+    "stageLabel": "Target stage",
+    "stageNone": "No stage",
+    "stages": {
+      "idea": "Idea / pre-seed",
+      "pre_seed": "Pre-seed",
+      "seed": "Seed",
+      "series_a": "Series A",
+      "growth": "Growth"
+    },
+    "amountLabel": "Amount sought",
+    "currencyLabel": "Currency",
+    "currencyNone": "No currency",
+    "noteLabel": "Note for investors (optional)",
+    "notePlaceholder": "Use of funds, milestones, ideal terms…",
+    "saveButton": "Save signal",
+    "disclaimer": "Informational signal only. The portal does not handle payments or equity."
+  },
+  "mentoring": {
+    "needKinds": {
+      "member": "Team",
+      "mentor": "Seeking mentor",
+      "tester": "Seeking testers"
+    }
   }
 }

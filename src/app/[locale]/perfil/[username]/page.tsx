@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/card";
 import { getProfileInterests, getProfileSkills } from "@/profiles/data";
 import { FollowButton } from "@/components/follows/follow-button";
+import { StartConversationButton } from "@/components/messaging/start-conversation-button";
 import { getProfileFollowCounts, isFollowingProfile } from "@/follows/data";
 import { brand } from "@/config/brand";
 import { pageMetadataTitle } from "@/i18n/metadata";
 import { Link } from "@/i18n/navigation";
+import { listPublishedServicesByProvider } from "@/services/data";
 import { listPublishedVideos } from "@/videos/data";
 import { resolveVideoThumbnails } from "@/lib/video/preview";
 
@@ -53,6 +55,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const types = await getTranslations("types");
   const collab = await getTranslations("collab");
   const skillLevels = await getTranslations("skillLevels");
+  const servicesT = await getTranslations("services");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -73,13 +76,15 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   const canFollow = !!user && !isOwner;
 
-  const [skills, interests, publishedVideos, followCounts, isFollowing] = await Promise.all([
-    getProfileSkills(supabase, profile.id),
-    getProfileInterests(supabase, profile.id),
-    listPublishedVideos(supabase, { authorId: profile.id, limit: 12 }),
-    getProfileFollowCounts(supabase, profile.id),
-    canFollow ? isFollowingProfile(supabase, user.id, profile.id) : Promise.resolve(false),
-  ]);
+  const [skills, interests, publishedVideos, publishedServices, followCounts, isFollowing] =
+    await Promise.all([
+      getProfileSkills(supabase, profile.id),
+      getProfileInterests(supabase, profile.id),
+      listPublishedVideos(supabase, { authorId: profile.id, limit: 12 }),
+      listPublishedServicesByProvider(supabase, profile.id, 6),
+      getProfileFollowCounts(supabase, profile.id),
+      canFollow ? isFollowingProfile(supabase, user.id, profile.id) : Promise.resolve(false),
+    ]);
 
   const firstName = profile.full_name?.split(" ")[0];
   const videoThumbnails = await resolveVideoThumbnails(supabase, publishedVideos);
@@ -113,6 +118,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 isFollowing={isFollowing}
               />
             )}
+            {canFollow && <StartConversationButton targetProfileId={profile.id} />}
             <span className="text-sm text-muted-foreground">
               {t("followers", { count: followCounts.followers })} ·{" "}
               {t("following", { count: followCounts.following })}
@@ -223,6 +229,40 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 />
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {publishedServices.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between gap-4">
+            <CardTitle>{t("servicesTitle")}</CardTitle>
+            <Link
+              href="/servicios"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              {t("viewAllServices")}
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid gap-3">
+              {publishedServices.map((service) => (
+                <li key={service.id}>
+                  <Link
+                    href={`/servicios/${service.id}`}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border/60 p-3 transition hover:bg-muted/50"
+                  >
+                    <span className="text-sm font-semibold">{service.title}</span>
+                    <Badge className="border-border bg-muted text-muted-foreground">
+                      {servicesT(`categories.${service.category}` as never)}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {servicesT(`pricingTypes.${service.pricing_type}` as never)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}

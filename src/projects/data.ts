@@ -175,3 +175,19 @@ export async function countOpenNeedsByProject(
   }
   return counts;
 }
+
+export type ProjectPilotPlan = Database["public"]["Tables"]["project_pilot_plans"]["Row"];
+
+// Plan de primeros usuarios del proyecto (1:1). La RLS decide visibilidad
+// (público si el proyecto lo es; gestión solo miembros).
+export async function getPilotPlanByProjectId(
+  supabase: SupabaseClient<Database>,
+  projectId: string,
+): Promise<ProjectPilotPlan | null> {
+  const { data } = await supabase
+    .from("project_pilot_plans")
+    .select("*")
+    .eq("project_id", projectId)
+    .maybeSingle();
+  return data ?? null;
+}

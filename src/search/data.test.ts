@@ -6,6 +6,7 @@ import {
   searchOrganizations,
   searchProfiles,
   searchProjects,
+  searchServices,
   searchVideos,
 } from "@/search/data";
 import type {
@@ -13,6 +14,7 @@ import type {
   SearchOrganizationRow,
   SearchProfileRow,
   SearchProjectRow,
+  SearchServiceRow,
   SearchVideoRow,
 } from "@/search/data";
 import { parseCursor, serializeCursor } from "@/search/schemas";
@@ -403,5 +405,87 @@ describe("searchOpportunities", () => {
     if (!result.ok) return;
     expect(result.page.items[0].project).toBeNull();
     expect(result.page.items[0].organization).toBeNull();
+  });
+});
+
+function serviceRow(overrides: Partial<SearchServiceRow> = {}): SearchServiceRow {
+  return {
+    service_id: "service-1",
+    title: "Landing page en Next.js",
+    description: "Diseño y desarrollo de landing pages rápidas.",
+    category: "desarrollo_web",
+    delivery_mode: "remote",
+    pricing_type: "range",
+    price_amount: null,
+    price_min: 300,
+    price_max: 600,
+    currency: "EUR",
+    provider_id: "provider-1",
+    provider_full_name: "Ana García",
+    provider_username: "ana",
+    provider_avatar_url: null,
+    provider_headline: null,
+    search_score: 0.88,
+    created_at: "2026-08-01T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
+describe("searchServices", () => {
+  it("llama a la RPC con query normalizada, límite por defecto y filtros", async () => {
+    const { client, calls } = createSupabaseSpy({ rpcResult: { data: [serviceRow()] } });
+    const result = await searchServices(client, {
+      query: "  landing  ",
+      category: "desarrollo_web",
+      deliveryMode: "remote",
+      pricingType: "range",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].rpc).toBe("search_services");
+    expect(calls[0].args.p_query).toBe("landing");
+    expect(calls[0].args.p_limit).toBe(SEARCH_PAGE_SIZE);
+    expect(calls[0].args.p_category).toBe("desarrollo_web");
+    expect(calls[0].args.p_delivery_mode).toBe("remote");
+    expect(calls[0].args.p_pricing_type).toBe("range");
+    expect(calls[0].args.p_cursor_score).toBeUndefined();
+  });
+
+  it("mapea la fila con el proveedor anidado y deriva el cursor del último item", async () => {
+    const { client } = createSupabaseSpy({
+      rpcResult: {
+        data: [serviceRow({ service_id: "s1" }), serviceRow({ service_id: "s2" })],
+      },
+    });
+    const result = await searchServices(client, {});
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.page.items).toHaveLength(2);
+    expect(result.page.items[0].id).toBe("s1");
+    expect(result.page.items[0].provider?.username).toBe("ana");
+    expect(result.page.items[0].priceMin).toBe(300);
+    expect(parseCursor(result.page.nextCursor)).toEqual({
+      score: 0.88,
+      createdAt: "2026-08-01T10:00:00.000Z",
+      id: "s2",
+    });
+  });
+
+  it("página vacía → nextCursor null; error se propaga", async () => {
+    const empty = createSupabaseSpy({ rpcResult: { data: [] } });
+    const emptyResult = await searchServices(empty.client, {});
+    expect(emptyResult.ok).toBe(true);
+    if (emptyResult.ok) {
+      expect(emptyResult.page.nextCursor).toBeNull();
+    }
+
+    const failing = createSupabaseSpy({ rpcResult: { error: { message: "boom" } } });
+    const failed = await searchServices(failing.client, {});
+    expect(failed.ok).toBe(false);
+    if (!failed.ok) {
+      expect(failed.error).toBe("boom");
+    }
   });
 });

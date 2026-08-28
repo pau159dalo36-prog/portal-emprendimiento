@@ -221,6 +221,49 @@ export type SearchVideoResult = {
   createdAt: string;
 };
 
+// Servicios (FASE 7): el proveedor es un perfil; headline viaja para las
+// tarjetas de descubrimiento sin segundo viaje.
+export type SearchService = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  deliveryMode: string;
+  pricingType: string;
+  priceAmount: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  currency: string | null;
+  provider: {
+    id: string;
+    fullName: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+    headline: string | null;
+  } | null;
+  createdAt: string;
+};
+
+export type SearchServiceResult = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  deliveryMode: string;
+  pricingType: string;
+  priceAmount: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  currency: string | null;
+  providerId: string;
+  providerFullName: string | null;
+  providerUsername: string | null;
+  providerAvatarUrl: string | null;
+  providerHeadline: string | null;
+  score: number;
+  createdAt: string;
+};
+
 // Cursor opaco para la UI: la capa de datos lo serializa/deserializa.
 export type SearchCursor = {
   score: number;

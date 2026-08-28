@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1441,6 +1441,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          need_kind: string
           project_id: string
           skill_id: string | null
           sort_order: number
@@ -1452,6 +1453,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          need_kind?: string
           project_id: string
           skill_id?: string | null
           sort_order?: number
@@ -1463,6 +1465,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          need_kind?: string
           project_id?: string
           skill_id?: string | null
           sort_order?: number
@@ -1486,19 +1489,68 @@ export type Database = {
           },
         ]
       }
+      project_pilot_plans: {
+        Row: {
+          created_at: string
+          id: string
+          incentive_note: string | null
+          project_id: string
+          slots_total: number | null
+          target_user_profile: string | null
+          tester_expectations: string | null
+          updated_at: string
+          what_to_test: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incentive_note?: string | null
+          project_id: string
+          slots_total?: number | null
+          target_user_profile?: string | null
+          tester_expectations?: string | null
+          updated_at?: string
+          what_to_test: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incentive_note?: string | null
+          project_id?: string
+          slots_total?: number | null
+          target_user_profile?: string | null
+          tester_expectations?: string | null
+          updated_at?: string
+          what_to_test?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_pilot_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
+          amount_sought: number | null
           cover_image_url: string | null
           created_at: string
           description: string | null
+          funding_stage: string | null
           id: string
           industries: string[]
+          investment_currency: string | null
+          investment_note: string | null
           is_public: boolean
           name: string
           organization_id: string | null
           owner_id: string
           problem: string | null
           search_text: string | null
+          seeking_investment: boolean
           slug: string
           solution: string | null
           stage: string
@@ -1510,17 +1562,22 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          amount_sought?: number | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          funding_stage?: string | null
           id?: string
           industries?: string[]
+          investment_currency?: string | null
+          investment_note?: string | null
           is_public?: boolean
           name: string
           organization_id?: string | null
           owner_id: string
           problem?: string | null
           search_text?: string | null
+          seeking_investment?: boolean
           slug: string
           solution?: string | null
           stage?: string
@@ -1532,17 +1589,22 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          amount_sought?: number | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          funding_stage?: string | null
           id?: string
           industries?: string[]
+          investment_currency?: string | null
+          investment_note?: string | null
           is_public?: boolean
           name?: string
           organization_id?: string | null
           owner_id?: string
           problem?: string | null
           search_text?: string | null
+          seeking_investment?: boolean
           slug?: string
           solution?: string | null
           stage?: string
@@ -1665,6 +1727,126 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_services: {
+        Row: {
+          created_at: string
+          profile_id: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_services_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string | null
+          delivery_mode: string
+          description: string
+          id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          moderation_status: string
+          price_amount: number | null
+          price_max: number | null
+          price_min: number | null
+          pricing_type: string
+          provider_id: string
+          published_at: string | null
+          search_text: string | null
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          currency?: string | null
+          delivery_mode?: string
+          description: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          price_amount?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          pricing_type?: string
+          provider_id: string
+          published_at?: string | null
+          search_text?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string | null
+          delivery_mode?: string
+          description?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
+          price_amount?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          pricing_type?: string
+          provider_id?: string
+          published_at?: string | null
+          search_text?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1946,9 +2128,17 @@ export type Database = {
         Args: { p_opportunity_id: string }
         Returns: boolean
       }
+      admin_approve_service: {
+        Args: { p_service_id: string }
+        Returns: boolean
+      }
       admin_approve_video: { Args: { p_video_id: string }; Returns: boolean }
       admin_flag_opportunity: {
         Args: { p_opportunity_id: string; p_reason?: string }
+        Returns: boolean
+      }
+      admin_flag_service: {
+        Args: { p_reason?: string; p_service_id: string }
         Returns: boolean
       }
       admin_flag_video: {
@@ -1957,6 +2147,10 @@ export type Database = {
       }
       admin_reject_opportunity: {
         Args: { p_opportunity_id: string; p_reason?: string }
+        Returns: boolean
+      }
+      admin_reject_service: {
+        Args: { p_reason?: string; p_service_id: string }
         Returns: boolean
       }
       admin_reject_video: {
@@ -2334,6 +2528,38 @@ export type Database = {
         Args: { p_created_at: string; p_ref?: string }
         Returns: number
       }
+      search_services: {
+        Args: {
+          p_category?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_cursor_score?: number
+          p_delivery_mode?: string
+          p_limit?: number
+          p_pricing_type?: string
+          p_query?: string
+          p_sort?: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          currency: string
+          delivery_mode: string
+          description: string
+          price_amount: number
+          price_max: number
+          price_min: number
+          pricing_type: string
+          provider_avatar_url: string
+          provider_full_name: string
+          provider_headline: string
+          provider_id: string
+          provider_username: string
+          search_score: number
+          service_id: string
+          title: string
+        }[]
+      }
       search_videos: {
         Args: {
           p_cursor_created_at?: string
@@ -2368,6 +2594,10 @@ export type Database = {
           video_id: string
           width: number
         }[]
+      }
+      service_is_publicly_distributable: {
+        Args: { p_moderation_status: string; p_status: string }
+        Returns: boolean
       }
       toggle_post_support: { Args: { p_post_id: string }; Returns: boolean }
       video_analytics_access: { Args: { p_video_id: string }; Returns: string }

@@ -212,4 +212,27 @@ describe("acciones de interacciones", () => {
     expect(state).toMatchObject({ status: "success", saved: true });
     expect(toggleSave).toHaveBeenCalledWith(expect.anything(), ME, "post", POST_ID);
   });
+
+  it("toggleSaveAction acepta servicios como destino (FASE 7)", async () => {
+    const SERVICE_ID = "00000000-0000-4000-8000-0000000000c1";
+    vi.mocked(toggleSave).mockResolvedValueOnce({ saved: false, error: null });
+
+    const state = await toggleSaveAction(
+      { status: "idle" },
+      formWith({ target_type: "service", target_id: SERVICE_ID }),
+    );
+
+    expect(state).toMatchObject({ status: "success", saved: false });
+    expect(toggleSave).toHaveBeenCalledWith(expect.anything(), ME, "service", SERVICE_ID);
+  });
+
+  it("toggleSaveAction rechaza tipos de destino desconocidos", async () => {
+    const state = await toggleSaveAction(
+      { status: "idle" },
+      formWith({ target_type: "organization", target_id: POST_ID }),
+    );
+
+    expect(state.status).toBe("error");
+    expect(toggleSave).not.toHaveBeenCalled();
+  });
 });

@@ -14,6 +14,7 @@ import type {
   SearchOrganization,
   SearchProfile,
   SearchProject,
+  SearchService,
   SearchVideo,
 } from "@/search/types";
 
@@ -48,6 +49,7 @@ vi.mock("@/search/data", () => ({
   searchProjects: vi.fn(),
   searchOrganizations: vi.fn(),
   searchOpportunities: vi.fn(),
+  searchServices: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -64,6 +66,7 @@ import {
   searchOrganizations,
   searchProfiles,
   searchProjects,
+  searchServices,
   searchVideos,
 } from "@/search/data";
 
@@ -72,6 +75,7 @@ const mockedSearchProfiles = vi.mocked(searchProfiles);
 const mockedSearchProjects = vi.mocked(searchProjects);
 const mockedSearchOrganizations = vi.mocked(searchOrganizations);
 const mockedSearchOpportunities = vi.mocked(searchOpportunities);
+const mockedSearchServices = vi.mocked(searchServices);
 
 function video(id: string): SearchVideo {
   return {
@@ -169,6 +173,23 @@ function opportunity(id: string): SearchOpportunity {
   };
 }
 
+function service(id: string): SearchService {
+  return {
+    id,
+    title: `Servicio ${id}`,
+    description: null,
+    category: "desarrollo_web",
+    deliveryMode: "remote",
+    pricingType: "negotiable",
+    priceAmount: null,
+    priceMin: null,
+    priceMax: null,
+    currency: null,
+    provider: null,
+    createdAt: "2026-08-01T10:00:00.000Z",
+  };
+}
+
 function initialData(overrides: Partial<ExploreInitialData> = {}): ExploreInitialData {
   return {
     profiles: { ok: true, items: [], nextCursor: null },
@@ -176,6 +197,7 @@ function initialData(overrides: Partial<ExploreInitialData> = {}): ExploreInitia
     organizations: { ok: true, items: [], nextCursor: null },
     videos: { ok: true, items: [], nextCursor: null },
     opportunities: { ok: true, items: [], nextCursor: null },
+    services: { ok: true, items: [], nextCursor: null },
     ...overrides,
   };
 }
@@ -193,6 +215,9 @@ const defaultParams: ExploreParams = {
   experience: "",
   firstJob: "false",
   date: "",
+  category: "",
+  deliveryMode: "",
+  pricingType: "",
 };
 
 function renderApp(props: {
@@ -216,6 +241,7 @@ beforeEach(() => {
   mockedSearchProjects.mockReset();
   mockedSearchOrganizations.mockReset();
   mockedSearchOpportunities.mockReset();
+  mockedSearchServices.mockReset();
 });
 
 afterEach(() => {
@@ -292,6 +318,36 @@ describe("ExploreApp — pestañas", () => {
     expect(screen.getByText("Oportunidad o1")).toBeInTheDocument();
     expect(screen.getByText("Oportunidad o2")).toBeInTheDocument();
     expect(mockedSearchOpportunities).not.toHaveBeenCalled();
+  });
+
+  it("la pestaña de servicios renderiza los items iniciales del servidor", () => {
+    renderApp({
+      params: { tab: "services" },
+      initial: initialData({
+        services: { ok: true, items: [service("s1"), service("s2")], nextCursor: null },
+      }),
+    });
+
+    expect(screen.getByRole("tab", { name: "explore.tabServices" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Servicio s1")).toBeInTheDocument();
+    expect(screen.getByText("Servicio s2")).toBeInTheDocument();
+    expect(mockedSearchServices).not.toHaveBeenCalled();
+  });
+
+  it("el filtro de categoría en servicios navega con category", async () => {
+    const user = userEvent.setup();
+    renderApp({ params: { tab: "services" } });
+
+    await user.selectOptions(screen.getByLabelText("explore.filterCategory"), "diseno");
+
+    expect(routerReplace).toHaveBeenCalledWith({
+      pathname: "/explorar",
+      query: { tab: "services", category: "diseno" },
+    });
+    expect(mockedSearchServices).not.toHaveBeenCalled();
   });
 
   it("el filtro de tipo en oportunidades navega con opportunityType", async () => {

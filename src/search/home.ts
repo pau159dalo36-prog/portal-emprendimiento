@@ -12,6 +12,7 @@ import {
   searchOrganizations,
   searchProfiles,
   searchProjects,
+  searchServices,
   searchVideos,
 } from "@/search/data";
 import type { ExploreParams } from "@/search/schemas";
@@ -21,6 +22,7 @@ import type {
   SearchProfile,
   SearchProject,
   SearchPageResult,
+  SearchService,
   SearchVideo,
 } from "@/search/types";
 import type { Database } from "@/types/database.types";
@@ -35,6 +37,7 @@ export type ExploreInitialData = {
   organizations: ExploreInitialTab<SearchOrganization>;
   videos: ExploreInitialTab<SearchVideo>;
   opportunities: ExploreInitialTab<SearchOpportunity>;
+  services: ExploreInitialTab<SearchService>;
 };
 
 function toTab<T>(result: SearchPageResult<T>): ExploreInitialTab<T> {
@@ -47,7 +50,7 @@ export async function loadExploreHome(
   supabase: SupabaseClient<Database>,
   params: ExploreParams,
 ): Promise<ExploreInitialData> {
-  const [profiles, projects, organizations, videos, opportunities] = await Promise.all([
+  const [profiles, projects, organizations, videos, opportunities, services] = await Promise.all([
     searchProfiles(supabase, {
       query: params.q,
       sort: params.sort,
@@ -80,6 +83,13 @@ export async function loadExploreHome(
       firstJob: params.firstJob === "true" ? true : null,
       date: params.date || null,
     }),
+    searchServices(supabase, {
+      query: params.q,
+      sort: params.sort,
+      category: params.category || null,
+      deliveryMode: params.deliveryMode || null,
+      pricingType: params.pricingType || null,
+    }),
   ]);
 
   return {
@@ -88,5 +98,6 @@ export async function loadExploreHome(
     organizations: toTab(organizations),
     videos: toTab(videos),
     opportunities: toTab(opportunities),
+    services: toTab(services),
   };
 }

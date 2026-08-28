@@ -11,7 +11,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { NEED_STATUSES } from "@/projects/constants";
+import { NEED_KINDS, NEED_STATUSES } from "@/projects/constants";
 
 export type NeedManagerItem = {
   id: string;
@@ -19,6 +19,7 @@ export type NeedManagerItem = {
   description: string | null;
   commitment: string | null;
   status: string;
+  need_kind?: string | null;
 };
 
 type NeedManagerProps = {
@@ -44,6 +45,7 @@ export function NeedManager({
 }: NeedManagerProps) {
   const t = useTranslations("managers");
   const statuses = useTranslations("needStatuses");
+  const mentoring = useTranslations("mentoring");
   const [state, formAction, pending] = useActionState(addAction, initialFormState);
 
   return (
@@ -59,7 +61,14 @@ export function NeedManager({
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{need.title}</p>
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {need.title}
+                    {need.need_kind && need.need_kind !== "member" && (
+                      <Badge className="border-primary/30 bg-primary/10 text-primary">
+                        {mentoring(`needKinds.${need.need_kind}` as never)}
+                      </Badge>
+                    )}
+                  </p>
                   {need.commitment && (
                     <p className="text-xs text-muted-foreground">{need.commitment}</p>
                   )}
@@ -129,6 +138,22 @@ export function NeedManager({
               {fieldError(state, "title") && (
                 <p className="text-sm text-destructive">{fieldError(state, "title")}</p>
               )}
+            </div>
+            <div className="grid gap-2 sm:max-w-64">
+              <Label htmlFor="need-kind">{t("needKind")}</Label>
+              <select
+                id="need-kind"
+                name="need_kind"
+                defaultValue="member"
+                aria-label={t("needKind")}
+                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+              >
+                {NEED_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {mentoring(`needKinds.${kind}` as never)}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="need-description">{t("needDescription")}</Label>

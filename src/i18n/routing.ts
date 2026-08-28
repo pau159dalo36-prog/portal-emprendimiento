@@ -17,6 +17,11 @@ export const routing = defineRouting({
       es: "/oportunidades",
       en: "/opportunities",
     },
+    // Mercado de servicios (FASE 7): /servicios (es) y /services (en).
+    "/servicios": {
+      es: "/servicios",
+      en: "/services",
+    },
   },
 });
 

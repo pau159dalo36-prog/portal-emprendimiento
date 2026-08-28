@@ -1,7 +1,80 @@
-# Estado del proyecto — FASE 10 (Mensajería + Notificaciones)
+# Estado del proyecto — FASE 7 (Servicios, pilot users, mentoría y señal de inversión)
 
 ## Estado general
 
+- ✅ **FASE 7 COMPLETA Y APLICADA EN REMOTO** (servicios profesionales +
+  freelance básico + guardados de servicios + pilot users + mentoría vía
+  project_needs + señal de inversión): migraciones NO destructivas
+  `20260823000000_fase7_servicios.sql`,
+  `20260824000000_fase7_needs_pilotos_financiacion.sql` y corrección
+  `20260825000000_fase7_fix_search_services.sql` **aplicadas en remoto**
+  (`efgmjuzcqolpibraymol`, migration list local=remoto 25/25),
+  `supabase:types` regenerado desde el remoto (los tipos manuales previos al
+  push coincidían; el generado añadió solo las RPCs admin_* y
+  `service_is_publicly_distributable`),
+  `lint`/`typecheck`/`test`/`build` en verde y `db push --dry-run` →
+  "Remote database is up to date.".
+  Auditoría ACL real contra remoto (catálogo + conductual con transacciones
+  revertidas): 39/39 PASS. Sin pagos, sin escrow, sin órdenes, sin ratings:
+  `services` es un catálogo informativo con CTA de mensajería (FASE 10).
+  - `services`: catálogo MVP por perfil (sin pagos/escrow/órdenes/ratings);
+    pricing `fixed|hourly|range|negotiable|free` con CHECK de forma exacta
+    (`services_pricing_shape_check`: fixed/hourly → amount+moneda; range →
+    min<=max+moneda; negotiable/free → sin importes); ciclo de vida
+    `draft→published⇄paused→archived` (terminal) con trigger
+    `services_validate_state_change`; moderación post-publicación
+    (unreviewed/approved/rejected/flagged + auditoría, patrón
+    vídeos/oportunidades); visibilidad `public|registered_users`;
+    `search_text` generado con `search_normalize`.
+  - RPC `search_services` con el estándar FASE 5/6 (SECURITY DEFINER,
+    auth.uid() interno, trigram+ts_rank+recency 0.60/0.25/0.15, cursor keyset
+    score/created_at/id, sin N+1) y EXCLUSIÓN de bloqueos en ambas direcciones.
+    Guardados `saved_services` (FK real, patrón FASE 9). Moderación admin:
+    `admin_approve_service`/`admin_reject_service`/`admin_flag_service`
+    (is_platform_admin() interno, no auto-moderación).
+  - RLS: lectura pública solo distribuible+public; propio siempre;
+    registered_users para autenticados; admin todo; INSERT/UPDATE solo
+    proveedor (sin DELETE: ciclo por estados). ACL revoke-first en TODO lo
+    nuevo; funciones de trigger sin EXECUTE.
+  - Señales del proyecto: `projects` += `seeking_investment`,
+    `funding_stage`, `amount_sought`, `investment_currency`, `investment_note`
+    (CHECK: flag apagado ⇒ todo NULL; SOLO señal informativa, sin
+    transacciones). `project_needs` += `need_kind ∈ member|mentor|tester`
+    (default member, retrocompatible) → "busco mentor/experto" reutiliza la
+    tabla existente. Pilot users: tabla NUEVA `project_pilot_plans` 1:1
+    (UNIQUE project_id; qué probar/perfil buscado/qué espera/incentivo/plazas),
+    RLS espejo de project_needs.
+  - Frontend: `/servicios` (mercado con filtros categoría/modalidad/precio),
+    `/servicios/[id]` (detalle + SaveButton + CTA "Enviar mensaje" reutilizando
+    `get_or_create_dm` FASE 10), `/publicar/servicio`,
+    `/servicios/[id]/editar`, `/panel/servicios` (secciones activos/archivados +
+    transiciones). Explorar: pestaña `services` + chips/filtros propios.
+    Perfil público: sección "Servicios que ofrece" + botón mensaje.
+    `/panel/guardados`: sección servicios. Proyecto: edición de plan piloto y
+    señal de inversión + badge "Buscando inversión" + necesidades
+    mentor/tester etiquetadas. Feed SIN tocar (los servicios NO entran en
+    Para ti/Siguiendo; distribución vía /servicios, perfil, Explore y search).
+  - i18n ES/EN paritaria (namespaces nuevos `services`, `servicePricing`,
+    `serviceStatuses`, `serviceValidation`, `serviceForm`, `pilotUsers`,
+    `funding`, `mentoring` + extensiones nav/sidebar/explore/savedPanel/
+    metadata/managers/actions/validation). Routing `/servicios ↔ /services`.
+    Features activadas: `servicios`, `financiacion`, `clientesPiloto`.
+  - Verificación: `lint` ✓ · `typecheck` ✓ · `test` ✓ (47 ficheros / 488 tests,
+    incluyen services: draft/publish/pause/archive, edición propia, denegación
+    ajena, pricing constraints, search, saves service target, validaciones
+    funding/pilot/needKind) · `build` ✓ (rutas nuevas listadas) ·
+    `db push --dry-run` ✓ ("Remote database is up to date.").
+  - Corrección post-push `20260825000000_fase7_fix_search_services.sql`: los
+    filtros category/delivery_mode/pricing_type de `search_services` se
+    normalizaban con `search_normalize` (que convierte `_` en espacio) y nunca
+    igualaban los valores snake_case; ahora son comparación exacta tras trim.
+    Detectado y verificado en la auditoría conductual contra remoto.
+  - Pendiente solo la ejecución del test SQL
+    `supabase/tests/fase7_services_needs.sql` contra el stack local (Docker no
+    disponible; NO ejecutarlo contra producción). Sin pasarela de pago, sin
+    marketplace financiero y sin UI admin específica de moderación de servicios
+    (las RPCs admin_* existen y están auditadas; la UI de moderación genérica
+    queda como follow-up).
 - ✅ **FASE 10 COMPLETA Y APLICADA EN REMOTO** (mensajería DM 1:1 +
   notificaciones): migración `20260822000000_fase10_messaging_notifications.sql`
   **aplicada en remoto** (`efgmjuzcqolpibraymol`, migration list local=remoto
@@ -659,10 +732,17 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: **22/22 (hasta `20260822000000_fase10_messaging_notifications.sql`)**.
-  FASE 10 aplicada, auditada en remoto y verificada (`db push --dry-run` →
-  "Remote database is up to date.").
-- Los tests SQL de FASE 4–FASE 10 (posts/follows/analytics/feed/search/
-  oportunidades/interacciones/applications/messaging-notifications) NO deben
-  ejecutarse contra producción; quedan para el stack local.
-- Sin commit/push pendiente de autorización.
+- Migraciones local=remoto: **25/25 (hasta `20260825000000_fase7_fix_search_services.sql`)**.
+  FASE 7 aplicada, auditada en remoto (catálogo ACL + auditoría conductual con
+  transacciones revertidas: 39/39 PASS, sin datos residuales) y verificada
+  (`db push --dry-run` → "Remote database is up to date.").
+- Los tests SQL de FASE 4–FASE 7 NO deben ejecutarse contra producción; quedan
+  para el stack local.
+- FASE 7 cerrada con commit único `feat: completar fase 7 servicios y
+  necesidades` (migraciones + tests + frontend + docs) y `git push origin main`.
+- Hardening menor identificado: 5 trigger functions FASE 1/2 (`normalize_slug`,
+  `handle_updated_at`, `prevent_id_change`, `organizations_add_owner_member`,
+  `projects_add_owner_member`) sin EXECUTE revocado de anon/authenticated. No es
+  vulnerabilidad activa (PostgreSQL ejecuta triggers independientemente del
+  grant), pero viola la convención fail-closed establecida en FASE 6+. Pendiente
+  migración correctiva de mínimo privilegio.
