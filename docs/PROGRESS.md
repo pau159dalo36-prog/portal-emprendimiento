@@ -1,6 +1,17 @@
-# Estado del proyecto — FASE 7 (Servicios, pilot users, mentoría y señal de inversión)
+# Estado del proyecto — FASE 12 (Seguridad, moderación y privacidad)
 
 ## Estado general
+
+- ✅ **FASE 12 COMPLETA Y APLICADA EN REMOTO** (hardening de seguridad global
+  del MVP): migraciones `20260826000000_fase12_security_hardening.sql` y
+  corrección de mínimo privilegio `20260829000000_fase12_fix_min_priv_reports_ratelimit.sql`
+  **aplicadas en remoto** (`efgmjuzcqolpibraymol`, remoto al día 27/27,
+  `db push --dry-run` → "Remote database is up to date."), `supabase:types`
+  regenerado desde el remoto, auditoría post-push contra el REMOTO REAL en
+  verde (grants, column grants, RLS, SECURITY DEFINER, search_path, funciones
+  trigger, content_reports, rate_limits, bloqueos, storage) y
+  `lint`/`typecheck`/`test`/`build`/`npm audit --omit=dev` en verde. El detalle
+  completo está en la sección FASE 12 de abajo.
 
 - ✅ **FASE 7 COMPLETA Y APLICADA EN REMOTO** (servicios profesionales +
   freelance básico + guardados de servicios + pilot users + mentoría vía
@@ -191,6 +202,148 @@
 - ✅ **FASE 4.1 aplicada** (migración `20260809000000` en remoto).
 - ✅ **FASE 3 completada** (subida, imágenes, publicación, moderación,
   reproductor, portada, panel, tests y docs).
+
+## FASE 12 — Seguridad, moderación de contenido y privacidad
+
+Deliverables creados, revisados y **aplicados en remoto** (`efgmjuzcqolpibraymol`,
+remoto al día 27/27):
+
+- `supabase/migrations/20260826000000_fase12_security_hardening.sql`: una única
+  migración (sección 1-6):
+  1. **ACL revoke-first + grants mínimos** sobre `profiles` (revoca
+     SELECT/INSERT/UPDATE/DELETE/TRUNCATE/resetgrant de `public` y reconcede por
+     política RLS) y REVOKE de ejecución externa para las **19 funciones de
+     trigger/helper de FASE 1/4** (incluidas las 5 señaladas en FASE 7:
+     `normalize_slug`, `handle_updated_at`, `prevent_id_change`,
+     `organizations_add_owner_member`, `projects_add_owner_member`).
+  2. **Column grants en `profiles` + `get_own_profile()`**: anon/authenticated
+     sin SELECT de `contact_email`, `timezone`, `search_text` y
+     `onboarding_completed` (y sin INSERT a `profiles`: la creación corre por
+     `handle_new_user`); `get_own_profile` (SECURITY DEFINER, `search_path=''`,
+     usa `auth.uid()`) devuelve la fila propia COMPLETA incluso en privado; se
+     documenta que el generador de tipos NO emite column grants (frontera a
+     mano en `src/types`).
+  3. **Bloqueos bidireccionales en búsquedas** (`search_projects`,
+     `search_organizations`, `search_videos` y `search_opportunities`):
+     not-exists sobre `profile_blocks` en ambos sentidos (el autor bloquea al
+     lector y el lector bloquea al autor) — espeja el patrón fail-closed
+     FASE 5/6/7 ya usado en `search_services`/`search_profiles`.
+  4. **`content_reports` + `admin_resolve_report`**: denuncias de contenido
+     (post/video/proyecto/oportunidad/servicio/perfil), asignación detectada
+     con CHECK de reason/target_type/status, índice parcial único con
+     `status='open'` (1 denuncia abierta por reporter+destino), resolución vía
+     RPC admin SECURITY DEFINER con `is_platform_admin()` interno y RLS
+     select-propio-o-admin / insert-propio / update-admin.
+  5. **`rate_limits` + `consume_rate_limit`**: tabla con
+     (scope, scope_key, window_start, counter), RLS deny-all (sin policies), y
+     ventana atómica por RPC SECURITY DEFINER fail-closed con `search_path=''`
+     que devuelve boolean; PK compuesta + borrado oportunista de expirados.
+- `supabase/migrations/20260829000000_fase12_fix_min_priv_reports_ratelimit.sql`:
+  corrección de mínimo privilegio detectada en la auditoría post-push: los
+  default privileges de la plataforma habían concedido TODOS los privilegios
+  (incl. DELETE/TRUNCATE/REFERENCES/TRIGGER) de las tablas nuevas
+  `content_reports` y `rate_limits` a anon/authenticated. Revoke-first
+  idempotente: content_reports → solo authenticated select/insert/update;
+  rate_limits → sin grants (solo la RPC SECURITY DEFINER accede como owner).
+- `src/types/database.types.ts`: extendido A MANO (las column grants no las
+  emite el generador) con `content_reports`, `rate_limits` y las RPCs
+  `get_own_profile`, `admin_resolve_report`, `consume_rate_limit`.
+- Capa de aplicación:
+  - Lectores propios ahora usan `get_own_profile()` (perfil propio, panel,
+    onboarding, destino post-login); perfil público con columnas explícitas
+    (nunca email como "username" en público).
+  - Gate `can_manage_opportunity` en `/panel/oportunidades/[id]/candidatos`
+    (solo managers/admin) — cierre del fallo de autorización FASE 8.
+  - Mime de vídeos por lista cerrada (`ALLOWED_VIDEO_MIME_TYPES`) y
+    `resolvePlaybackUrl` devuelve `null` en vez de un URL inventado.
+  - Zod bounds: `userTypes`/`collaborationPreferences` y niveles con `.max(50)`
+    y `MAX_SKILLS=8` (inferiores a los límites SQL) en `profile.ts` y
+    `organization.ts`.
+
+  - **Rate limits aplicados** (helper `src/lib/rate-limit.ts` con
+    `getAnonymousRateLimitKey()` de un solo IP + `consumeRateLimit`):
+    sign_up 5/h, sign_in 10/min, password_reset 5/h (responde éxito aunque se
+    limite, para no revelar existencia de cuentas), update_password 5/h,
+    follow 120/min, comment 30/min, support 60/min, avatar 6/min,
+    report 5/h. Auth usa clave anónima por IP; el resto `user.id`.
+  - **Admin/moderación**: `admin/layout.tsx` con `requireAdmin()`, moderación
+    de servicios (action+form+page reutilizando `search.services`),
+    `src/actions/reports.ts` + botón de denuncia (videos/servicios/
+    oportunidades) y página `/admin/reportes` con lista y resolución.
+  - **Headers web**: `next.config.ts` (`poweredByHeader: false` + `headers()`
+    para `/` y `/:path*`: HSTS, frame/CTO/referrer, permissions, CSP
+    'unsafe-inline' scripts/styles, img/media `https://*.supabase.co`,
+    connect-src ws/wss) y `netlify.toml` espejando los mismos headers (local
+    hosts and deploy).
+  - **Privacidad/legal**: páginas `/[locale]/legal/{terminos,privacidad}`
+    (`SECTIONS` map + namespace `legal` es/en paritario), términos aceptados
+    con enlaces rich text en `sign-up-form.tsx` y footer del layout `(auth)`;
+    metadata terms/privacy. Textos son borradores a revisar.
+- **Upgrade `next` 16.2.12 → 16.3.3** (+ `eslint-config-next` igualado) para
+  eliminar las 3 vulnerabilidades high de producción (postcss 8.5.22, sharp
+  <0.35.0). `npm audit --omit=dev` → **0 vulnerabilidades**; quedan 5 high solo
+  en tooling dev del chain netlify-cli (arreglarlas exige downgrade breaking a
+  netlify-cli@23; se documentó, no se forzó).
+- Tests: `src/lib/rate-limit.test.ts` (mapping RPC + clave anónima vía mock de
+  `next/headers`), `src/actions/reports.test.ts` (denuncia válida/inválida/
+  limitada; resolución anon/normal/administrador), test de rate-limit añadido a
+  `interactions.test.ts`, y mocks `@/lib/rate-limit` en `auth.test.ts` +
+  `interactions.test.ts` (los `headers()`/`supabase.rpc` no corren en vitest).
+  Suite completa **49 ficheros / 501 tests ✅**.
+- `supabase/tests/fase12_security_hardening.sql`: script de verificación SQL
+  (transacción que se revierte) con helpers `t12_ok`/`t12_raises`/`t12_fail` y
+  tabla `t12_failures`: ACL de tablas/funciones por rol (set role via EXECUTE)
+  — column grants y revoke de las 19 funciones —, `consume_rate_limit`
+  (consumo/ventana/reset), `get_own_profile` (completo en privado),
+  `content_reports` + resolución admin con `request.jwt.claim.sub`,
+  búsquedas con filtro de bloqueos en ambas direcciones. **NO ejecutar contra
+  producción** (requiere stack local).
+
+### Verificación actual
+
+- `npm run lint` ✅ / `npm run typecheck` ✅ / `npm run build` ✅ (rutas
+  `[locale]/legal/*` y `admin/*` compiladas).
+- `npm run test` ✅ (501 tests, ver arriba).
+- **Aplicado en remoto** (`efgmjuzcqolpibraymol`): migraciones FASE 12
+  `20260826000000` y fix `20260829000000` applied; `db push --dry-run --linked`
+  → **"Remote database is up to date."** (remoto al día 27/27).
+- **Auditoría post-push contra el remoto REAL** ✅ (catálogo read-only +
+  `set local role` en transacciones revertidas):
+  - Column grants `profiles`: 14 columnas públicas SELECT para anon/auth;
+    `contact_email`/`timezone`/`search_text`/`onboarding_completed` →
+    `permission denied` para anon (probado) y auth sin SELECT; UPDATE propio a
+    nivel de columna; sin INSERT a `profiles` (verificado `has_table_privilege`).
+  - Las **19 funciones trigger** FASE 1/4 con EXECUTE revocado de
+    anon/authenticated (probado `has_function_privilege` = false en las 19).
+  - Matriz de grants por tabla única: content_reports solo
+    authenticated SELECT/INSERT/UPDATE; rate_limits SIN grants a nadie (solo la
+    RPC); anon únicamente SELECT mínimo en las tablas con página pública.
+  - `consume_rate_limit` probado como anon en transacción revertida:
+    3× true + 1× false con límite 3/ventana (correcto); `get_own_profile` sin
+    claims → fail-closed sin fila real.
+  - RLS/policies por tabla (content_reports con sus 3 policies;
+    rate_limits deny-all), SECURITY DEFINER + `search_path=''` en todas las RPC
+    críticas (búsquedas, feed, get_own_profile, admin_*, consume_rate_limit) y
+    filtro de bloqueos en AMBOS sentidos presente en las 6 búsquedas (verificado
+    por `pg_get_functiondef`). Storage: policies intactas
+    (foldername[1]=auth.uid() y reads públicos).
+- `npx supabase db lint` ❌ no ejecutable en este entorno: requiere `supabase
+  start` (Postgres local/Docker no disponible); sólo queda pendiente de
+  ejecutar localmente.
+
+### Pendiente / decisiones
+
+- Ejecutar `supabase/tests/fase12_security_hardening.sql` contra el stack local
+  cuando Docker esté disponible (nunca contra producción) — cubre los caminos
+  con JWT real (auth.uid con request.jwt.claims), que no se pueden simular en
+  esta auditoría read-only.
+- Textos legales actuales son borradores; revisar contenido con el responsable
+  legal antes de producción.
+- Vulnerabilidades dev (`netlify-cli` chain: sharp/ipx, 5 high) documentadas,
+  sin corregir (exigen downgrade breaking a netlify-cli@23; `npm audit --omit=dev`
+  → 0 vulnerabilidades).
+- Cierre con commit único `security: completar fase 12 hardening y moderacion`
+  + `git push origin main`, documentado en `docs/INFORME_PRE_PUSH_FASE12.md`.
 
 ## FASE 9 — Comentarios, feedback, reacciones y guardados
 
@@ -732,17 +885,14 @@ Deliverables creados y revisados:
 ## Remoto
 
 - Proyecto enlazado: `efgmjuzcqolpibraymol` (no tocar `raqcchcvypeptywpjisn`).
-- Migraciones local=remoto: **25/25 (hasta `20260825000000_fase7_fix_search_services.sql`)**.
-  FASE 7 aplicada, auditada en remoto (catálogo ACL + auditoría conductual con
-  transacciones revertidas: 39/39 PASS, sin datos residuales) y verificada
-  (`db push --dry-run` → "Remote database is up to date.").
-- Los tests SQL de FASE 4–FASE 7 NO deben ejecutarse contra producción; quedan
+- Migraciones local=remoto: **27/27** (hasta
+  `20260829000000_fase12_fix_min_priv_reports_ratelimit.sql`).
+  `db push --dry-run` → "Remote database is up to date.".
+- Los tests SQL de FASE 4–FASE 12 NO deben ejecutarse contra producción; quedan
   para el stack local.
 - FASE 7 cerrada con commit único `feat: completar fase 7 servicios y
   necesidades` (migraciones + tests + frontend + docs) y `git push origin main`.
-- Hardening menor identificado: 5 trigger functions FASE 1/2 (`normalize_slug`,
-  `handle_updated_at`, `prevent_id_change`, `organizations_add_owner_member`,
-  `projects_add_owner_member`) sin EXECUTE revocado de anon/authenticated. No es
-  vulnerabilidad activa (PostgreSQL ejecuta triggers independientemente del
-  grant), pero viola la convención fail-closed establecida en FASE 6+. Pendiente
-  migración correctiva de mínimo privilegio.
+- Hardening de trigger functions (5 identificadas en FASE 7 + el resto):
+  incluido en la migración FASE 12 (`20260826000000_`) como REVOKE de EXECUTE
+  de las 19 funciones de trigger/helper, **verificado en remoto**
+  (`has_function_privilege` false para anon/authenticated en las 19).

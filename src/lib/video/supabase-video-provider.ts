@@ -25,7 +25,7 @@ export function createSupabaseVideoProvider(supabase: SupabaseClient<Database>):
       return getPublicObjectUrl(getSupabaseUrl(), bucket, path);
     },
 
-    async resolvePlaybackUrl(ref: StorageObjectRef, visibility: VideoVisibility): Promise<string> {
+    async resolvePlaybackUrl(ref: StorageObjectRef, visibility: VideoVisibility): Promise<string | null> {
       const isPubliclyListable = visibility === "public" || visibility === "unlisted";
       if (ref.bucket === VIDEO_BUCKET_PUBLIC || isPubliclyListable) {
         return getPublicObjectUrl(getSupabaseUrl(), ref.bucket, ref.path);
@@ -35,7 +35,7 @@ export function createSupabaseVideoProvider(supabase: SupabaseClient<Database>):
         .from(ref.bucket)
         .createSignedUrl(ref.path, SIGNED_URL_EXPIRY_SECONDS);
 
-      return data?.signedUrl ?? getPublicObjectUrl(getSupabaseUrl(), ref.bucket, ref.path);
+      return data?.signedUrl ?? null;
     },
   };
 }

@@ -10,14 +10,10 @@ export async function generateMetadata() {
 }
 
 export default async function MyProfilePage() {
-  const { supabase, user } = await requireUser();
+  const { supabase } = await requireUser();
   const locale = await getLocale();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username, onboarding_completed")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data: profile } = await supabase.rpc("get_own_profile");
 
   if (profile?.username) {
     redirect(getPathname({ href: `/perfil/${profile.username}`, locale }));

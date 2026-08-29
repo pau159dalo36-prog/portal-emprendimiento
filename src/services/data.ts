@@ -88,3 +88,38 @@ export async function listSavedServiceIds(
     .in("service_id", serviceIds);
   return new Set((data ?? []).map((row) => row.service_id));
 }
+
+const MODERATION_PRIORITY: Record<string, number> = {
+  unreviewed: 0,
+  flagged: 1,
+  rejected: 2,
+  approved: 3,
+};
+
+// Servicios para moderación (solo admin, vía políticas RLS). Ordena primero lo
+// sin revisar y lo marcado; después recencia. Los archivados no se listan: ya
+// son invisibles públicamente por trigger.
+export async function listServicesForModeration(
+  supabase: SupabaseClient<Database>,
+): Promise<ServiceWithProvider[]> {
+  const { data } = await supabase
+    .from("services")
+    .select(
+      "*, provider:profiles!services_provider_id_fkey(id, username, full_name, avatar_url, headline)",
+    )
+    .neq("status", "archived");
+
+  return [...(data ?? [])].sort((a, b) => {
+    const priority =
+      (MODERATION_PRIORITY[a.moderation_status] ?? 4) -
+      (MODERATION_PRIORITY[b.moderation_status] ?? 4);
+    if (priority !== 0) {
+      return priority;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  }).map((service) => ({
+    ...service,
+    provider:
+      service.provider && !Array.isArray(service.provider) ? service.provider : null,
+  }));
+}

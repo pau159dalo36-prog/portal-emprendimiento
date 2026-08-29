@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/auth/session";
 import type { FormState } from "@/actions/form-state";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { isFollowTargetId } from "@/validations/follows";
 import {
   followOrganization,
@@ -37,6 +38,12 @@ export async function toggleFollowAction(
 
   if (!isFollowTarget(targetType) || !isFollowTargetId(targetId)) {
     return { status: "error", message: t("invalidTarget") };
+  }
+
+  // Mitigación de abuso: evita seguidores/desbloqueos masivos por script.
+  const withinLimit = await consumeRateLimit(supabase, "follow", user.id, 120, 60);
+  if (!withinLimit) {
+    return { status: "error", message: t("failed"), following };
   }
 
   const result =

@@ -12,6 +12,13 @@ export type ProfileInterest = {
   name: string;
 };
 
+export async function getOwnProfile(
+  supabase: SupabaseClient<Database>,
+): Promise<Database["public"]["Functions"]["get_own_profile"]["Returns"] | null> {
+  const { data } = await supabase.rpc("get_own_profile");
+  return data;
+}
+
 export async function getProfileSkills(
   supabase: SupabaseClient<Database>,
   profileId: string,

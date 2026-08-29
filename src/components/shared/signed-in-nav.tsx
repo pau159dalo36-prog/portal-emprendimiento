@@ -21,10 +21,24 @@ export async function SignedInNav({ isAdmin = false }: { isAdmin?: boolean }) {
         {t("myVideos")}
       </Link>
       {isAdmin && (
-        <Link href="/admin/videos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          <ShieldCheck className="size-4" aria-hidden="true" />
-          {t("adminVideos")}
-        </Link>
+        <>
+          <Link href="/admin/videos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ShieldCheck className="size-4" aria-hidden="true" />
+            {t("adminVideos")}
+          </Link>
+          <Link href="/admin/oportunidades" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ShieldCheck className="size-4" aria-hidden="true" />
+            {t("adminOpportunities")}
+          </Link>
+          <Link href="/admin/servicios" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ShieldCheck className="size-4" aria-hidden="true" />
+            {t("adminServices")}
+          </Link>
+          <Link href="/admin/reportes" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ShieldCheck className="size-4" aria-hidden="true" />
+            {t("adminReports")}
+          </Link>
+        </>
       )}
       <Link href="/panel" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         {t("panel")}

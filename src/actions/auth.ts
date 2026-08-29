@@ -15,6 +15,7 @@ import {
 } from "@/validations/auth";
 import { getPathname } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
+import { consumeRateLimit, getAnonymousRateLimitKey } from "@/lib/rate-limit";
 
 type AuthLogEntry = {
   action: string;
@@ -92,6 +93,17 @@ export async function signUpAction(
 
   const supabase = await createClient();
 
+  // Mitigación de abuso: nº limitado de registros por IP y ventana (para no
+  // revelar la política, se responde con el mismo error genérico).
+  const rateKey = await getAnonymousRateLimitKey();
+  const withinLimit = await consumeRateLimit(supabase, "sign_up", rateKey, 5, 3600);
+  if (!withinLimit) {
+    return {
+      status: "error",
+      message: ta("signUpFailed"),
+    };
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.correo,
     password: parsed.data.contrasena,
@@ -110,7 +122,7 @@ export async function signUpAction(
   }
 
   if (data.session && data.user) {
-    const destination = await getPostLoginDestination(supabase, data.user.id);
+    const destination = await getPostLoginDestination(supabase);
     redirect(getPathname({ href: destination, locale }));
   }
 
@@ -137,6 +149,16 @@ export async function signInAction(
 
   const supabase = await createClient({ persistent: parsed.data.recordar });
 
+  // Mitigación de abuso en el inicio de sesión (fuerza bruta por IP).
+  const rateKey = await getAnonymousRateLimitKey();
+  const withinLimit = await consumeRateLimit(supabase, "sign_in", rateKey, 10, 60);
+  if (!withinLimit) {
+    return {
+      status: "error",
+      message: ta("signInFailed"),
+    };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email: parsed.data.correo,
     password: parsed.data.contrasena,
@@ -150,7 +172,7 @@ export async function signInAction(
     };
   }
 
-  const destination = await getPostLoginDestination(supabase, data.session.user.id);
+  const destination = await getPostLoginDestination(supabase);
   redirect(getPathname({ href: destination, locale }));
 }
 
@@ -170,6 +192,16 @@ export async function requestPasswordResetAction(
   }
 
   const supabase = await createClient();
+
+  // Mitigación de abuso: evita inundar buzones de correo por IP.
+  const rateKey = await getAnonymousRateLimitKey();
+  const withinLimit = await consumeRateLimit(supabase, "password_reset", rateKey, 5, 3600);
+  if (!withinLimit) {
+    return {
+      status: "success",
+      message: ta("resetSent"),
+    };
+  }
 
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.correo, {
     redirectTo: `${getSiteUrl()}/auth/reset-password`,
@@ -203,6 +235,16 @@ export async function updatePasswordAction(
   }
 
   const supabase = await createClient();
+
+  // Mitigación de abuso en el cambio de contraseña por IP.
+  const rateKey = await getAnonymousRateLimitKey();
+  const withinLimit = await consumeRateLimit(supabase, "update_password", rateKey, 5, 3600);
+  if (!withinLimit) {
+    return {
+      status: "error",
+      message: ta("updateFailed"),
+    };
+  }
 
   const { data, error } = await supabase.auth.updateUser({
     password: parsed.data.contrasena,

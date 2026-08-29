@@ -30,6 +30,12 @@ vi.mock("@/lib/env", () => ({
   getSiteUrl: vi.fn(() => "http://localhost:3000"),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({
+  // El rate-limit por IP no aplica en tests unitarios: siempre dentro del límite.
+  consumeRateLimit: vi.fn(async () => true),
+  getAnonymousRateLimitKey: vi.fn(async () => "test-ip"),
+}));
+
 const mockedCreateClient = vi.mocked(createClient);
 const mockedGetSiteUrl = vi.mocked(getSiteUrl);
 

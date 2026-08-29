@@ -46,6 +46,11 @@ vi.mock("@/interactions/saves", () => ({
   toggleSave: vi.fn(async () => ({ saved: true, error: null })),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({
+  // El rate-limit no aplica en tests unitarios: siempre dentro del límite.
+  consumeRateLimit: vi.fn(async () => true),
+}));
+
 import {
   createComment,
   deleteOwnComment,
@@ -55,6 +60,7 @@ import {
 import { upsertProjectFeedback } from "@/interactions/feedback";
 import { togglePostSupport } from "@/interactions/reactions";
 import { toggleSave } from "@/interactions/saves";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 function formWith(entries: Record<string, string>): FormData {
   const formData = new FormData();
@@ -111,6 +117,18 @@ describe("acciones de interacciones", () => {
 
     expect(state.status).toBe("error");
     expect(state.message).toContain("invalidBody");
+    expect(createComment).not.toHaveBeenCalled();
+  });
+
+  it("el rate-limit bloquea el comentario sin tocar la BD", async () => {
+    vi.mocked(consumeRateLimit).mockResolvedValueOnce(false);
+
+    const state = await createCommentAction(
+      { status: "idle" },
+      formWith({ post_id: POST_ID, body: "Buen punto" }),
+    );
+
+    expect(state.status).toBe("error");
     expect(createComment).not.toHaveBeenCalled();
   });
 

@@ -34,12 +34,16 @@
     "panelApplications": "Mis candidaturas",
     "panelCandidates": "Candidatos de la oportunidad",
     "adminOpportunities": "Moderación de oportunidades",
+    "adminServices": "Moderación de servicios",
+    "adminReports": "Moderación de reportes",
     "notifications": "Notificaciones",
     "messages": "Mensajes",
     "services": "Servicios",
     "publishService": "Publicar servicio",
     "editService": "Editar servicio",
-    "panelServices": "Mis servicios"
+    "panelServices": "Mis servicios",
+    "terms": "Términos y condiciones",
+    "privacy": "Política de privacidad"
   },
   "common": {
     "loading": "Cargando…",
@@ -74,6 +78,8 @@
     "myOpportunities": "Mis oportunidades",
     "myApplications": "Mis candidaturas",
     "adminOpportunities": "Moderación de oportunidades",
+    "adminServices": "Moderación de servicios",
+    "adminReports": "Moderación de reportes",
     "messages": "Mensajes",
     "notifications": "Notificaciones",
     "unreadMessages": "{count, plural, one {# mensaje sin leer} other {# mensajes sin leer}}",
@@ -201,7 +207,7 @@
     "passwordMinPlaceholder": "Mínimo 8 caracteres",
     "confirmPassword": "Confirmar contraseña",
     "confirmPasswordPlaceholder": "Repite tu contraseña",
-    "acceptTerms": "He leído y acepto los términos y condiciones y la política de privacidad.",
+    "termsLabel": "He leído y acepto los <terms>términos y condiciones</terms> y la <privacy>política de privacidad</privacy>.",
     "createAccount": "Crear cuenta",
     "createAccountPending": "Creando cuenta…",
     "newPassword": "Nueva contraseña",
@@ -832,6 +838,22 @@
       "moderationFailed": "No se pudo completar la moderación. Inténtalo de nuevo.",
       "done": "Moderación aplicada."
     },
+    "serviceModeration": {
+      "unauthorized": "No tienes permiso para moderar servicios.",
+      "invalidRequest": "Solicitud de moderación no válida.",
+      "reasonTooLong": "El motivo no puede superar los 500 caracteres.",
+      "moderationFailed": "No se pudo completar la moderación. Inténtalo de nuevo.",
+      "done": "Moderación aplicada."
+    },
+    "report": {
+      "unauthorized": "No tienes permiso para gestionar reportes.",
+      "invalid": "Reporte no válido.",
+      "noteTooLong": "Los detalles no pueden superar los 2000 caracteres.",
+      "failed": "No se pudo enviar el reporte. Inténtalo de nuevo.",
+      "done": "Reporte enviado. Gracias por ayudarnos.",
+      "resolveFailed": "No se pudo resolver el reporte. Inténtalo de nuevo.",
+      "resolveDone": "Reporte resuelto."
+    },
     "follow": {
       "invalidTarget": "Destino no válido.",
       "blocked": "No puedes seguir a esta persona.",
@@ -905,6 +927,54 @@
     "approved": "Aprobado",
     "rejected": "Rechazado",
     "flagged": "Marcado"
+  },
+  "serviceModeration": {
+    "title": "Moderación de servicios",
+    "description": "Revisa los servicios publicados y retira los que incumplan las normas.",
+    "empty": "No hay servicios pendientes de moderación.",
+    "reasonLabel": "Motivo (opcional)",
+    "reasonPlaceholder": "Motivo del rechazo o marcado…",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "flag": "Marcar"
+  },
+  "reports": {
+    "button": "Reportar",
+    "reasonLabel": "Motivo",
+    "noteLabel": "Detalles (opcional)",
+    "notePlaceholder": "Añade contexto para el equipo de moderación…",
+    "submit": "Enviar reporte",
+    "cancel": "Cancelar",
+    "reasons": {
+      "spam": "Spam",
+      "inappropriate": "Contenido inapropiado",
+      "misinformation": "Desinformación",
+      "harassment": "Acoso u hostigamiento",
+      "impersonation": "Suplantación de identidad",
+      "other": "Otro motivo"
+    }
+  },
+  "adminReports": {
+    "title": "Reportes de la comunidad",
+    "description": "Revisa los reportes abiertos y resuélvelos o descártalos.",
+    "empty": "No hay reportes pendientes.",
+    "target": "{type} {id}",
+    "reporterLine": "Reportado por {name} el {date}",
+    "anonymous": "Anónimo",
+    "resolutionLabel": "Nota de resolución",
+    "resolutionPlaceholder": "Decisión y motivo…",
+    "resolve": "Resolver",
+    "dismiss": "Descartar",
+    "targetTypes": {
+      "post": "Publicación",
+      "video": "Vídeo",
+      "service": "Servicio",
+      "opportunity": "Oportunidad",
+      "project": "Proyecto",
+      "organization": "Organización",
+      "comment": "Comentario",
+      "profile": "Perfil"
+    }
   },
   "videos": {
     "title": "Vídeos",
@@ -1096,6 +1166,8 @@
       "bio": "La biografía",
       "skill": "habilidad",
       "interest": "interés",
+      "userTypes": "rol",
+      "collaborationPreferences": "preferencia de colaboración",
       "orgName": "El nombre de la organización",
       "orgHeadline": "El titular",
       "orgDescription": "La descripción",
@@ -1733,6 +1805,79 @@
       "member": "Equipo",
       "mentor": "Busco mentor/a",
       "tester": "Busco testers"
+    }
+  },
+  "legal": {
+    "lastUpdated": "Última actualización: agosto de 2026.",
+    "terms": {
+      "title": "Términos y condiciones",
+      "sections": {
+        "s1": {
+          "title": "1. Aceptación de los términos",
+          "body": "Al crear una cuenta en Ideora aceptas estos términos y condiciones. Si no estás de acuerdo con alguno de ellos, no debes usar el servicio."
+        },
+        "s2": {
+          "title": "2. Cuentas",
+          "body": "Eres responsable de mantener la confidencialidad de tu contraseña y de la actividad que se realice con tu cuenta. Los datos de registro deben ser exactos y actualizados. Carece una cuenta por persona: no está permitida la suplantación de identidad ni la creación de cuentas automatizadas en masa."
+        },
+        "s3": {
+          "title": "3. Contenido publicado",
+          "body": "Eres el único responsable del contenido que publicas. Al publicarlo concedes a Ideora una licencia limitada para operar el servicio (almacenarlo, mostrarlo y distribuirlo en la plataforma), sin que esto afecte a tus derechos sobre el contenido. Queda prohibido publicar contenido ilegal, ofensivo o que infrinja derechos de terceros."
+        },
+        "s4": {
+          "title": "4. Conducta",
+          "body": "Debes usar la plataforma con respeto y sin abusar de ella: sin acoso, spam, estafas ni intentos de evadir las medidas de seguridad o moderación. Las infracciones repetidas pueden derivar en la suspensión de tu cuenta."
+        },
+        "s5": {
+          "title": "5. Moderación",
+          "body": "Ideora puede revisar, moderar, archivar o eliminar contenido que incumpla estos términos o la ley, y puede suspender cuentas que los vulneren. Puedes reportar contenido a través de los botones de reporte del sitio."
+        },
+        "s6": {
+          "title": "6. Vigencia y baja",
+          "body": "Estos términos se aplican mientras uses el servicio. Puedes dejar de usarlo en cualquier momento y eliminar tu cuenta o tu contenido. Ideora puede suspender o cerrar tu cuenta si incumples lo pactado."
+        },
+        "s7": {
+          "title": "7. Ley aplicable",
+          "body": "Estos términos se rigen por la legislación española y europea (incluido el Reglamento General de Protección de Datos). Para cualquier duda puedes contactar con nosotros a través del repositorio oficial del proyecto."
+        }
+      }
+    },
+    "privacy": {
+      "title": "Política de privacidad",
+      "sections": {
+        "s1": {
+          "title": "1. Responsable del tratamiento",
+          "body": "El responsable del tratamiento de los datos personales es Ideora, una plataforma independiente gestionada de forma comunitaria. Puedes contactar con nosotros a través del repositorio oficial del proyecto."
+        },
+        "s2": {
+          "title": "2. Datos que recogemos",
+          "body": "Recogemos los datos que tú aportas al crear tu cuenta (nombre y correo electrónico), los que añades a tu perfil (descripción, sector, habilidades, avatar) y los contenidos que publicas (proyectos, vídeos, servicios, comentarios). Además, por motivos de seguridad y funcionamiento registramos datos técnicos como tu dirección IP, el tipo de navegador y los registros de actividad."
+        },
+        "s3": {
+          "title": "3. Finalidades",
+          "body": "Usamos tus datos para prestar el servicio (autenticación, publicación y búsqueda de contenido), para proteger la plataforma y a sus usuarios (límites de uso, bloqueos, reportes y moderación) y para mejorar el funcionamiento de la web. No utilizamos tus datos para publicidad personalizada."
+        },
+        "s4": {
+          "title": "4. Base legal",
+          "body": "Tratamos tus datos sobre la base de la ejecución del contrato de servicio, de nuestra obligación legal y de nuestro interés legítimo en la seguridad y el correcto funcionamiento de la plataforma. El consentimiento queda registrado mediante la aceptación de estos términos en el registro."
+        },
+        "s5": {
+          "title": "5. Compartir datos",
+          "body": "No vendemos tus datos personales a terceros. Compartimos únicamente los datos imprescindibles con nuestros encargados de tratamiento (proveedores de hosting y base de datos, como Supabase y el proveedor de despliegue) para operar el servicio. Los datos que publicas públicamente son visibles para otros usuarios según el ámbito que tú eliges."
+        },
+        "s6": {
+          "title": "6. Conservación",
+          "body": "Conservamos tus datos mientras tu cuenta esté activa. Si eliminas tu cuenta o tu contenido, los datos asociados se borran en un plazo razonable, salvo los que la ley exija conservar."
+        },
+        "s7": {
+          "title": "7. Tus derechos",
+          "body": "Tienes derecho a acceder, rectificar y suprimir tus datos, a la portabilidad, a limitar el tratamiento y a retirar tu consentimiento. Puedes ejercerlos desde la configuración de tu perfil o contactando con nosotros. También puedes solicitar la eliminación completa de tu cuenta."
+        },
+        "s8": {
+          "title": "8. Contacto",
+          "body": "Para cualquier consulta sobre privacidad, contacta con nosotros a través del repositorio oficial del proyecto."
+        }
+      }
     }
   }
 }

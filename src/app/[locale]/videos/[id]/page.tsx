@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Pencil } from "lucide-react";
 
 import { getCurrentUser } from "@/auth/session";
+import { ReportButton } from "@/components/reports/report-button";
 import { getPublicVideoViewsCount } from "@/analytics/data";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -222,6 +223,7 @@ export default async function VideoDetailPage({ params }: VideoDetailPageProps) 
               count={interactionCounts.supportCount}
             />
             <SaveButton targetId={post.id} targetType="post" saved={saved} />
+            {user && !isOwner && <ReportButton targetType="post" targetId={post.id} />}
           </div>
         )}
       </div>

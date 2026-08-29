@@ -59,7 +59,9 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
+    .select(
+      "id, username, full_name, headline, bio, avatar_url, location, is_public, created_at, updated_at, user_types, weekly_availability, collaboration_preferences, website_url, linkedin_url",
+    )
     .eq("username", username.toLowerCase())
     .maybeSingle();
 

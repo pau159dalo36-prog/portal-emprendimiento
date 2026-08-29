@@ -27,7 +27,7 @@ export type VideoTrack = {
 };
 
 type VideoPlayerProps = {
-  src: string;
+  src: string | null;
   poster?: string | null;
   className?: string;
   tracks?: VideoTrack[];
@@ -196,7 +196,7 @@ export function VideoPlayer({ src, poster, className, tracks = [], videoId }: Vi
         ref={videoRef}
         key={src}
         className="h-full w-full"
-        src={src}
+        src={src ?? undefined}
         poster={poster ?? undefined}
         playsInline
         preload="metadata"

@@ -6,3 +6,16 @@
 # La versión de Node se controla con .nvmrc (Node 24 LTS).
 [build]
   command = "npm run build"
+
+# Headers de seguridad en el borde del CDN (mismo juego que next.config.ts).
+# Aplican a todas las respuestas aunque la ruta no llegue a la app.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-DNS-Prefetch-Control = "on"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains"
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), browsing-topics=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https://*.supabase.co; connect-src 'self' ws: wss:; font-src 'self' data:; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none'"

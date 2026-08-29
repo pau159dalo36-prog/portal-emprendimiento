@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/auth/session";
 import type { FormState } from "@/actions/form-state";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { SAVE_TARGETS, type SaveTarget } from "@/config/interactions";
 import { createComment, deleteOwnComment, setOwnCommentHidden, updateOwnComment } from "@/interactions/comments";
 import { upsertProjectFeedback } from "@/interactions/feedback";
@@ -27,6 +28,12 @@ export async function createCommentAction(
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
   const t = await getTranslations("interactions.comments");
+
+  // Mitigación de abuso: limita comentarios por usuario y ventana.
+  const withinLimit = await consumeRateLimit(supabase, "comment", user.id, 30, 60);
+  if (!withinLimit) {
+    return { status: "error", message: t("invalidBody") };
+  }
 
   const parsed = createCommentSchema.safeParse({
     postId: formData.get("post_id"),
@@ -169,8 +176,14 @@ export async function toggleSupportAction(
   formData: FormData,
 ): Promise<SupportFormState> {
   // La RPC deduce la identidad del llamador con auth.uid() en la BD.
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const t = await getTranslations("interactions.reactions");
+
+  // Mitigación de abuso ante reacciones en bucle.
+  const withinLimit = await consumeRateLimit(supabase, "support", user.id, 60, 60);
+  if (!withinLimit) {
+    return { status: "error", message: t("failed") };
+  }
 
   const postId = formData.get("post_id");
   if (!isInteractionTargetId(postId)) {

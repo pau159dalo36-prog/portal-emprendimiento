@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "@/i18n/navigation";
 
 export function SignUpForm() {
   const [state, formAction] = useActionState(signUpAction, initialAuthFormState);
@@ -108,7 +109,24 @@ export function SignUpForm() {
       <div className="flex items-start gap-2">
         <Checkbox id="terminos" name="terminos" value="on" className="mt-0.5" />
         <Label htmlFor="terminos" className="leading-6 font-normal">
-          {t("acceptTerms")}
+          {t.rich("termsLabel", {
+            terms: (chunks) => (
+              <Link
+                href="/legal/terminos"
+                className="text-foreground underline underline-offset-4 hover:underline"
+              >
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link
+                href="/legal/privacidad"
+                className="text-foreground underline underline-offset-4 hover:underline"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
         </Label>
       </div>
       {state.fieldErrors?.terminos && (

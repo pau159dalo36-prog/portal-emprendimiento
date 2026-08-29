@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Pencil } from "lucide-react";
 
 import { getCurrentUser } from "@/auth/session";
+import { ReportButton } from "@/components/reports/report-button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -104,7 +105,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{service.title}</h1>
           {user && !isOwner && (
-            <SaveButton targetId={service.id} targetType="service" saved={savedService} />
+            <>
+              <SaveButton targetId={service.id} targetType="service" saved={savedService} />
+              <ReportButton targetType="service" targetId={service.id} />
+            </>
           )}
           <Badge className="border-primary/30 bg-primary/10 text-primary">
             {t(`categories.${service.category}` as never)}

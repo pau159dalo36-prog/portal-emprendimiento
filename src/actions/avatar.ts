@@ -2,6 +2,7 @@
 
 import { getTranslations } from "next-intl/server";
 import { requireUser } from "@/auth/session";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { getSupabaseUrl } from "@/lib/env";
 import {
   AVATAR_MAX_BYTES,
@@ -31,6 +32,12 @@ async function removeFilesInFolder(
 export async function updateAvatarAction(formData: FormData): Promise<FormState> {
   const { supabase, user } = await requireUser();
   const t = await getTranslations("actions.avatar");
+
+  // Mitigación de abuso: subidas de avatar limitadas por usuario y ventana.
+  const withinLimit = await consumeRateLimit(supabase, "avatar", user.id, 6, 60);
+  if (!withinLimit) {
+    return { status: "error", message: t("uploadFailed") };
+  }
 
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) {

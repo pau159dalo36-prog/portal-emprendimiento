@@ -9,6 +9,7 @@ import {
   getMyApplicationForOpportunity,
 } from "@/applications/data";
 import { ApplyButton } from "@/components/applications/apply-button";
+import { ReportButton } from "@/components/reports/report-button";
 import { isApplicationStatus } from "@/applications/config";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +124,10 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{opportunity.title}</h1>
           {user && !isOwner && (
-            <SaveButton targetId={opportunity.id} targetType="opportunity" saved={savedOpportunity} />
+            <>
+              <SaveButton targetId={opportunity.id} targetType="opportunity" saved={savedOpportunity} />
+              <ReportButton targetType="opportunity" targetId={opportunity.id} />
+            </>
           )}
           <Badge className="border-primary/30 bg-primary/10 text-primary">
             {types(opportunity.opportunity_type as Parameters<typeof types>[0])}

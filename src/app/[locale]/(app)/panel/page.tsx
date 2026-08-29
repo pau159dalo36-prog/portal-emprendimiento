@@ -36,7 +36,7 @@ export default async function PanelPage() {
 
   const { profile, skills, interests } = await (async () => {
     const [{ data: profile }, skillRows, interestRows] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.rpc("get_own_profile"),
       getProfileSkills(supabase, user.id),
       getProfileInterests(supabase, user.id),
     ]);

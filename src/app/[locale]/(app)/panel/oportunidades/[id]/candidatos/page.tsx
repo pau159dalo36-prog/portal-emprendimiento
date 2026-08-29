@@ -36,6 +36,15 @@ export default async function OpportunityCandidatesPage({ params }: CandidatesPa
     notFound();
   }
 
+  // Autorización explícita a nivel de página (no solo RLS): un miembro del
+  // proyecto/org puede leer la oportunidad pero no debe ver las candidaturas.
+  const { data: canManage } = await supabase.rpc("can_manage_opportunity", {
+    p_opportunity_id: id,
+  });
+  if (!canManage) {
+    notFound();
+  }
+
   // Outsiders obtienen cero filas por RLS; la página muestra vacío, no error.
   const [applications, counts] = await Promise.all([
     listOpportunityApplications(supabase, opportunity.id),

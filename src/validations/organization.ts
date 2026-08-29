@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ValidationTranslator } from "@/validations/auth";
+import { createUsernameSchema } from "@/validations/profile";
 import { INDUSTRIES, MAX_INDUSTRIES, ORGANIZATION_LINK_TYPES, ORGANIZATION_MEMBER_ROLES } from "@/organizations/constants";
 import {
   createEnumArraySchema,
@@ -55,7 +56,7 @@ export function createOrganizationLinkSchema(t: ValidationTranslator) {
 }
 
 export function createMemberUsernameSchema(t: ValidationTranslator) {
-  return z.string().trim().toLowerCase().min(1, t("requiredField", { label: t("labels.memberUsername") }));
+  return createUsernameSchema(t);
 }
 
 export function createOrganizationMemberRoleSchema(t: ValidationTranslator) {

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -64,6 +64,63 @@ export type Database = {
             columns: ["opportunity_id"]
             isOneToOne: false
             referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_reports: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reason: string
+          reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reason: string
+          reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reason?: string
+          reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1632,6 +1689,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          counter: number
+          scope: string
+          scope_key: string
+          window_start: string
+        }
+        Insert: {
+          counter?: number
+          scope: string
+          scope_key: string
+          window_start: string
+        }
+        Update: {
+          counter?: number
+          scope?: string
+          scope_key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       saved_opportunities: {
         Row: {
           created_at: string
@@ -2157,12 +2235,29 @@ export type Database = {
         Args: { p_reason?: string; p_video_id: string }
         Returns: boolean
       }
+      admin_resolve_report: {
+        Args: {
+          p_report_id: string
+          p_resolution_note?: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       can_access_video_storage: {
         Args: { p_bucket: string; p_path: string }
         Returns: boolean
       }
       can_manage_opportunity: {
         Args: { p_opportunity_id: string }
+        Returns: boolean
+      }
+      consume_rate_limit: {
+        Args: {
+          p_max: number
+          p_scope: string
+          p_scope_key: string
+          p_window_seconds?: number
+        }
         Returns: boolean
       }
       count_organization_followers: {
@@ -2280,6 +2375,36 @@ export type Database = {
       get_or_create_dm: {
         Args: { p_target_profile_id: string }
         Returns: string
+      }
+      get_own_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          bio: string | null
+          collaboration_preferences: string[]
+          contact_email: string | null
+          created_at: string
+          full_name: string | null
+          headline: string | null
+          id: string
+          is_public: boolean
+          linkedin_url: string | null
+          location: string | null
+          onboarding_completed: boolean
+          search_text: string | null
+          timezone: string | null
+          updated_at: string
+          user_types: string[]
+          username: string | null
+          website_url: string | null
+          weekly_availability: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_post_interaction_counts: {
         Args: { p_post_ids: string[] }

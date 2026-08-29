@@ -6,7 +6,7 @@ import { getVideoImageUrl } from "@/lib/video/utils";
 export type VideoImageInput = { bucket: string | null; path: string | null } | null;
 
 export type VideoPlaybackSource = {
-  src: string;
+  src: string | null;
   poster: string | null;
 };
 
@@ -14,7 +14,7 @@ export function resolveVideoPlaybackUrl(
   provider: VideoProvider,
   ref: StorageObjectRef,
   visibility: VideoVisibility,
-): Promise<string> {
+): Promise<string | null> {
   return provider.resolvePlaybackUrl(ref, visibility);
 }
 

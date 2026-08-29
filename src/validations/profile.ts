@@ -55,13 +55,20 @@ function createNonEmptyStringArray(t: ValidationTranslator, labelKey: string, ma
 }
 
 function createUserTypesSchema(t: ValidationTranslator) {
-  return z.array(z.enum(USER_TYPES)).min(1, t("minRole"));
+  return z
+    .array(z.enum(USER_TYPES))
+    .min(1, t("minRole"))
+    .max(USER_TYPES.length, t("maxItems", { count: USER_TYPES.length, label: t("labels.userTypes") }));
 }
 
 function createCollaborationPreferencesSchema(t: ValidationTranslator) {
   return z
     .array(z.enum(COLLABORATION_PREFERENCES))
-    .min(1, t("minCollaboration"));
+    .min(1, t("minCollaboration"))
+    .max(
+      COLLABORATION_PREFERENCES.length,
+      t("maxItems", { count: COLLABORATION_PREFERENCES.length, label: t("labels.collaborationPreferences") }),
+    );
 }
 
 function createWeeklyAvailabilitySchema(t: ValidationTranslator) {
@@ -97,7 +104,9 @@ export function createOnboardingStepSchemas(t: ValidationTranslator) {
           new Set(items.map((item) => item.toLowerCase())).size === items.length,
         { error: t("duplicateInterests") },
       ),
-      niveles: z.array(z.string()).max(MAX_SKILLS),
+      niveles: z
+        .array(z.string().trim().max(50, t("fieldTooLong", { label: t("labels.skill") })))
+        .max(MAX_SKILLS, t("maxItems", { count: MAX_SKILLS, label: t("labels.skill") })),
     }),
     5: z.object({
       website_url: createOptionalUrlSchema(t),
@@ -123,7 +132,9 @@ export function createUpdateProfileSchema(t: ValidationTranslator) {
         new Set(items.map((item) => item.toLowerCase())).size === items.length,
       { error: t("duplicateInterests") },
     ),
-    niveles: z.array(z.string()).max(MAX_SKILLS),
+    niveles: z
+        .array(z.string().trim().max(50, t("fieldTooLong", { label: t("labels.skill") })))
+        .max(MAX_SKILLS, t("maxItems", { count: MAX_SKILLS, label: t("labels.skill") })),
     website_url: createOptionalUrlSchema(t),
     linkedin_url: createOptionalUrlSchema(t),
     is_public: isPublicSchema,

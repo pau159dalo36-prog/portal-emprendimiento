@@ -10,7 +10,7 @@ export interface VideoProvider {
 
   getPublicUrl(ref: StorageObjectRef): string;
 
-  resolvePlaybackUrl(ref: StorageObjectRef, visibility: VideoVisibility): Promise<string>;
+  resolvePlaybackUrl(ref: StorageObjectRef, visibility: VideoVisibility): Promise<string | null>;
 }
 
 export type { StorageObjectRef } from "@/lib/video/types";

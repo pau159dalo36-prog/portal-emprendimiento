@@ -3,13 +3,8 @@ import type { Database } from "@/types/database.types";
 
 export async function getPostLoginDestination(
   supabase: SupabaseClient<Database>,
-  userId: string,
 ): Promise<"/panel" | "/onboarding"> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("onboarding_completed")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data } = await supabase.rpc("get_own_profile");
 
   return data?.onboarding_completed ? "/panel" : "/onboarding";
 }

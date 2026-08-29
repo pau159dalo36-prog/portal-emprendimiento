@@ -10,6 +10,7 @@ import { validationState, type FormState } from "@/actions/form-state";
 import { VIDEO_LANGUAGE_CODES, VIDEO_PUBLICATION_STATUSES, VIDEO_VISIBILITIES } from "@/config/video";
 import {
   ALLOWED_IMAGE_MIME_TYPES,
+  ALLOWED_VIDEO_MIME_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_VIDEO_UPLOAD_BYTES,
   VIDEO_BUCKET_PRIVATE,
@@ -37,7 +38,7 @@ type CreateVideoUploadInput = {
 function createCreateVideoUploadSchema() {
   return z.object({
     originalFilename: z.string().min(1).max(255),
-    mimeType: z.string().regex(/^video\//),
+    mimeType: z.enum(ALLOWED_VIDEO_MIME_TYPES),
     sizeBytes: z.number().int().positive().max(MAX_VIDEO_UPLOAD_BYTES),
     durationSeconds: z
       .number()

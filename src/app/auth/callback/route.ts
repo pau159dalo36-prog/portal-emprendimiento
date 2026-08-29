@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.session) {
-      const destination = await getPostLoginDestination(supabase, data.session.user.id);
+      const destination = await getPostLoginDestination(supabase);
       return NextResponse.redirect(new URL(destination, request.url));
     }
   }

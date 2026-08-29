@@ -23,7 +23,7 @@ export default async function ProfileSettingsPage() {
   const common = await getTranslations("common");
 
   const [{ data: profile }, skills, initialSkills, initialInterests] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    supabase.rpc("get_own_profile"),
     getAllSkills(supabase),
     getProfileSkills(supabase, user.id),
     getProfileInterests(supabase, user.id),

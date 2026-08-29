@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations("common");
+  const legal = await getTranslations("legal");
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -22,10 +23,25 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         {children}
       </main>
-      <footer className="flex justify-center px-6 py-6">
+      <footer className="flex items-center justify-center gap-6 px-6 py-6">
         <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} {brand.name}
         </p>
+        <Link
+          href="/legal/terminos"
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {legal("terms.title")}
+        </Link>
+        <span className="text-muted-foreground" aria-hidden="true">
+          ·
+        </span>
+        <Link
+          href="/legal/privacidad"
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {legal("privacy.title")}
+        </Link>
       </footer>
     </div>
   );
