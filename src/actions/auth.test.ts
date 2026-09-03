@@ -5,7 +5,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthApiError } from "@supabase/supabase-js";
-import { requestPasswordResetAction, signUpAction, updatePasswordAction } from "@/actions/auth";
+import {
+  requestPasswordResetAction,
+  signInAction,
+  signOutAction,
+  signUpAction,
+  updatePasswordAction,
+} from "@/actions/auth";
 import { getSiteUrl } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,6 +22,10 @@ vi.mock("next-intl/server", () => ({
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/i18n/navigation", () => ({
@@ -51,6 +61,7 @@ vi.mock("@/profiles/destination", () => ({
 
 const mockedCreateClient = vi.mocked(createClient);
 const mockedGetSiteUrl = vi.mocked(getSiteUrl);
+const revalidatePath = vi.mocked((await import("next/cache")).revalidatePath);
 
 const GENERIC_MESSAGE = "actions.auth.resetSent";
 
@@ -60,6 +71,7 @@ let updateUser: ReturnType<typeof vi.fn>;
 let signOut: ReturnType<typeof vi.fn>;
 let getOwnProfile: ReturnType<typeof vi.fn>;
 let getUser: ReturnType<typeof vi.fn>;
+let signInWithPassword: ReturnType<typeof vi.fn>;
 
 function setupSupabase(error?: unknown) {
   resetPasswordForEmail = vi.fn().mockResolvedValue({ data: {}, error: error ?? null });
@@ -67,6 +79,10 @@ function setupSupabase(error?: unknown) {
   updateUser = vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   signOut = vi.fn().mockResolvedValue({ error: null });
   getUser = vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+  signInWithPassword = vi.fn().mockResolvedValue({
+    data: { session: { access_token: "tok" } },
+    error: null,
+  });
   getOwnProfile = vi.fn().mockResolvedValue({ data: { onboarding_completed: false }, error: null });
   mockedCreateClient.mockReturnValue({
     auth: {
@@ -75,6 +91,7 @@ function setupSupabase(error?: unknown) {
       updateUser,
       signOut,
       getUser,
+      signInWithPassword,
     },
     rpc: getOwnProfile,
   } as never);
@@ -233,6 +250,21 @@ describe("signUpAction", () => {
     expect(redirectMock).not.toHaveBeenCalledWith("/es/onboarding");
   });
 
+  it("signup con auto-login (confirmación desactivada) invalida la UI de auth y redirige al destino", async () => {
+    signUp.mockResolvedValue({
+      data: { user: { id: "u1" }, session: { access_token: "tok" } },
+      error: null,
+    });
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+    revalidatePath.mockClear();
+
+    await signUpAction({ status: "idle" }, formWithSignup("auto@example.com"));
+
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(redirectMock).toHaveBeenCalledWith("/es/onboarding");
+  });
+
   it("usa emailRedirectTo con la URL del sitio + /auth/callback", async () => {
     await signUpAction({ status: "idle" }, formWithSignup("nuevo@example.com"));
 
@@ -314,6 +346,7 @@ describe("updatePasswordAction", () => {
   it("llama a updateUser con la nueva contraseña y redirige a iniciar-sesion", async () => {
     const redirectMock = vi.mocked((await import("next/navigation")).redirect);
     redirectMock.mockClear();
+    revalidatePath.mockClear();
 
     await updatePasswordAction(
       { status: "idle" },
@@ -322,6 +355,7 @@ describe("updatePasswordAction", () => {
 
     expect(updateUser).toHaveBeenCalledWith({ password: "NuevaPass123" });
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     expect(redirectMock).toHaveBeenCalledWith("/es/iniciar-sesion?contrasena=actualizada");
   });
 
@@ -399,5 +433,98 @@ describe("updatePasswordAction", () => {
     expect(updateUser).not.toHaveBeenCalled();
     expect(signOut).not.toHaveBeenCalled();
     expect(redirectMock).toHaveBeenCalledWith("/es/iniciar-sesion");
+  });
+});
+
+describe("signInAction", () => {
+  beforeEach(() => {
+    setupSupabase();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function formWithLogin(email = "usuario@example.com", pass = "Abcdef123"): FormData {
+    const form = new FormData();
+    form.set("correo", email);
+    form.set("contrasena", pass);
+    return form;
+  }
+
+  it("login exitoso: invalida la UI dependiente de auth y redirige al destino", async () => {
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+    revalidatePath.mockClear();
+
+    await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "usuario@example.com",
+      password: "Abcdef123",
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(redirectMock).toHaveBeenCalledWith("/es/onboarding");
+  });
+
+  it("login exitoso con onboarding completado redirige a /panel", async () => {
+    // `@/profiles/destination` está mockeado a nivel de módulo; se ajusta aquí
+    // para cubrir el destino /panel cuando el onboarding ya está completado.
+    const destMock = vi.mocked((await import("@/profiles/destination")).getPostLoginDestination);
+    destMock.mockResolvedValueOnce("/panel");
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+
+    await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(redirectMock).toHaveBeenCalledWith("/es/panel");
+  });
+
+  it("login fallido NO invalida ni redirige y devuelve error genérico", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null },
+      error: new AuthApiError("Invalid login", 400, "invalid_credentials"),
+    });
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+    revalidatePath.mockClear();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.signInFailed");
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(redirectMock).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("datos inválidos devuelven error de validación sin llamar a Supabase", async () => {
+    const result = await signInAction({ status: "idle" }, formWithLogin("correo-invalido"));
+
+    expect(result.status).toBe("error");
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+});
+
+describe("signOutAction", () => {
+  beforeEach(() => {
+    setupSupabase();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("cierra sesión, invalida la UI de auth y redirige a la home", async () => {
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+    revalidatePath.mockClear();
+
+    await signOutAction();
+
+    expect(signOut).toHaveBeenCalledWith({ scope: "global" });
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(redirectMock).toHaveBeenCalledWith("/es/");
   });
 });

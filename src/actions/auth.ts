@@ -15,6 +15,7 @@ import {
 } from "@/validations/auth";
 import { getPathname } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { consumeRateLimit, getAnonymousRateLimitKey } from "@/lib/rate-limit";
 
 type AuthLogEntry = {
@@ -127,6 +128,9 @@ export async function signUpAction(
   // error to avoid email enumeration.
   if (data.session && data.user) {
     const destination = await getPostLoginDestination(supabase);
+    // El registro crea una sesión real: invalida la UI dependiente de auth
+    // (header/nav/home) para que el árbol RSC deje de mostrar el snapshot anónimo.
+    revalidatePath("/", "layout");
     redirect(getPathname({ href: destination, locale }));
   }
 
@@ -182,6 +186,12 @@ export async function signInAction(
       message: ta("signInFailed"),
     };
   }
+
+  // Login exitoso: la sesión cambia en el servidor. Invalida la UI dependiente
+  // de auth (PublicHeader, SignedInNav/AuthActions, AppShell/TopHeader,
+  // DesktopSidebar, MobileBottomNav, home CTA) para que el árbol RSC no quede
+  // con el snapshot anónimo previo sin necesidad de recargar manualmente.
+  revalidatePath("/", "layout");
 
   const destination = await getPostLoginDestination(supabase);
   redirect(getPathname({ href: destination, locale }));
@@ -286,6 +296,8 @@ export async function updatePasswordAction(
 
   await supabase.auth.signOut({ scope: "global" });
 
+  revalidatePath("/", "layout");
+
   redirect(
     getPathname({
       href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } },
@@ -299,6 +311,11 @@ export async function signOutAction(): Promise<void> {
   const supabase = await createClient({ persistent: false });
 
   await supabase.auth.signOut({ scope: "global" });
+
+  // Logout exitoso: invalida la UI dependiente de auth para que el árbol RSC no
+  // siga mostrando el snapshot autenticado (avatar/panel/nav privada) al volver
+  // a la home, sin necesidad de recargar manualmente.
+  revalidatePath("/", "layout");
 
   redirect(getPathname({ href: "/", locale }));
 }
