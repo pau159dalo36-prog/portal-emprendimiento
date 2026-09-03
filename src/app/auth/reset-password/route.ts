@@ -1,59 +1,81 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { classifyRecoveryError } from "@/lib/supabase/auth-recovery";
 
 /**
- * Handles the recovery link that Supabase sends via email.
+ * Ruta CANÓNICA (único consumidor) del enlace de recuperación de contraseña.
  *
- * Supports two flows depending on the Supabase project configuration:
- *   1. **PKCE** – the URL carries `?code=…`. We exchange it for a session.
- *   2. **OTP**  – the URL carries `?token_hash=…&type=recovery`. We verify
- *      the OTP and establish a session.
+ * El template de correo de Supabase debe apuntar aquí:
  *
- * On success the user is redirected to `/actualizar-contrasena` where they can
- * set a new password. On failure we redirect to `/recuperar-contrasena` with an
- * error indicator so the page can show an appropriate message.
+ *   http://localhost:3000/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery
+ *   https://sensational-squirrel-26a2f8.netlify.app/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery
  *
- * Locale resolution is delegated to the intl middleware that runs on the
- * redirected path.
+ * Soporta los formatos que Supabase pueda entregar:
+ *   1. OTP (`token_hash` + `type=recovery`): vía `verifyOtp`. Es el flujo
+ *      robusto y recomendado por Supabase para @supabase/ssr porque NO depende
+ *      del verifier PKCE ni de estado previo: funciona desde cualquier
+ *      navegador/dispositivo.
+ *   2. PKCE (`code`): vía `exchangeCodeForSession`. Se conserva como fallback
+ *      para enlaces basados en `{{ .ConfirmationURL }}` ya enviados.
+ *
+ * El token se consume UNA SOLA vez aquí. Después se establece la sesión de
+ * recuperación en cookies y se redirige a /actualizar-contrasena (el middleware
+ * de idioma resuelve el prefijo de locale, p. ej. /es/actualizar-contrasena).
+ *
+ * Errores: se distingue entre enlace REALMENTE caducado/usado (`expired`) y
+ * fallos técnicos/PKCE (`technical`). Solo el primero muestra el mensaje de
+ * "enlace expirado"; el segundo pide reintentar.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  const code = searchParams.get("code");
+  const flowId = searchParams.get("sb_flow_id");
 
   const supabase = await createClient();
 
-  // --- PKCE flow (default in Supabase v2) ---
-  if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  // --- 1) OTP / token_hash (flujo robusto, sin PKCE) ---
+  if (tokenHash && type === "recovery") {
+    const { error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
 
-    if (!error && data.session) {
+    if (!error) {
+      // verifyOtp ya ha guardado la sesión de recuperación en cookies.
       return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
     }
 
-    console.error("[auth:reset-password]", JSON.stringify({ flow: "pkce", error: error?.message }));
-    return NextResponse.redirect(new URL("/recuperar-contrasena?error=expired", request.url));
+    const category = classifyRecoveryError(error);
+    console.error("[auth:recovery]", JSON.stringify({ flow: "otp", category, name: error?.name }));
+    return recoveryErrorRedirect(request, category);
   }
 
-  // --- OTP / token_hash flow ---
-  if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+  // --- 2) PKCE / code (fallback) ---
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
 
     if (!error) {
-      if (type === "recovery") {
-        return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
-      }
-      // email_change or other OTP types → fallback to sign-in
-      return NextResponse.redirect(new URL("/iniciar-sesion", request.url));
+      return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
     }
 
-    console.error("[auth:reset-password]", JSON.stringify({ flow: "otp", type, error: error?.message }));
-    return NextResponse.redirect(new URL("/recuperar-contrasena?error=expired", request.url));
+    const category = classifyRecoveryError(error);
+    console.error("[auth:recovery]", JSON.stringify({ flow: "pkce", category, name: error?.name }));
+    return recoveryErrorRedirect(request, category);
   }
 
-  // --- No recognisable params → bad/expired link ---
-  return NextResponse.redirect(new URL("/recuperar-contrasena?error=expired", request.url));
+  // --- 3) Sin credenciales reconocibles → enlace mal formado/expirado ---
+  console.error("[auth:recovery]", JSON.stringify({ flow: "none", category: "expired" }));
+  return recoveryErrorRedirect(request, "expired");
+}
+
+function recoveryErrorRedirect(request: NextRequest, category: "expired" | "technical") {
+  return NextResponse.redirect(
+    new URL(
+      category === "expired"
+        ? "/recuperar-contrasena?error=expired"
+        : "/recuperar-contrasena?error=technical&reintentar=1",
+      request.url,
+    ),
+  );
 }

@@ -177,13 +177,16 @@
       "description": "Te enviaremos un enlace para restablecer tu contraseña.",
       "remembered": "¿Recordaste tu contraseña?",
       "signIn": "Inicia sesión",
-      "expiredError": "El enlace de recuperación ha expirado o ya no es válido. Solicita uno nuevo a continuación."
+      "expiredError": "El enlace de recuperación ha expirado o ya no es válido. Solicita uno nuevo a continuación.",
+      "technicalError": "No pudimos abrir tu enlace de recuperación. Inténtalo de nuevo o solicita un enlace nuevo."
     },
     "update": {
       "title": "Actualizar contraseña",
       "description": "Elige una contraseña nueva para tu cuenta.",
       "expiredTitle": "Enlace caducado",
       "expiredDescription": "El enlace de recuperación ha expirado o ya no es válido. Solicita un enlace nuevo para continuar.",
+      "technicalTitle": "No se pudo abrir el enlace",
+      "technicalDescription": "Hubo un problema técnico al abrir el enlace de recuperación. Solicita un enlace nuevo para continuar.",
       "requestNewLink": "Solicitar un enlace nuevo"
     },
     "verify": {

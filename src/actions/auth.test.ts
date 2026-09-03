@@ -59,12 +59,14 @@ let signUp: ReturnType<typeof vi.fn>;
 let updateUser: ReturnType<typeof vi.fn>;
 let signOut: ReturnType<typeof vi.fn>;
 let getOwnProfile: ReturnType<typeof vi.fn>;
+let getUser: ReturnType<typeof vi.fn>;
 
 function setupSupabase(error?: unknown) {
   resetPasswordForEmail = vi.fn().mockResolvedValue({ data: {}, error: error ?? null });
   signUp = vi.fn().mockResolvedValue({ data: {}, error: null });
   updateUser = vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   signOut = vi.fn().mockResolvedValue({ error: null });
+  getUser = vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   getOwnProfile = vi.fn().mockResolvedValue({ data: { onboarding_completed: false }, error: null });
   mockedCreateClient.mockReturnValue({
     auth: {
@@ -72,6 +74,7 @@ function setupSupabase(error?: unknown) {
       signUp,
       updateUser,
       signOut,
+      getUser,
     },
     rpc: getOwnProfile,
   } as never);
@@ -374,5 +377,27 @@ describe("updatePasswordAction", () => {
     const allCalls = redirectMock.mock.calls.map((c) => c[0]);
     expect(allCalls).toContain("/es/iniciar-sesion?contrasena=actualizada");
     expect(allCalls.some((u) => String(u).includes("recuperar-contrasena"))).toBe(false);
+  });
+
+  it("sin sesión de recuperación válida: NO llama a updateUser y va a iniciar-sesion (bloquea cambio no autorizado)", async () => {
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    // En Next.js `redirect` lanza y corta la ejecución; lo simulamos igualmente
+    // para verificar que no se llega a updateUser.
+    redirectMock.mockImplementation(() => {
+      throw Object.assign(new Error("NEXT_REDIRECT"), { digest: "NEXT_REDIRECT" });
+    });
+
+    await expect(
+      updatePasswordAction(
+        { status: "idle" },
+        formWithPassword("NuevaPass123", "NuevaPass123"),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(getUser).toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+    expect(redirectMock).toHaveBeenCalledWith("/es/iniciar-sesion");
   });
 });

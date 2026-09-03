@@ -257,6 +257,21 @@ export async function updatePasswordAction(
     };
   }
 
+  // Solo una sesión de recuperación válida puede cambiar la contraseña. Sin
+  // sesión autenticada la llamada a updateUser fracasaría, pero lo impedimos de
+  // forma explícita para no revelar estado ni permitir cambios no autorizados.
+  const {
+    data: { user: recoveryUser },
+  } = await supabase.auth.getUser();
+  if (!recoveryUser) {
+    redirect(
+      getPathname({
+        href: "/iniciar-sesion",
+        locale,
+      }),
+    );
+  }
+
   const { data, error } = await supabase.auth.updateUser({
     password: parsed.data.contrasena,
   });

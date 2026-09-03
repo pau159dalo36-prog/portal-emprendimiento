@@ -33,7 +33,8 @@ export default async function RequestResetPage({
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {error && <FormMessage status="error">{t("expiredError")}</FormMessage>}
+          {error === "expired" && <FormMessage status="error">{t("expiredError")}</FormMessage>}
+          {error === "technical" && <FormMessage status="error">{t("technicalError")}</FormMessage>}
           <RequestResetForm />
         </CardContent>
         <CardFooter className="justify-center">

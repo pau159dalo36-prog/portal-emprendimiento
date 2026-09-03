@@ -34,7 +34,7 @@ export default async function UpdatePasswordPage({
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : null;
 
-  if (error === "expired") {
+  if (error === "expired" || error === "technical") {
     return (
       <div className="w-full max-w-md">
         <Card>
@@ -45,8 +45,12 @@ export default async function UpdatePasswordPage({
             >
               <AlertTriangle className="size-6" />
             </span>
-            <CardTitle>{t("expiredTitle")}</CardTitle>
-            <CardDescription>{t("expiredDescription")}</CardDescription>
+            <CardTitle>
+              {error === "expired" ? t("expiredTitle") : t("technicalTitle")}
+            </CardTitle>
+            <CardDescription>
+              {error === "expired" ? t("expiredDescription") : t("technicalDescription")}
+            </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
             <Link
