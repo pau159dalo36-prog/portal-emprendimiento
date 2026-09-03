@@ -176,11 +176,15 @@
       "title": "Reset password",
       "description": "We'll send you a link to reset your password.",
       "remembered": "Remembered your password?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "expiredError": "The recovery link has expired or is no longer valid. Request a new one below."
     },
     "update": {
       "title": "Update password",
-      "description": "Choose a new password for your account."
+      "description": "Choose a new password for your account.",
+      "expiredTitle": "Expired link",
+      "expiredDescription": "The recovery link has expired or is no longer valid. Request a new link to continue.",
+      "requestNewLink": "Request a new link"
     },
     "verify": {
       "title": "Check your email",

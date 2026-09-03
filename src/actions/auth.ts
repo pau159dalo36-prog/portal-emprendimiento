@@ -121,11 +121,22 @@ export async function signUpAction(
     };
   }
 
+  // When email confirmation is enabled Supabase returns user + null session.
+  // When it is disabled we get both user AND session (auto-signed-in).
+  // If neither condition holds the signUp silently failed — keep the generic
+  // error to avoid email enumeration.
   if (data.session && data.user) {
     const destination = await getPostLoginDestination(supabase);
     redirect(getPathname({ href: destination, locale }));
   }
 
+  if (data.user) {
+    redirect(getPathname({ href: "/verificar-correo", locale }));
+  }
+
+  // Fallback: signUp returned no error but also no user. Keep anti-enumeration
+  // protection by showing the same "check your email" page — Supabase may
+  // return this shape for already-confirmed duplicate accounts.
   redirect(getPathname({ href: "/verificar-correo", locale }));
 }
 

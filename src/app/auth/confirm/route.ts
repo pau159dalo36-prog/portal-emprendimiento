@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * Legacy OTP confirmation route. Handles the `token_hash` + `type` query-param
+ * flow that Supabase may send when email links are configured as OTP instead of
+ * PKCE. Modern projects with PKCE enabled route through `/auth/callback` and
+ * `/auth/reset-password` instead.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
@@ -16,10 +22,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
       }
       if (type === "email_change") {
-        return NextResponse.redirect(new URL("/configuracion/perfil", request.url));
+        return NextResponse.redirect(new URL("/iniciar-sesion", request.url));
       }
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+      if (type === "signup" || type === "magiclink") {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
+      return NextResponse.redirect(new URL("/iniciar-sesion", request.url));
     }
+
+    console.error("[auth:confirm]", JSON.stringify({ type, error: error?.message }));
+    return NextResponse.redirect(new URL("/iniciar-sesion?error=1", request.url));
   }
 
   return NextResponse.redirect(new URL("/iniciar-sesion?error=1", request.url));
