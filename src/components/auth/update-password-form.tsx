@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { updatePasswordAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
+import { useAuthRedirect } from "@/components/auth/use-auth-redirect";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 export function UpdatePasswordForm() {
   const [state, formAction] = useActionState(updatePasswordAction, initialAuthFormState);
   const t = useTranslations("authForm");
+  useAuthRedirect(state);
 
   return (
     <form action={formAction} noValidate className="grid gap-4">

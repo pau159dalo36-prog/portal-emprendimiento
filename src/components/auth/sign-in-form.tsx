@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { signInAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
+import { useAuthRedirect } from "@/components/auth/use-auth-redirect";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { Link } from "@/i18n/navigation";
 export function SignInForm() {
   const [state, formAction] = useActionState(signInAction, initialAuthFormState);
   const t = useTranslations("authForm");
+  useAuthRedirect(state);
 
   return (
     <form action={formAction} noValidate className="grid gap-4">

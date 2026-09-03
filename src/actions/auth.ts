@@ -127,11 +127,11 @@ export async function signUpAction(
   // If neither condition holds the signUp silently failed — keep the generic
   // error to avoid email enumeration.
   if (data.session && data.user) {
-    const destination = await getPostLoginDestination(supabase);
+    const destination = getPathname({ href: await getPostLoginDestination(supabase), locale });
     // El registro crea una sesión real: invalida la UI dependiente de auth
     // (header/nav/home) para que el árbol RSC deje de mostrar el snapshot anónimo.
     revalidatePath("/", "layout");
-    redirect(getPathname({ href: destination, locale }));
+    return { status: "success", redirectTo: destination };
   }
 
   if (data.user) {
@@ -193,8 +193,13 @@ export async function signInAction(
   // con el snapshot anónimo previo sin necesidad de recargar manualmente.
   revalidatePath("/", "layout");
 
-  const destination = await getPostLoginDestination(supabase);
-  redirect(getPathname({ href: destination, locale }));
+  const destination = getPathname({ href: await getPostLoginDestination(supabase), locale });
+
+  // El cliente (SignInForm) navega mediante window.location.assign(destination)
+  // para descartar el Router Cache del navegador. La cookie de sesión ya quedó
+  // escrita en la respuesta de esta Server Action, por lo que el siguiente
+  // render del servidor mostrará la UI autenticada.
+  return { status: "success", redirectTo: destination };
 }
 
 export async function requestPasswordResetAction(
@@ -298,15 +303,20 @@ export async function updatePasswordAction(
 
   revalidatePath("/", "layout");
 
-  redirect(
-    getPathname({
-      href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } },
-      locale,
-    }),
-  );
+  return {
+    status: "success",
+    redirectTo: getPathname({ href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } }, locale }),
+  };
 }
 
-export async function signOutAction(): Promise<void> {
+export async function signOutAction(
+  // Ambos parámetros son obligatorios por el contrato de `useActionState`,
+  // aunque el form de sign-out no lea ni estado previo ni FormData.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: AuthFormState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<AuthFormState> {
   const locale = await getLocale();
   const supabase = await createClient({ persistent: false });
 
@@ -317,5 +327,5 @@ export async function signOutAction(): Promise<void> {
   // a la home, sin necesidad de recargar manualmente.
   revalidatePath("/", "layout");
 
-  redirect(getPathname({ href: "/", locale }));
+  return { status: "success", redirectTo: getPathname({ href: "/", locale }) };
 }

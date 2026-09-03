@@ -13,7 +13,7 @@ import {
   Video,
 } from "lucide-react";
 
-import { signOutAction } from "@/actions/auth";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import type {
   ShellUnreadCounts,
   ShellUser,
@@ -21,7 +21,7 @@ import type {
 import { Logo } from "@/components/shared/logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { Avatar } from "@/components/ui/avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -152,18 +152,14 @@ export function TopHeader({ user, unreadCounts }: TopHeaderProps) {
               <Link href="/perfil" aria-label={t("panel")}>
                 <Avatar name={user.full_name} src={user.avatar_url} size="sm" />
               </Link>
-              <form action={signOutAction}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon-sm"
-                  title={t("signOut")}
-                  aria-label={t("signOut")}
-                  className="text-muted-foreground"
-                >
-                  <LogOut className="size-4" />
-                </Button>
-              </form>
+              <SignOutButton
+                size="icon-sm"
+                className="text-muted-foreground"
+                title={t("signOut")}
+                aria-label={t("signOut")}
+              >
+                <LogOut className="size-4" />
+              </SignOutButton>
             </>
           ) : (
             <>

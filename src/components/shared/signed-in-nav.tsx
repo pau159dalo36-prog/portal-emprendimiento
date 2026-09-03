@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Languages, ShieldCheck, Video } from "lucide-react";
 
-import { signOutAction } from "@/actions/auth";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
 export async function SignedInNav({ isAdmin = false }: { isAdmin?: boolean }) {
@@ -57,11 +57,7 @@ export async function SignedInNav({ isAdmin = false }: { isAdmin?: boolean }) {
         <Languages aria-hidden="true" />
         {t("language")}
       </Link>
-      <form action={signOutAction}>
-        <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground">
-          {t("signOut")}
-        </Button>
-      </form>
+      <SignOutButton className="text-muted-foreground">{t("signOut")}</SignOutButton>
     </div>
   );
 }
