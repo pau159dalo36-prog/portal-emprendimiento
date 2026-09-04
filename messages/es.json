@@ -758,6 +758,7 @@
       "validationGeneral": "Revisa los campos marcados.",
       "signInInvalid": "El correo o la contraseña no son válidos.",
       "signInFailed": "El correo o la contraseña son incorrectos.",
+      "emailNotConfirmed": "Debes confirmar tu correo antes de iniciar sesión.",
       "signUpFailed": "No se pudo crear la cuenta. Inténtalo de nuevo.",
       "resetSent": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
       "updateFailed": "No se pudo actualizar la contraseña. Vuelve a intentarlo."

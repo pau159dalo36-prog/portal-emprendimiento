@@ -503,6 +503,37 @@ describe("signInAction", () => {
     errorSpy.mockRestore();
   });
 
+  it("email no confirmado devuelve un mensaje claro específico (no el genérico)", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Email not confirmed", 400, "email_not_confirmed"),
+    });
+    revalidatePath.mockClear();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.emailNotConfirmed");
+    expect(result.redirectTo).toBeUndefined();
+    expect(revalidatePath).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("signIn devuelve error si no hay session y este error se distingue de credenciales inválidas", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Invalid login credentials", 400, "invalid_credentials"),
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.signInFailed");
+    errorSpy.mockRestore();
+  });
+
   it("datos inválidos devuelven error de validación sin llamar a Supabase", async () => {
     const result = await signInAction({ status: "idle" }, formWithLogin("correo-invalido"));
 

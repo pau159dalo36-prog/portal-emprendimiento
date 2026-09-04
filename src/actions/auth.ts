@@ -179,8 +179,24 @@ export async function signInAction(
     password: parsed.data.contrasena,
   });
 
-  if (error || !data.session) {
+  if (error) {
     logAuthError("signIn", error);
+    // Caso explícito: correo sin confirmar. Mostramos un mensaje claro en lugar
+    // del genérico anti-enumeración porque la causa es específica y accionable.
+    if (error.code === "email_not_confirmed") {
+      return {
+        status: "error",
+        message: ta("emailNotConfirmed"),
+      };
+    }
+    return {
+      status: "error",
+      message: ta("signInFailed"),
+    };
+  }
+
+  if (!data.session) {
+    logAuthError("signIn", { name: "NoSession", message: "signIn devolvió user sin session" });
     return {
       status: "error",
       message: ta("signInFailed"),

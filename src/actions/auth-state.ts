@@ -12,4 +12,9 @@ export type AuthFormState = {
   redirectTo?: string;
 }
 
+export type AuthFormAction = (
+  prevState: AuthFormState,
+  formData: FormData,
+) => Promise<AuthFormState>;
+
 export const initialAuthFormState: AuthFormState = { status: "idle" };

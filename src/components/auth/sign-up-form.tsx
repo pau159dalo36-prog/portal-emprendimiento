@@ -1,11 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import { signUpAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
-import { useAuthRedirect } from "@/components/auth/use-auth-redirect";
+import { useAuthForm } from "@/components/auth/use-auth-form";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +13,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/i18n/navigation";
 
 export function SignUpForm() {
-  const [state, formAction] = useActionState(signUpAction, initialAuthFormState);
   const t = useTranslations("authForm");
-  useAuthRedirect(state);
+  const ta = useTranslations("actions.auth");
+  const { state, pending, handleSubmit } = useAuthForm(
+    signUpAction,
+    initialAuthFormState,
+    ta("signUpFailed"),
+  );
 
   return (
-    <form action={formAction} noValidate className="grid gap-4">
+    <form onSubmit={handleSubmit} noValidate className="grid gap-4">
       {state.message && (
         <FormMessage status={state.status === "success" ? "success" : "error"}>
           {state.message}
@@ -135,7 +138,7 @@ export function SignUpForm() {
         <p className="text-sm text-destructive">{state.fieldErrors.terminos[0]}</p>
       )}
 
-      <SubmitButton className="mt-2 w-full" pendingText={t("createAccountPending")}>
+      <SubmitButton className="mt-2 w-full" pendingText={t("createAccountPending")} isPending={pending}>
         {t("createAccount")}
       </SubmitButton>
     </form>
