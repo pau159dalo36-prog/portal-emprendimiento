@@ -49,7 +49,11 @@ export function classifyRecoveryError(error: AuthError | null): RecoveryErrorCat
     message.includes("expired") ||
     message.includes("token has expired") ||
     message.includes("already been used") ||
-    message.includes("code has expired")
+    message.includes("code has expired") ||
+    // La OTP no coincide con ninguna pendiente: token consumido/inválido real
+    // (GoTrue: "Email OTP verification failed"). Es un enlace que ya no sirve,
+    // no un problema de infraestructura.
+    message.includes("verification failed")
   ) {
     return "expired";
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { classifyRecoveryError } from "@/lib/supabase/auth-recovery";
 
 /**
@@ -23,9 +23,16 @@ import { classifyRecoveryError } from "@/lib/supabase/auth-recovery";
  * recuperación en cookies y se redirige a /actualizar-contrasena (el middleware
  * de idioma resuelve el prefijo de locale, p. ej. /es/actualizar-contrasena).
  *
+ * Cookies y redirect: el cliente Supabase se enlaza AL `NextResponse` que
+ * devolvemos (createRouteHandlerClient). De ese modo las Set-Cookie de la
+ * sesión viajan en la misma respuesta redirect y el navegador llega a
+ * /actualizar-contrasena ya autenticado. Sin esto, la sesión puede perderse y
+ * la página rebota creando un bucle.
+ *
  * Errores: se distingue entre enlace REALMENTE caducado/usado (`expired`) y
- * fallos técnicos/PKCE (`technical`). Solo el primero muestra el mensaje de
- * "enlace expirado"; el segundo pide reintentar.
+ * fallos técnicos (`technical`). Ambos se muestran en /actualizar-contrasena
+ * (tarjeta de error), NUNCA redirigiendo por debajo a /recuperar-contrasena.
+ * Un enlace sin credenciales es un fallo técnico, no un token caducado.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -35,47 +42,57 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const flowId = searchParams.get("sb_flow_id");
 
-  const supabase = await createClient();
+  // Única respuesta del handler: las cookies de sesión que escriba Supabase se
+  // adjuntan a ESTE objeto; al devolverlo como redirect (Location) viajan con él.
+  const response = NextResponse.redirect(new URL("/", request.url));
+  const supabase = createRouteHandlerClient(response);
 
   // --- 1) OTP / token_hash (flujo robusto, sin PKCE) ---
   if (tokenHash && type === "recovery") {
     const { error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
 
     if (!error) {
-      // verifyOtp ya ha guardado la sesión de recuperación en cookies.
-      return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
+      return redirectTo(response, new URL("/actualizar-contrasena", request.url));
     }
 
     const category = classifyRecoveryError(error);
-    console.error("[auth:recovery]", JSON.stringify({ flow: "otp", category, name: error?.name }));
-    return recoveryErrorRedirect(request, category);
+    console.error(
+      "[auth:recovery]",
+      JSON.stringify({ flow: "otp", category, name: error?.name, code: error?.code }),
+    );
+    return redirectTo(response, errorTarget(category, request));
   }
 
   // --- 2) PKCE / code (fallback) ---
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
+    const { error } = await supabase.auth.exchangeCodeForSession(
+      code,
+      flowId ? { flowId } : undefined,
+    );
 
     if (!error) {
-      return NextResponse.redirect(new URL("/actualizar-contrasena", request.url));
+      return redirectTo(response, new URL("/actualizar-contrasena", request.url));
     }
 
     const category = classifyRecoveryError(error);
-    console.error("[auth:recovery]", JSON.stringify({ flow: "pkce", category, name: error?.name }));
-    return recoveryErrorRedirect(request, category);
+    console.error(
+      "[auth:recovery]",
+      JSON.stringify({ flow: "pkce", category, name: error?.name, code: error?.code }),
+    );
+    return redirectTo(response, errorTarget(category, request));
   }
 
-  // --- 3) Sin credenciales reconocibles → enlace mal formado/expirado ---
-  console.error("[auth:recovery]", JSON.stringify({ flow: "none", category: "expired" }));
-  return recoveryErrorRedirect(request, "expired");
+  // --- 3) Sin credenciales reconocibles → enlace mal formado/incompleto. No es
+  //     un token caducado: es un fallo técnico (routing/entorno) y se loguea.
+  console.error("[auth:recovery]", JSON.stringify({ flow: "none", category: "technical" }));
+  return redirectTo(response, errorTarget("technical", request));
 }
 
-function recoveryErrorRedirect(request: NextRequest, category: "expired" | "technical") {
-  return NextResponse.redirect(
-    new URL(
-      category === "expired"
-        ? "/recuperar-contrasena?error=expired"
-        : "/recuperar-contrasena?error=technical&reintentar=1",
-      request.url,
-    ),
-  );
+function errorTarget(category: "expired" | "technical", request: NextRequest) {
+  return new URL(`/actualizar-contrasena?error=${category}`, request.url);
+}
+
+function redirectTo(response: NextResponse, target: URL) {
+  response.headers.set("Location", target.toString());
+  return response;
 }

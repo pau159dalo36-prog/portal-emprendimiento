@@ -7,11 +7,12 @@ import { NextRequest } from "next/server";
 import { GET as resetPasswordGET } from "@/app/auth/reset-password/route";
 import { GET as callbackGET } from "@/app/auth/callback/route";
 import { GET as confirmGET } from "@/app/auth/confirm/route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createRouteHandlerClient } from "@/lib/supabase/server";
 import { getPostLoginDestination } from "@/profiles/destination";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
+  createRouteHandlerClient: vi.fn(),
 }));
 
 vi.mock("@/profiles/destination", () => ({
@@ -19,6 +20,7 @@ vi.mock("@/profiles/destination", () => ({
 }));
 
 const mockedCreateClient = vi.mocked(createClient);
+const mockedCreateRouteHandlerClient = vi.mocked(createRouteHandlerClient);
 const mockedGetPostLoginDestination = vi.mocked(getPostLoginDestination);
 
 let exchangeCodeForSession: ReturnType<typeof vi.fn>;
@@ -30,9 +32,11 @@ function setupSupabase() {
     error: null,
   });
   verifyOtp = vi.fn().mockResolvedValue({ error: null });
-  mockedCreateClient.mockReturnValue({
+  const client = {
     auth: { exchangeCodeForSession, verifyOtp },
-  } as never);
+  } as never;
+  mockedCreateClient.mockReturnValue(client);
+  mockedCreateRouteHandlerClient.mockReturnValue(client);
 }
 
 function makeRequest(url: string): NextRequest {
@@ -59,7 +63,7 @@ describe("GET /auth/reset-password (consumidor canónico del recovery)", () => {
     expect(lastLocation(res)).toContain("/actualizar-contrasena");
   });
 
-  it("otp_expired REAL: redirige a recuperar-contrasena?error=expired (no loop al formulario sin mensaje)", async () => {
+  it("otp_expired REAL: redirige a actualizar-contrasena?error=expired (tarjeta, sin bucle)", async () => {
     verifyOtp.mockResolvedValue({
       data: { user: null, session: null },
       error: { name: "AuthApiError", code: "otp_expired", status: 422, message: "Token has expired" },
@@ -71,13 +75,14 @@ describe("GET /auth/reset-password (consumidor canónico del recovery)", () => {
     );
 
     const location = lastLocation(res);
-    expect(location).toContain("/recuperar-contrasena");
+    expect(location).toContain("/actualizar-contrasena");
     expect(location).toContain("error=expired");
     expect(location).not.toContain("error=technical");
+    expect(location).not.toContain("/recuperar-contrasena");
     errorSpy.mockRestore();
   });
 
-  it("error TÉCNICO NO se etiqueta como expired: redirige a error=technical", async () => {
+  it("error TÉCNICO NO se etiqueta como expired: redirige a actualizar-contrasena?error=technical", async () => {
     verifyOtp.mockResolvedValue({
       data: { user: null, session: null },
       error: { name: "AuthRetryableFetchError", code: "request_timeout", status: 503, message: "timeout" },
@@ -89,9 +94,10 @@ describe("GET /auth/reset-password (consumidor canónico del recovery)", () => {
     );
 
     const location = lastLocation(res);
-    expect(location).toContain("/recuperar-contrasena");
+    expect(location).toContain("/actualizar-contrasena");
     expect(location).toContain("error=technical");
     expect(location).not.toContain("error=expired");
+    expect(location).not.toContain("/recuperar-contrasena");
     errorSpy.mockRestore();
   });
 
@@ -132,15 +138,24 @@ describe("GET /auth/reset-password (consumidor canónico del recovery)", () => {
     );
 
     const location = lastLocation(res);
+    expect(location).toContain("/actualizar-contrasena");
     expect(location).toContain("error=technical");
     expect(location).not.toContain("error=expired");
+    expect(location).not.toContain("/recuperar-contrasena");
     errorSpy.mockRestore();
   });
 
-  it("sin parámetros: enlace mal formado → error=expired", async () => {
+  it("sin parámetros: enlace mal formado → error TÉCNICO (no 'expired' sin credenciales)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
     const res = await resetPasswordGET(makeRequest("https://site.com/auth/reset-password"));
 
-    expect(lastLocation(res)).toContain("error=expired");
+    const location = lastLocation(res);
+    expect(location).toContain("/actualizar-contrasena");
+    expect(location).toContain("error=technical");
+    expect(location).not.toContain("error=expired");
+    expect(verifyOtp).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
 
