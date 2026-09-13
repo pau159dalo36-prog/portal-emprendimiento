@@ -6,13 +6,10 @@ import { Button } from "@/components/ui/button"
 
 type SubmitButtonProps = React.ComponentProps<typeof Button> & {
   pendingText?: string
-  /** pending explícito gestionado por el formulario que llama a la Server Action de forma manual. */
-  isPending?: boolean
 }
 
-export function SubmitButton({ pendingText, children, disabled, isPending, ...props }: SubmitButtonProps) {
-  const { pending: formPending } = useFormStatus()
-  const pending = isPending ?? formPending
+export function SubmitButton({ pendingText, children, disabled, ...props }: SubmitButtonProps) {
+  const { pending } = useFormStatus()
 
   return (
     <Button type="submit" disabled={disabled || pending} aria-busy={pending} {...props}>

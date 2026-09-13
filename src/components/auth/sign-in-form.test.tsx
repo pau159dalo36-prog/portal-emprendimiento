@@ -1,11 +1,3 @@
-// Test del formulario de login REAL (SignInForm), el mismo componente montado en
-// /es/iniciar-sesion.
-//
-// El componente usa useAuthForm, que llama directamente a la Server Action desde
-// el handler de submit (await) y, al recibir status:success + redirectTo, hace la
-// navegación completa (window.location.assign) de forma inmediata para descartar
-// el Router Cache anónimo. En caso de error, pending se restablece SIEMPRE
-// (try/finally) y el botón vuelve a su estado normal: nunca "loading" infinito.
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,10 +13,6 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-// Componentes UI sustituidos por versiones planas (Base UI no se renderiza
-// fiablemente en jsdom). El mock de SubmitButton reproduce el estado `isPending`
-// del botón real (aria-busy + pendingText) para poder verificar que el loading
-// termina.
 vi.mock("@/components/ui/checkbox", () => ({
   Checkbox: (props: Record<string, unknown>) => <input type="checkbox" {...props} />,
 }));
@@ -39,26 +27,11 @@ vi.mock("@/components/ui/label", () => ({
     <label {...props}>{children}</label>
   ),
 }));
-vi.mock("@/components/ui/submit-button", () => ({
-  SubmitButton: ({
-    children,
-    pendingText,
-    isPending,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    pendingText?: string;
-    isPending?: boolean;
-  } & Record<string, unknown>) => (
-    <button {...props} aria-busy={isPending}>
-      {isPending ? (pendingText ?? children) : children}
-    </button>
-  ),
-}));
 
 const { signInAction } = vi.hoisted(() => ({ signInAction: vi.fn() }));
 vi.mock("@/actions/auth", () => ({ signInAction }));
 
+import { initialAuthFormState } from "@/actions/auth-state";
 import { SignInForm } from "@/components/auth/sign-in-form";
 
 let assignMock: ReturnType<typeof vi.fn>;
@@ -67,12 +40,14 @@ const realLocation = window.location;
 beforeEach(() => {
   assignMock = vi.fn();
   Object.defineProperty(window, "location", {
-    value: { assign: assignMock },
+    value: { assign: assignMock, href: "/", reload: vi.fn() },
     writable: true,
     configurable: true,
   });
   signInAction.mockReset();
-  signInAction.mockResolvedValue({ status: "success", redirectTo: "/es/onboarding" });
+  // En el flujo real la Server Action redirige server-side (redirect) y nunca
+  // devuelve un estado de éxito: lo simulamos como si no hubiera cambio visible.
+  signInAction.mockResolvedValue(initialAuthFormState);
 });
 
 afterEach(() => {
@@ -80,26 +55,7 @@ afterEach(() => {
   Object.defineProperty(window, "location", { value: realLocation, writable: true, configurable: true });
 });
 
-describe("SignInForm (componente de login real)", () => {
-  it("con credenciales válidas navega de forma completa hacia el redirectTo", async () => {
-    render(<SignInForm />);
-    const form = document.querySelector("form") as HTMLFormElement;
-    fireEvent.submit(form);
-
-    await waitFor(() => expect(assignMock).toHaveBeenCalledWith("/es/onboarding"));
-    expect(signInAction).toHaveBeenCalled();
-  });
-
-  it("navega a /panel cuando el onboarding ya está completado", async () => {
-    signInAction.mockResolvedValue({ status: "success", redirectTo: "/es/panel" });
-
-    render(<SignInForm />);
-    const form = document.querySelector("form") as HTMLFormElement;
-    fireEvent.submit(form);
-
-    await waitFor(() => expect(assignMock).toHaveBeenCalledWith("/es/panel"));
-  });
-
+describe("SignInForm (useActionState)", () => {
   it("la acción recibe el FormData real del formulario y el estado inicial", async () => {
     render(<SignInForm />);
     const form = document.querySelector("form") as HTMLFormElement;
@@ -111,7 +67,19 @@ describe("SignInForm (componente de login real)", () => {
     expect(formData).toBeInstanceOf(FormData);
   });
 
-  it("un login con error NO navega, muestra el error y el botón vuelve a estar activo (loading termina)", async () => {
+  it("tras el submit la navegación al destino es server-side: NO usa window.location.assign", async () => {
+    render(<SignInForm />);
+    const form = document.querySelector("form") as HTMLFormElement;
+    fireEvent.submit(form);
+
+    await waitFor(() => expect(signInAction).toHaveBeenCalled());
+    // El redirect lo gestiona Next.js desde la Server Action (cookie ya escrita
+    // en la misma respuesta); el componente no debe navegar por su cuenta.
+    expect(assignMock).not.toHaveBeenCalled();
+    expect(screen.queryByText("actions.auth.signInFailed")).not.toBeInTheDocument();
+  });
+
+  it("un login con error NO navega, muestra el error y el botón vuelve a estar activo", async () => {
     signInAction.mockResolvedValue({
       status: "error",
       message: "actions.auth.signInFailed",
@@ -125,9 +93,6 @@ describe("SignInForm (componente de login real)", () => {
       expect(screen.getByText("actions.auth.signInFailed")).toBeInTheDocument(),
     );
     expect(assignMock).not.toHaveBeenCalled();
-    const button = screen.getByRole("button");
-    expect(button).toHaveAttribute("aria-busy", "false");
-    expect(button).not.toBeDisabled();
   });
 
   it("email no confirmado muestra un mensaje claro y NO navega", async () => {
@@ -144,19 +109,32 @@ describe("SignInForm (componente de login real)", () => {
       expect(screen.getByText("actions.auth.emailNotConfirmed")).toBeInTheDocument(),
     );
     expect(assignMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("button")).not.toBeDisabled();
   });
 
-  it("si la Server Action lanza una excepción, el botón vuelve a estar activo (nunca loading infinito)", async () => {
-    signInAction.mockRejectedValueOnce(new Error("boom"));
+  it("un error de red (signInNetwork) se muestra y NO navega", async () => {
+    signInAction.mockResolvedValue({
+      status: "error",
+      message: "actions.auth.signInNetwork",
+    });
 
     render(<SignInForm />);
     const form = document.querySelector("form") as HTMLFormElement;
     fireEvent.submit(form);
 
-    const button = screen.getByRole("button");
-    await waitFor(() => expect(button).toHaveAttribute("aria-busy", "false"));
-    expect(button).not.toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByText("actions.auth.signInNetwork")).toBeInTheDocument(),
+    );
+    expect(assignMock).not.toHaveBeenCalled();
+  });
+
+  it("si la Server Action devuelve error inesperado, NO navega", async () => {
+    signInAction.mockResolvedValueOnce({ status: "error", message: "error inesperado" });
+
+    render(<SignInForm />);
+    const form = document.querySelector("form") as HTMLFormElement;
+    fireEvent.submit(form);
+
+    await waitFor(() => expect(signInAction).toHaveBeenCalled());
     expect(assignMock).not.toHaveBeenCalled();
   });
 });

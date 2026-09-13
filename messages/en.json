@@ -761,7 +761,9 @@
       "emailNotConfirmed": "You must confirm your email before signing in.",
       "signUpFailed": "The account could not be created. Try again.",
       "resetSent": "If the email is registered, you'll receive a link to reset your password.",
-      "updateFailed": "The password could not be updated. Please try again."
+      "updateFailed": "The password could not be updated. Please try again.",
+      "rateLimit": "Too many attempts. Wait a moment and try again.",
+      "signInNetwork": "Could not sign in. Please try again."
     },
     "profile": {
       "invalidStep": "Invalid step.",

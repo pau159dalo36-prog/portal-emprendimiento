@@ -1,10 +1,10 @@
 "use client";
 
+import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import { signInAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
-import { useAuthForm } from "@/components/auth/use-auth-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,11 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Link } from "@/i18n/navigation";
 
 export function SignInForm() {
+  const [state, formAction] = useActionState(signInAction, initialAuthFormState);
   const t = useTranslations("authForm");
-  const ta = useTranslations("actions.auth");
-  const { state, pending, handleSubmit } = useAuthForm(
-    signInAction,
-    initialAuthFormState,
-    ta("signInFailed"),
-  );
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+    <form action={formAction} noValidate className="grid gap-4">
       {state.message && (
         <FormMessage status={state.status === "success" ? "success" : "error"}>
           {state.message}
@@ -82,7 +77,7 @@ export function SignInForm() {
         </Label>
       </div>
 
-      <SubmitButton className="mt-2 w-full" pendingText={t("signInPending")} isPending={pending}>
+      <SubmitButton className="mt-2 w-full" pendingText={t("signInPending")}>
         {t("signInSubmit")}
       </SubmitButton>
     </form>

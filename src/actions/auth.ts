@@ -1,7 +1,11 @@
 "use server";
 
 import { z } from "zod";
-import { AuthUnknownError, isAuthError } from "@supabase/supabase-js";
+import {
+  AuthRetryableFetchError,
+  AuthUnknownError,
+  isAuthError,
+} from "@supabase/supabase-js";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { AuthFormState } from "@/actions/auth-state";
 import { getSiteUrl } from "@/lib/env";
@@ -127,11 +131,16 @@ export async function signUpAction(
   // If neither condition holds the signUp silently failed — keep the generic
   // error to avoid email enumeration.
   if (data.session && data.user) {
-    const destination = getPathname({ href: await getPostLoginDestination(supabase), locale });
     // El registro crea una sesión real: invalida la UI dependiente de auth
-    // (header/nav/home) para que el árbol RSC deje de mostrar el snapshot anónimo.
+    // (header/nav/home) y redirige en el servidor a su destino. La navegación
+    // la gestiona Next.js (no un efecto cliente), así que la cookie de sesión
+    // ya está escrita en la respuesta y el destino se renderiza autenticado.
     revalidatePath("/", "layout");
-    return { status: "success", redirectTo: destination };
+    const destination = getPathname({
+      href: await getPostLoginDestination(supabase),
+      locale,
+    });
+    redirect(destination);
   }
 
   if (data.user) {
@@ -170,7 +179,7 @@ export async function signInAction(
   if (!withinLimit) {
     return {
       status: "error",
-      message: ta("signInFailed"),
+      message: ta("rateLimit"),
     };
   }
 
@@ -181,17 +190,37 @@ export async function signInAction(
 
   if (error) {
     logAuthError("signIn", error);
-    // Caso explícito: correo sin confirmar. Mostramos un mensaje claro en lugar
-    // del genérico anti-enumeración porque la causa es específica y accionable.
+    // email_not_confirmed: causa específica y accionable → mensaje claro.
     if (error.code === "email_not_confirmed") {
       return {
         status: "error",
         message: ta("emailNotConfirmed"),
       };
     }
+    // invalid_credentials: contraseña/correo incorrectos → mensaje explícito.
+    if (error.code === "invalid_credentials") {
+      return {
+        status: "error",
+        message: ta("signInFailed"),
+      };
+    }
+    // Límite de intentos de Supabase (429): mensaje específico, no genérico.
+    if (error.status === 429) {
+      return {
+        status: "error",
+        message: ta("rateLimit"),
+      };
+    }
+    // Fallos de red / servidor: mensaje de reintento, no "credenciales incorrectas".
+    if (error instanceof AuthRetryableFetchError || error instanceof AuthUnknownError) {
+      return {
+        status: "error",
+        message: ta("signInNetwork"),
+      };
+    }
     return {
       status: "error",
-      message: ta("signInFailed"),
+      message: ta("signInNetwork"),
     };
   }
 
@@ -199,23 +228,24 @@ export async function signInAction(
     logAuthError("signIn", { name: "NoSession", message: "signIn devolvió user sin session" });
     return {
       status: "error",
-      message: ta("signInFailed"),
+      message: ta("signInNetwork"),
     };
   }
 
   // Login exitoso: la sesión cambia en el servidor. Invalida la UI dependiente
   // de auth (PublicHeader, SignedInNav/AuthActions, AppShell/TopHeader,
-  // DesktopSidebar, MobileBottomNav, home CTA) para que el árbol RSC no quede
-  // con el snapshot anónimo previo sin necesidad de recargar manualmente.
+  // DesktopSidebar, MobileBottomNav, home CTA) y redirige en el servidor al
+  // destino. Next.js aplica la cookie de sesión en esta misma respuesta y la
+  // navegación trae el destino renderizado ya autenticado (sin depender de un
+  // efecto cliente ni de recargar a mano).
   revalidatePath("/", "layout");
 
-  const destination = getPathname({ href: await getPostLoginDestination(supabase), locale });
+  const destination = getPathname({
+    href: await getPostLoginDestination(supabase),
+    locale,
+  });
 
-  // El cliente (SignInForm) navega mediante window.location.assign(destination)
-  // para descartar el Router Cache del navegador. La cookie de sesión ya quedó
-  // escrita en la respuesta de esta Server Action, por lo que el siguiente
-  // render del servidor mostrará la UI autenticada.
-  return { status: "success", redirectTo: destination };
+  redirect(destination);
 }
 
 export async function requestPasswordResetAction(
@@ -319,10 +349,12 @@ export async function updatePasswordAction(
 
   revalidatePath("/", "layout");
 
-  return {
-    status: "success",
-    redirectTo: getPathname({ href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } }, locale }),
-  };
+  redirect(
+    getPathname({
+      href: { pathname: "/iniciar-sesion", query: { contrasena: "actualizada" } },
+      locale,
+    }),
+  );
 }
 
 export async function signOutAction(
@@ -339,9 +371,8 @@ export async function signOutAction(
   await supabase.auth.signOut({ scope: "global" });
 
   // Logout exitoso: invalida la UI dependiente de auth para que el árbol RSC no
-  // siga mostrando el snapshot autenticado (avatar/panel/nav privada) al volver
-  // a la home, sin necesidad de recargar manualmente.
+  // siga mostrando el snapshot autenticado, y redirige en el servidor a la home.
   revalidatePath("/", "layout");
 
-  return { status: "success", redirectTo: getPathname({ href: "/", locale }) };
+  redirect(getPathname({ href: "/", locale }));
 }

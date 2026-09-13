@@ -1,6 +1,7 @@
 "use client";
 
-import { useAuthForm } from "@/components/auth/use-auth-form";
+import { useActionState } from "react";
+
 import { signOutAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
 import { Button } from "@/components/ui/button";
@@ -23,10 +24,10 @@ export function SignOutButton({
   title?: string;
   "aria-label"?: string;
 }) {
-  const { pending, handleSubmit } = useAuthForm(signOutAction, initialAuthFormState);
+  const [, formAction] = useActionState(signOutAction, initialAuthFormState);
 
   return (
-    <form onSubmit={handleSubmit} className="contents">
+    <form action={formAction} className="contents">
       <Button
         type="submit"
         variant={variant}
@@ -34,7 +35,6 @@ export function SignOutButton({
         className={className}
         title={title}
         aria-label={ariaLabel}
-        disabled={pending}
       >
         {children}
       </Button>

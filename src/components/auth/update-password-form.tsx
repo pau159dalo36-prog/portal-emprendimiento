@@ -1,26 +1,21 @@
 "use client";
 
+import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import { updatePasswordAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
-import { useAuthForm } from "@/components/auth/use-auth-form";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export function UpdatePasswordForm() {
+  const [state, formAction] = useActionState(updatePasswordAction, initialAuthFormState);
   const t = useTranslations("authForm");
-  const ta = useTranslations("actions.auth");
-  const { state, pending, handleSubmit } = useAuthForm(
-    updatePasswordAction,
-    initialAuthFormState,
-    ta("updateFailed"),
-  );
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+    <form action={formAction} noValidate className="grid gap-4">
       {state.message && (
         <FormMessage status={state.status === "success" ? "success" : "error"}>
           {state.message}
@@ -72,7 +67,7 @@ export function UpdatePasswordForm() {
         )}
       </div>
 
-      <SubmitButton className="mt-2 w-full" pendingText={t("updatePasswordPending")} isPending={pending}>
+      <SubmitButton className="mt-2 w-full" pendingText={t("updatePasswordPending")}>
         {t("updatePassword")}
       </SubmitButton>
     </form>

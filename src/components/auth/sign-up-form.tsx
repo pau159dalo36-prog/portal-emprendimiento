@@ -1,28 +1,23 @@
 "use client";
 
+import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import { signUpAction } from "@/actions/auth";
 import { initialAuthFormState } from "@/actions/auth-state";
-import { useAuthForm } from "@/components/auth/use-auth-form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/i18n/navigation";
 
 export function SignUpForm() {
+  const [state, formAction] = useActionState(signUpAction, initialAuthFormState);
   const t = useTranslations("authForm");
-  const ta = useTranslations("actions.auth");
-  const { state, pending, handleSubmit } = useAuthForm(
-    signUpAction,
-    initialAuthFormState,
-    ta("signUpFailed"),
-  );
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+    <form action={formAction} noValidate className="grid gap-4">
       {state.message && (
         <FormMessage status={state.status === "success" ? "success" : "error"}>
           {state.message}
@@ -112,7 +107,14 @@ export function SignUpForm() {
       </div>
 
       <div className="flex items-start gap-2">
-        <Checkbox id="terminos" name="terminos" value="on" className="mt-0.5" />
+        <Checkbox
+          id="terminos"
+          name="terminos"
+          value="on"
+          className="mt-0.5"
+          aria-invalid={Boolean(state.fieldErrors?.terminos)}
+          aria-describedby={state.fieldErrors?.terminos ? "error-terminos" : undefined}
+        />
         <Label htmlFor="terminos" className="leading-6 font-normal">
           {t.rich("termsLabel", {
             terms: (chunks) => (
@@ -135,10 +137,12 @@ export function SignUpForm() {
         </Label>
       </div>
       {state.fieldErrors?.terminos && (
-        <p className="text-sm text-destructive">{state.fieldErrors.terminos[0]}</p>
+        <p id="error-terminos" className="text-sm text-destructive">
+          {state.fieldErrors.terminos[0]}
+        </p>
       )}
 
-      <SubmitButton className="mt-2 w-full" pendingText={t("createAccountPending")} isPending={pending}>
+      <SubmitButton className="mt-2 w-full" pendingText={t("createAccountPending")}>
         {t("createAccount")}
       </SubmitButton>
     </form>

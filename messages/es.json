@@ -761,7 +761,9 @@
       "emailNotConfirmed": "Debes confirmar tu correo antes de iniciar sesión.",
       "signUpFailed": "No se pudo crear la cuenta. Inténtalo de nuevo.",
       "resetSent": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
-      "updateFailed": "No se pudo actualizar la contraseña. Vuelve a intentarlo."
+      "updateFailed": "No se pudo actualizar la contraseña. Vuelve a intentarlo.",
+      "rateLimit": "Demasiados intentos. Espera un poco e inténtalo de nuevo.",
+      "signInNetwork": "No se ha podido iniciar sesión. Inténtalo de nuevo."
     },
     "profile": {
       "invalidStep": "Paso no válido.",

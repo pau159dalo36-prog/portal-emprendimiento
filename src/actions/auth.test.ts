@@ -4,7 +4,7 @@
 // nunca se filtran datos sensibles (correo, tokens, claves, secretos).
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthApiError } from "@supabase/supabase-js";
+import { AuthApiError, AuthRetryableFetchError } from "@supabase/supabase-js";
 import {
   requestPasswordResetAction,
   signInAction,
@@ -250,7 +250,7 @@ describe("signUpAction", () => {
     expect(redirectMock).not.toHaveBeenCalledWith("/es/onboarding");
   });
 
-  it("signup con auto-login (confirmación desactivada) invalida la UI de auth y redirige al destino", async () => {
+  it("signup con auto-login (confirmación desactivada) invalida la UI y redirige en servidor al destino", async () => {
     signUp.mockResolvedValue({
       data: { user: { id: "u1" }, session: { access_token: "tok" } },
       error: null,
@@ -259,15 +259,12 @@ describe("signUpAction", () => {
     redirectMock.mockClear();
     revalidatePath.mockClear();
 
-    // La sesión real se crea: la action devuelve success + redirectTo y el
-    // cliente (SignUpForm) hace una navegación completa para descartar el
-    // Router Cache anónimo. No se lanza redirect server-side.
-    const result = await signUpAction({ status: "idle" }, formWithSignup("auto@example.com"));
+    // La sesión real se crea: la cookie ya queda escrita en la respuesta y la
+    // navegación es server-side (redirect), sin depender de un efecto cliente.
+    await signUpAction({ status: "idle" }, formWithSignup("auto@example.com"));
 
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toBe("/es/onboarding");
-    expect(redirectMock).not.toHaveBeenCalledWith("/es/onboarding");
+    expect(redirectMock).toHaveBeenCalledWith("/es/onboarding");
   });
 
   it("usa emailRedirectTo con la URL del sitio + /auth/callback", async () => {
@@ -348,10 +345,12 @@ describe("updatePasswordAction", () => {
     vi.restoreAllMocks();
   });
 
-  it("llama a updateUser con la nueva contraseña y devuelve redirectTo a iniciar-sesion", async () => {
+  it("llama a updateUser con la nueva contraseña y redirige en el servidor a iniciar-sesion", async () => {
     revalidatePath.mockClear();
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
 
-    const result = await updatePasswordAction(
+    await updatePasswordAction(
       { status: "idle" },
       formWithPassword("NuevaPass123", "NuevaPass123"),
     );
@@ -359,8 +358,8 @@ describe("updatePasswordAction", () => {
     expect(updateUser).toHaveBeenCalledWith({ password: "NuevaPass123" });
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toBe("/es/iniciar-sesion?contrasena=actualizada");
+    // La navegación es server-side (redirect de Server Action), no cliente.
+    expect(redirectMock).toHaveBeenCalledWith("/es/iniciar-sesion?contrasena=actualizada");
   });
 
   it("password mismatch devuelve error de validación sin llamar a updateUser", async () => {
@@ -404,14 +403,18 @@ describe("updatePasswordAction", () => {
   });
 
   it("no hay bucle hacia solicitud de email: tras éxito va a iniciar-sesion, nunca a recuperar-contrasena", async () => {
-    const result = await updatePasswordAction(
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
+
+    await updatePasswordAction(
       { status: "idle" },
       formWithPassword("NuevaPass123", "NuevaPass123"),
     );
 
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toContain("/es/iniciar-sesion?contrasena=actualizada");
-    expect(result.redirectTo).not.toContain("recuperar-contrasena");
+    expect(signOut).toHaveBeenCalledWith({ scope: "global" });
+    expect(redirectMock).toHaveBeenCalledWith("/es/iniciar-sesion?contrasena=actualizada");
+    const calledRedirects = redirectMock.mock.calls.flat().map(String);
+    expect(calledRedirects.some((url) => url.includes("recuperar-contrasena"))).toBe(false);
   });
 
   it("sin sesión de recuperación válida: NO llama a updateUser y va a iniciar-sesion (bloquea cambio no autorizado)", async () => {
@@ -453,23 +456,21 @@ describe("signInAction", () => {
     return form;
   }
 
-  it("login exitoso: invalida la UI dependiente de auth y devuelve redirectTo", async () => {
+  it("login exitoso: invalida la UI dependiente de auth y redirige en el servidor al destino", async () => {
     const redirectMock = vi.mocked((await import("next/navigation")).redirect);
     redirectMock.mockClear();
     revalidatePath.mockClear();
 
-    const result = await signInAction({ status: "idle" }, formWithLogin());
+    await signInAction({ status: "idle" }, formWithLogin());
 
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: "usuario@example.com",
       password: "Abcdef123",
     });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
-    // El cliente (SignInForm) navega de forma completa (window.location.assign)
-    // al destino para descartar el Router Cache anónimo.
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toBe("/es/onboarding");
-    expect(redirectMock).not.toHaveBeenCalledWith("/es/onboarding");
+    // La cookie de sesión ya queda escrita en esta respuesta; la navegación es
+    // server-side (redirect de Server Action), sin window.location.assign.
+    expect(redirectMock).toHaveBeenCalledWith("/es/onboarding");
   });
 
   it("login exitoso con onboarding completado redirige a /panel", async () => {
@@ -477,11 +478,12 @@ describe("signInAction", () => {
     // para cubrir el destino /panel cuando el onboarding ya está completado.
     const destMock = vi.mocked((await import("@/profiles/destination")).getPostLoginDestination);
     destMock.mockResolvedValueOnce("/panel");
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
 
-    const result = await signInAction({ status: "idle" }, formWithLogin());
+    await signInAction({ status: "idle" }, formWithLogin());
 
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toBe("/es/panel");
+    expect(redirectMock).toHaveBeenCalledWith("/es/panel");
   });
 
   it("login fallido NO invalida ni redirige y devuelve error genérico", async () => {
@@ -515,8 +517,46 @@ describe("signInAction", () => {
 
     expect(result.status).toBe("error");
     expect(result.message).toBe("actions.auth.emailNotConfirmed");
-    expect(result.redirectTo).toBeUndefined();
     expect(revalidatePath).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("rate limit de Supabase (429) devuelve mensaje específico, no credenciales incorrectas", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Too many requests", 429, "over_request_rate_limit"),
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.rateLimit");
+    errorSpy.mockRestore();
+  });
+
+  it("rate limit previo de la app (pre-check) devuelve mensaje específico sin llamar a Supabase", async () => {
+    const consumeMock = vi.mocked((await import("@/lib/rate-limit")).consumeRateLimit);
+    consumeMock.mockResolvedValueOnce(false);
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.rateLimit");
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("fallo de red (AuthRetryableFetchError) devuelve mensaje de reintento, no credenciales incorrectas", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthRetryableFetchError("fetch failed", 0),
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.signInNetwork");
     errorSpy.mockRestore();
   });
 
@@ -531,6 +571,20 @@ describe("signInAction", () => {
 
     expect(result.status).toBe("error");
     expect(result.message).toBe("actions.auth.signInFailed");
+    errorSpy.mockRestore();
+  });
+
+  it("signIn sin session (fatal) no se presenta como error de credenciales y sugiere reintento", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: null,
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await signInAction({ status: "idle" }, formWithLogin());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toBe("actions.auth.signInNetwork");
     errorSpy.mockRestore();
   });
 
@@ -551,16 +605,16 @@ describe("signOutAction", () => {
     vi.restoreAllMocks();
   });
 
-  it("cierra sesión, invalida la UI de auth y devuelve redirectTo a la home", async () => {
+  it("cierra sesión, invalida la UI de auth y redirige en el servidor a la home", async () => {
     revalidatePath.mockClear();
+    const redirectMock = vi.mocked((await import("next/navigation")).redirect);
+    redirectMock.mockClear();
 
-    const result = await signOutAction({ status: "idle" }, new FormData());
+    await signOutAction({ status: "idle" }, new FormData());
 
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
-    // SignOutButton navega de forma completa a la home para descartar el Router
-    // Cache autenticado y volver a la navegación de visitante.
-    expect(result.status).toBe("success");
-    expect(result.redirectTo).toBe("/es/");
+    // La navegación es server-side (redirect de Server Action), no cliente.
+    expect(redirectMock).toHaveBeenCalledWith("/es/");
   });
 });
