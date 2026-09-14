@@ -219,8 +219,8 @@
     "createAccountPending": "Creating accountâ€¦",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
-    "updatePassword": "Update password",
-    "updatePasswordPending": "Updating passwordâ€¦",
+    "updatePassword": "Save password",
+    "updatePasswordPending": "Saving password…",
     "sendResetLink": "Send recovery link",
     "sendResetLinkPending": "Sending linkâ€¦"
   },
